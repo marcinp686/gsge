@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32825.248
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gsge", "gsge\gsge.vcxproj", "{AF746779-8CC5-4AC5-8A56-22793CB0B81A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementy rozwiązania", "Elementy rozwiązania", "{F872FFB8-435F-489D-985F-532D6B0AEA6D}"
+	ProjectSection(SolutionItems) = preProject
+		gsge\component\motion.cpp = gsge\component\motion.cpp
+		gsge\component\motion.h = gsge\component\motion.h
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AF746779-8CC5-4AC5-8A56-22793CB0B81A}.Debug|x64.ActiveCfg = Debug|x64
+		{AF746779-8CC5-4AC5-8A56-22793CB0B81A}.Debug|x64.Build.0 = Debug|x64
+		{AF746779-8CC5-4AC5-8A56-22793CB0B81A}.Debug|x86.ActiveCfg = Debug|Win32
+		{AF746779-8CC5-4AC5-8A56-22793CB0B81A}.Debug|x86.Build.0 = Debug|Win32
+		{AF746779-8CC5-4AC5-8A56-22793CB0B81A}.Release|x64.ActiveCfg = Release|x64
+		{AF746779-8CC5-4AC5-8A56-22793CB0B81A}.Release|x64.Build.0 = Release|x64
+		{AF746779-8CC5-4AC5-8A56-22793CB0B81A}.Release|x86.ActiveCfg = Release|Win32
+		{AF746779-8CC5-4AC5-8A56-22793CB0B81A}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {29676C10-935C-46C0-B984-2DFD725074A3}
+	EndGlobalSection
+EndGlobal

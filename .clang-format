@@ -1,0 +1,6 @@
+# Format Style Options - Created with Clang Power Tools
+---
+BasedOnStyle: Microsoft
+ColumnLimit: 130
+SortIncludes: false
+...

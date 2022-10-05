@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Pliki źródłowe">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Pliki nagłówkowe">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Pliki zasobów">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Natvis">
+      <UniqueIdentifier>{53e66159-f66b-4a0b-9aca-073cb0b0b27e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{cdf323fb-b65d-41da-8f98-1191924ec58b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="GDemo.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="vulkan.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="vkProxies.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="gsge.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="component\mesh.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="component\name.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="component\transform.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="timer.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="scene.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="component\camera.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="vulkan.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="vkProxies.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="gsge.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="component\mesh.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="component\name.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="component\transform.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="timer.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="scene.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="component\component.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="component\motion.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="component\camera.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="shaders\per_vertex_light_shader.frag">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\per_vertex_light_shader.vert">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\per_fragment_light_shader.frag">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\per_fragment_light_shader.vert">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\entt\natvis\entt\config.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+    <Natvis Include="..\..\entt\natvis\entt\container.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+    <Natvis Include="..\..\entt\natvis\entt\core.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+    <Natvis Include="..\..\entt\natvis\entt\entity.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+    <Natvis Include="..\..\entt\natvis\entt\graph.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+    <Natvis Include="..\..\entt\natvis\entt\locator.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+    <Natvis Include="..\..\entt\natvis\entt\meta.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+    <Natvis Include="..\..\entt\natvis\entt\platform.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+    <Natvis Include="..\..\entt\natvis\entt\poly.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+    <Natvis Include="..\..\entt\natvis\entt\process.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+    <Natvis Include="..\..\entt\natvis\entt\resource.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+    <Natvis Include="..\..\entt\natvis\entt\signal.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+    <Natvis Include="..\..\glm\util\glm.natvis">
+      <Filter>Natvis</Filter>
+    </Natvis>
+  </ItemGroup>
+</Project>
