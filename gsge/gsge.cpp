@@ -36,8 +36,8 @@ void gsge::mainLoop()
         glfwSetWindowTitle(renderer->window, std::to_string(1 / dt).c_str());
         glfwPollEvents();
 
-        // level->update(dt);
-        //    renderer->updateUniformBuffer(static_cast<void *>(&level->ubo), sizeof(level->ubo));
+        level->update(dt);
+        renderer->updateUniformBufferEx(level->ubo);
         renderer->update();
     }
 }

@@ -17,11 +17,9 @@ layout(binding = 0) uniform UniformBufferObject {
 
 void main() { 
     
-    fragPosition_WorldSpace = vec3( ubo.normal * vec4( inPosition, 1.0 ) );
-    fragNormal_WorldSpace = mat3(ubo.normal) * inNormal;       
+    fragPosition_WorldSpace = vec3(ubo.normal * vec4( inPosition, 1.0 ));
+    fragNormal_WorldSpace = mat3(inverse(transpose(ubo.normal))) * inNormal;       
     fragLightVector_WorldSpace = ubo.lightPosition;    
     
-    gl_Position = ubo.proj * ubo.view * ubo.normal * vec4(inPosition, 1.0);
-    //gl_Position = ubo.view * ubo.normal * vec4(inPosition, 1.0);
-    
+    gl_Position = ubo.proj * ubo.view * ubo.normal * vec4(inPosition, 1.0);  
 }

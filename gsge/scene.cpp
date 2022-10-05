@@ -3,8 +3,8 @@
 void scene::initScene()
 {
     // Camera object
-    mainCamera.setPosition(glm::vec3(0.0f, -4.0f, -4.0f));
-    mainCamera.setCenter(glm::vec3(0.0f, 1.0f, 0.0f));
+    mainCamera.setPosition(glm::vec3(2.0f, -2.0f, -8.0f));
+    mainCamera.setCenter(glm::vec3(0.0f, 0.0f, 0.0f));
 
     // Objects in the scene
     suzanne = registry.create();
@@ -23,20 +23,20 @@ void scene::initScene()
     registry.emplace<component::name>(simpleCube, "simpleCube");
     // scene.emplace<component::name>(plane, "plane");
 
-    /* registry.emplace<component::mesh>(suzanne);
-     registry.emplace<component::mesh>(icoSphere);
-     registry.emplace<component::mesh>(testCube);
-     registry.emplace<component::mesh>(companionCube);
-     registry.emplace<component::mesh>(squareFloor);*/
+    registry.emplace<component::mesh>(suzanne);
+    registry.emplace<component::mesh>(icoSphere);
+    registry.emplace<component::mesh>(testCube);
+    registry.emplace<component::mesh>(companionCube);
+    registry.emplace<component::mesh>(squareFloor);
     registry.emplace<component::mesh>(simpleCube);
     // scene.emplace<component::mesh>(plane);
 
-    /*registry.emplace<component::motion>(suzanne);
+    registry.emplace<component::motion>(suzanne);
     registry.emplace<component::motion>(icoSphere, glm::vec3(0), glm::vec3(0.0f, 30.0f, 0.0f));
     registry.emplace<component::motion>(testCube);
     registry.emplace<component::motion>(companionCube);
     registry.emplace<component::motion>(squareFloor);
-    registry.emplace<component::motion>(simpleCube);*/
+    registry.emplace<component::motion>(simpleCube, glm::vec3(0.1f, 0.0f, 0.0f), glm::vec3(30.f, 20.f, 10.f));
     // scene.emplace<component::motion>(plane);
 
     registry.emplace<component::transform>(suzanne, glm::vec3(-2.5, -0.5, 0));
@@ -44,14 +44,15 @@ void scene::initScene()
     registry.emplace<component::transform>(testCube, glm::vec3(-2.5, 1.5, -2.5));
     registry.emplace<component::transform>(companionCube, glm::vec3(1.5, -1, 1.5));
     registry.emplace<component::transform>(squareFloor, glm::vec3(0, 0, 0));
-    registry.emplace<component::transform>(simpleCube, glm::vec3(0, 0, 4));
+    registry.emplace<component::transform>(simpleCube, glm::vec3(0, 0, 0));
+
     // scene.emplace<component::transform>(plane, glm::vec3(0,, 0));
 
-    /* loadModel(suzanne, "models/suzanne.fbx");
-     loadModel(icoSphere, "models/icoSphere.fbx");
-     loadModel(testCube, "models/testCube.fbx");
-     loadModel(companionCube, "models/CompanionCube.fbx");
-     loadModel(squareFloor, "models/squareFloor.fbx");*/
+    loadModel(suzanne, "models/suzanne.fbx");
+    loadModel(icoSphere, "models/icoSphere.fbx");
+    loadModel(testCube, "models/testCube.fbx");
+    loadModel(companionCube, "models/CompanionCube.fbx");
+    loadModel(squareFloor, "models/squareFloor.fbx");
     loadModel(simpleCube, "models/simpleCube.fbx");
     // loadModel(plane, "models/plane_1x1.fbx");
 }
@@ -111,14 +112,6 @@ void scene::loadModel(entt::entity entity, std::string fileName, uint32_t meshId
     meshComp.nVertices = nVertices;
     meshComp.nIndices = nFaces * 3;
     meshComp.nFaces = nFaces;
-
-    /*auto &trans = registry.get<component::transform>(entity);
-    {
-        for (auto &vert : meshComp.vertices)
-        {
-            vert += trans.position;
-        }
-    }*/
 }
 
 void scene::update(float deltaTime)
@@ -141,14 +134,16 @@ void scene::updateTransformMatrices(float dt)
 
         // Translation first - Matrix multiplication is not commutative, which means their order is important
         transform.transformMatrix = glm::translate(glm::mat4(1.0f), transform.position);
-        // Rotation
+
+        // Rotation second
         transform.transformMatrix =
             glm::rotate(transform.transformMatrix, glm::radians(transform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
         transform.transformMatrix =
             glm::rotate(transform.transformMatrix, glm::radians(transform.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
         transform.transformMatrix =
             glm::rotate(transform.transformMatrix, glm::radians(transform.rotation.z), glm::vec3(0.0f, 0.0f, 0.1f));
-        // Scale
+
+        // Scale third
         transform.transformMatrix = glm::scale(transform.transformMatrix, transform.scale);
     }
 }
@@ -193,9 +188,13 @@ void scene::prepareFrameData()
 
 void scene::updateUniformBuffer()
 {
+    auto &tr = registry.get<component::transform>(simpleCube);
+
+    ubo.model = tr.transformMatrix;
     ubo.view = mainCamera.getViewMatrix();
     ubo.proj = mainCamera.getProjMatrix();
-    ubo.normal = glm::transpose(glm::inverse(glm::identity<glm::mat4>()));
+    ubo.normal = ubo.model;
+    // ubo.normal = glm::inverse(glm::transpose(tr.transformMatrix));
 }
 
 std::vector<glm::vec3> &scene::getVertexLump()

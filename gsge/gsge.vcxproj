@@ -200,6 +200,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
     <ClInclude Include="component\name.h" />
     <ClInclude Include="component\transform.h" />
     <ClInclude Include="gsge.h" />
+    <ClInclude Include="types.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="timer.h" />
     <ClInclude Include="vulkan.h" />

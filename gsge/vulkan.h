@@ -16,6 +16,7 @@
 #include <GLFW/glfw3.h>
 
 #include "timer.h"
+#include "types.h"
 
 class vulkan
 {
@@ -31,7 +32,7 @@ class vulkan
     void prepareNormalsData(glm::vec3 *dataPtr, size_t len);
     void prepareIndexOffsets(std::vector<uint32_t> data);
     void prepareVertexOffsets(std::vector<uint32_t> data);
-    // void updateUniformBuffer(void *ubo, size_t size);
+    void updateUniformBufferEx(UniformBufferObject ubo);
     void updateUniformBuffer(uint32_t currentImage);
 
     GLFWwindow *window;
@@ -40,9 +41,6 @@ class vulkan
     const uint32_t WINDOW_WIDTH = 800;
     const uint32_t WINDOW_HEIGHT = 600;
     const int MAX_FRAMES_IN_FLIGHT = 2;
-
-    timer systemTimer;
-    float dt = 0;
 
     VkInstance instance;
     VkDebugUtilsMessengerEXT debugMessenger;
@@ -84,6 +82,8 @@ class vulkan
     VkDeviceMemory indexBufferMemory;
     VkBuffer vertexNormalsBuffer;
     VkDeviceMemory vertexNormalsBufferMemory;
+
+    UniformBufferObject local_ubo;
 
     VkImage depthImage;
     VkDeviceMemory depthImageMemory;
@@ -175,15 +175,6 @@ class vulkan
         VkSurfaceCapabilitiesKHR capabilities;
         std::vector<VkSurfaceFormatKHR> formats;
         std::vector<VkPresentModeKHR> presentModes;
-    };
-
-    struct UniformBufferObject
-    {
-        alignas(16) glm::mat4 model;
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
-        alignas(16) glm::mat4 normal;
-        alignas(16) glm::vec3 lightPos;
     };
 
     SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);

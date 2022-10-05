@@ -1393,38 +1393,18 @@ void vulkan::createDescriptorSets()
     }
 }
 
-float rotation = 0;
-float lastTime = 0;
 // void vulkan::updateUniformBuffer(void *ubo, size_t size)
 void vulkan::updateUniformBuffer(uint32_t currentImage)
 {
-    static auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-    dt = lastTime - time;
-
-    rotation += dt * 30;
-    UniformBufferObject ubo2{};
-
-    ubo2.model = glm::rotate(glm::mat4(1.0f), 0 * glm::radians(rotation), glm::vec3(0.0f, -1.0f, 0.0f));
-    ubo2.view = glm::lookAt(glm::vec3(-5 + time, 0.0f, -3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    ubo2.proj =
-        glm::perspective(glm::radians(70.0f), swapChainExtent.width / static_cast<float>(swapChainExtent.height), 0.1f, 100.0f);
-
-    // ubo2.proj[1][1] *= -1;
-
-    ubo2.normal = glm::transpose(glm::inverse(ubo2.model));
-
-    ubo2.lightPos = glm::vec3(-1.5, 0.f, 0.f);
-    // ubo2.lightPos = glm::rotate(ubo2.lightPos, glm::radians(rotation), glm::vec3(0, -1, 0));
-
     void *data;
-    vkMapMemory(device, uniformBuffersMemory[currentImage], 0, sizeof(ubo2), 0, &data);
-    memcpy(data, &ubo2, sizeof(ubo2));
+    vkMapMemory(device, uniformBuffersMemory[currentImage], 0, sizeof(local_ubo), 0, &data);
+    memcpy(data, &local_ubo, sizeof(local_ubo));
     vkUnmapMemory(device, uniformBuffersMemory[currentImage]);
-    lastTime = time;
+}
+
+void vulkan::updateUniformBufferEx(UniformBufferObject ubo)
+{
+    local_ubo = ubo;
 }
 
 void vulkan::createIndexBuffer()

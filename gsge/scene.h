@@ -16,6 +16,7 @@
 
 #include "component/component.h"
 #include "component/camera.h"
+#include "types.h"
 
 class scene
 {
@@ -34,14 +35,6 @@ class scene
     std::vector<glm::u16> &getIndexLump();
     std::vector<uint32_t> &getVertexOffsets();
     std::vector<uint32_t> &getIndexOffsets();
-
-    struct UniformBufferObject
-    {
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
-        alignas(16) glm::mat4 normal;
-        alignas(16) glm::vec3 lightPos{glm::vec3(-2, -2.5, 0)};
-    };
 
     UniformBufferObject ubo;
 

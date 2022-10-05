@@ -25,7 +25,7 @@ class camera
     // Data to calculate view matrix
     glm::vec3 position{0.0f, 0.0f, 0.0f};
     glm::vec3 center{0.0f, 0.0f, 0.0f};
-    glm::vec3 upVector{0.0f, 1.0f, 0.0f};
+    glm::vec3 upVector{0.0f, -1.0f, 0.0f};
 
     // Data to calculate projection matrix
     float fov{75};
