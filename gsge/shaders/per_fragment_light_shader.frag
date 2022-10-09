@@ -20,7 +20,7 @@ layout(binding = 0) uniform UniformBufferObject {
 const vec3 pointLightColor = {1, 1, 1};
 const float pointLightPower = 2;
 const float ambientLightPower = 0.025;
-const vec3 materialDiffuseColor = {0.3,1,1};
+const vec3 materialDiffuseColor = {0.6,0.4,1};
 
 // Light attenuation terms
 const float Kc = 1.0;   // constant term
