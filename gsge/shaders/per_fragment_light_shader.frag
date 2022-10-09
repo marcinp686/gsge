@@ -1,4 +1,6 @@
-#version 450
+#version 460
+
+// #extension SPV_KHR_shader_draw_parameters : enable
 // #extension GL_EXT_debug_printf : enable
 
 layout(location = 0) in vec3 fragNormal_WorldSpace;

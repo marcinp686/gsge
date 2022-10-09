@@ -6,6 +6,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <array>
 
 #include <vulkan/vulkan.h>
 #include "vkProxies.h"
@@ -32,8 +33,10 @@ class vulkan
     void prepareNormalsData(glm::vec3 *dataPtr, size_t len);
     void prepareIndexOffsets(std::vector<uint32_t> data);
     void prepareVertexOffsets(std::vector<uint32_t> data);
+    void pushTransformMatricesToGpu(std::vector<glm::mat4> data);
     void updateUniformBufferEx(UniformBufferObject ubo);
     void updateUniformBuffer(uint32_t currentImage);
+    void updateTransformMatrixBuffer(uint32_t currentImage);
 
     GLFWwindow *window;
 
@@ -54,13 +57,19 @@ class vulkan
     VkSwapchainKHR swapChain;
     VkFormat swapChainImageFormat = VK_FORMAT_B8G8R8A8_SRGB;
     VkExtent2D swapChainExtent;
-    VkDescriptorSetLayout descriptorSetLayout;
+
     VkPipelineLayout pipelineLayout;
     VkRenderPass renderPass;
     VkPipeline graphicsPipeline;
     VkCommandPool commandPool;
+
+    std::vector<VkVertexInputBindingDescription> vertexBindingDesc;
+    std::vector<VkVertexInputAttributeDescription> vertexAttrDesc;
+
     VkDescriptorPool descriptorPool;
+    VkDescriptorSetLayout descriptorSetLayout;
     std::vector<VkDescriptorSet> descriptorSets;
+
     std::vector<VkCommandBuffer> commandBuffers;
     std::vector<VkSemaphore> imageAvailableSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
@@ -73,8 +82,6 @@ class vulkan
     std::vector<VkImage> swapChainImages;
     std::vector<VkImageView> swapChainImageViews;
     std::vector<VkFramebuffer> swapChainFramebuffers;
-    std::vector<VkVertexInputBindingDescription> vertexBindingDesc;
-    std::vector<VkVertexInputAttributeDescription> vertexAttrDesc;
 
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
@@ -82,6 +89,14 @@ class vulkan
     VkDeviceMemory indexBufferMemory;
     VkBuffer vertexNormalsBuffer;
     VkDeviceMemory vertexNormalsBufferMemory;
+    std::vector<VkBuffer> uniformBuffers;
+    std::vector<VkDeviceMemory> uniformBuffersMemory;
+
+    // transform matrices buffers
+    std::vector<VkBuffer> transformMatricesStagingBuffer;
+    std::vector<VkDeviceMemory> transformMatricesStagingBufferMemory;
+    std::vector<VkBuffer> transformMatricesBuffer;
+    std::vector<VkDeviceMemory> transformMatricesBufferMemory;
 
     UniformBufferObject local_ubo;
 
@@ -89,15 +104,12 @@ class vulkan
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
 
-    std::vector<VkBuffer> uniformBuffers;
-    std::vector<VkDeviceMemory> uniformBuffersMemory;
-
     std::vector<glm::vec3> vertices;
     std::vector<glm::u16> indices;
     std::vector<glm::vec3> vertexNormals;
     std::vector<uint32_t> indexOffsets;
-
     std::vector<uint32_t> vertexOffsets;
+    std::vector<glm::mat4> transformMatrices;
 
     // shaders
     std::vector<char> vertShaderCode;
@@ -124,7 +136,7 @@ class vulkan
     void createSwapChain();
     void createImageViews();
     void createRenderPass();
-    void createDescriptors();
+    void createVertexBindingDescriptors();
     void createGraphicsPipeline();
     void createFramebuffers();
     void createCommandPool();
@@ -137,13 +149,13 @@ class vulkan
     void createVertexBuffer();
     void createIndexBuffer();
     void createVertexNormalsBuffer();
-    void createTransformBuffer();
+    void createTransformMatricesBuffer();
 
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
                       VkDeviceMemory &bufferMemory);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-    void createDescriptorSetLayout();
+    void createDescriptorSetLayouts();
     void createUniformBuffers();
     void createDescriptorPool();
     void createDescriptorSets();

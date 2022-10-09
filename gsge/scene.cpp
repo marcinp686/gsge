@@ -3,11 +3,12 @@
 void scene::initScene()
 {
     // Camera object
-    mainCamera.setPosition(glm::vec3(2.0f, -2.0f, -8.0f));
+    mainCamera.setPosition(glm::vec3(2.0f, -2.0f, -20.0f));
     mainCamera.setCenter(glm::vec3(0.0f, 0.0f, 0.0f));
 
     // Objects in the scene
     suzanne = registry.create();
+    suzanne_smooth = registry.create();
     icoSphere = registry.create();
     testCube = registry.create();
     companionCube = registry.create();
@@ -16,6 +17,7 @@ void scene::initScene()
     plane = registry.create();
 
     registry.emplace<component::name>(suzanne, "suzanne");
+    registry.emplace<component::name>(suzanne_smooth, "suzanne_smooth");
     registry.emplace<component::name>(icoSphere, "icoSphere");
     registry.emplace<component::name>(testCube, "testCube");
     registry.emplace<component::name>(companionCube, "companionCube");
@@ -24,6 +26,7 @@ void scene::initScene()
     // scene.emplace<component::name>(plane, "plane");
 
     registry.emplace<component::mesh>(suzanne);
+    registry.emplace<component::mesh>(suzanne_smooth);
     registry.emplace<component::mesh>(icoSphere);
     registry.emplace<component::mesh>(testCube);
     registry.emplace<component::mesh>(companionCube);
@@ -31,24 +34,27 @@ void scene::initScene()
     registry.emplace<component::mesh>(simpleCube);
     // scene.emplace<component::mesh>(plane);
 
-    registry.emplace<component::motion>(suzanne);
+    registry.emplace<component::motion>(suzanne, glm::vec3(0), glm::vec3(0.0f, -60.0f, 0.0f));
+    registry.emplace<component::motion>(suzanne_smooth, glm::vec3(0), glm::vec3(0.0f, 45.0f, 0.0f));
     registry.emplace<component::motion>(icoSphere, glm::vec3(0), glm::vec3(0.0f, 30.0f, 0.0f));
-    registry.emplace<component::motion>(testCube);
-    registry.emplace<component::motion>(companionCube);
-    registry.emplace<component::motion>(squareFloor);
+    registry.emplace<component::motion>(testCube, glm::vec3(0), glm::vec3(0.0f, 0.0f, -15.0f));
+    registry.emplace<component::motion>(companionCube, glm::vec3(0), glm::vec3(0.0f, -20.0f, 0.0f));
+    registry.emplace<component::motion>(squareFloor, glm::vec3(0), glm::vec3(0.0f, -20.0f, 0.0f));
     registry.emplace<component::motion>(simpleCube, glm::vec3(0.1f, 0.0f, 0.0f), glm::vec3(30.f, 20.f, 10.f));
     // scene.emplace<component::motion>(plane);
 
     registry.emplace<component::transform>(suzanne, glm::vec3(-2.5, -0.5, 0));
-    registry.emplace<component::transform>(icoSphere, glm::vec3(1.5, -1, 0));
-    registry.emplace<component::transform>(testCube, glm::vec3(-2.5, 1.5, -2.5));
+    registry.emplace<component::transform>(suzanne_smooth, glm::vec3(2.5, 1, 2));
+    registry.emplace<component::transform>(icoSphere, glm::vec3(2.5, -1.2, 0));
+    registry.emplace<component::transform>(testCube, glm::vec3(-2.5, 1.5, 2.5));
     registry.emplace<component::transform>(companionCube, glm::vec3(1.5, -1, 1.5));
-    registry.emplace<component::transform>(squareFloor, glm::vec3(0, 0, 0));
-    registry.emplace<component::transform>(simpleCube, glm::vec3(0, 0, 0));
+    registry.emplace<component::transform>(squareFloor, glm::vec3(0, 3, 0));
+    registry.emplace<component::transform>(simpleCube, glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0.5));
 
     // scene.emplace<component::transform>(plane, glm::vec3(0,, 0));
 
     loadModel(suzanne, "models/suzanne.fbx");
+    loadModel(suzanne_smooth, "models/suzanne_smooth.fbx");
     loadModel(icoSphere, "models/icoSphere.fbx");
     loadModel(testCube, "models/testCube.fbx");
     loadModel(companionCube, "models/CompanionCube.fbx");
@@ -124,6 +130,8 @@ void scene::updateTransformMatrices(float dt)
 {
     auto view = registry.view<component::transform, component::motion>();
 
+    transformMatrixLump.clear();
+
     for (auto entity : view)
     {
         auto &transform = view.get<component::transform>(entity);
@@ -145,6 +153,7 @@ void scene::updateTransformMatrices(float dt)
 
         // Scale third
         transform.transformMatrix = glm::scale(transform.transformMatrix, transform.scale);
+        transformMatrixLump.push_back(transform.transformMatrix);
     }
 }
 
@@ -191,6 +200,7 @@ void scene::updateUniformBuffer()
     auto &tr = registry.get<component::transform>(simpleCube);
 
     ubo.model = tr.transformMatrix;
+    // glm::transpose(tr.transformMatrix);
     ubo.view = mainCamera.getViewMatrix();
     ubo.proj = mainCamera.getProjMatrix();
     ubo.normal = ubo.model;
@@ -220,4 +230,9 @@ std::vector<glm::uint32_t> &scene::getVertexOffsets()
 std::vector<glm::uint32_t> &scene::getIndexOffsets()
 {
     return indexOffsets;
+}
+
+std::vector<glm::mat4> &scene::getTransformMatricesLump()
+{
+    return transformMatrixLump;
 }

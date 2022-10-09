@@ -35,6 +35,7 @@ class scene
     std::vector<glm::u16> &getIndexLump();
     std::vector<uint32_t> &getVertexOffsets();
     std::vector<uint32_t> &getIndexOffsets();
+    std::vector<glm::mat4> &getTransformMatricesLump();
 
     UniformBufferObject ubo;
 
@@ -42,11 +43,12 @@ class scene
 
   private:
     entt::registry registry;
-    entt::entity suzanne, icoSphere, testCube, companionCube, squareFloor, simpleCube, plane;
+    entt::entity suzanne, suzanne_smooth, icoSphere, testCube, companionCube, squareFloor, simpleCube, plane;
 
     std::vector<uint32_t> vertexOffsets;
     std::vector<uint32_t> indexOffsets;
     std::vector<glm::vec3> vertexLump;
     std::vector<glm::vec3> normalLump;
     std::vector<glm::u16> indexLump;
+    std::vector<glm::mat4> transformMatrixLump; // TODO: change model to normal matrix in future
 };

@@ -31,18 +31,33 @@ void vulkan::init()
 
     createImageViews();
     createRenderPass();
-    createDescriptors();
-    createDescriptorSetLayout();
+
+    // 1. Create vertex binding descriptors for vertex stage buffers
+    createVertexBindingDescriptors();
+
+    // 2. Create descriptor set layouts (to bind descriptor sets later on)
+    createDescriptorSetLayouts();
+
+    // 3. pass (2) as parameter to create pipeline layout and (1) to bind vertex buffers to pipeline
     createGraphicsPipeline();
+
     createDepthResources();
     createFramebuffers();
     createCommandPool();
+
+    // 4. create descriptor pool
+    createDescriptorPool();
+
+    // 5. create buffers for descriptor sets data
     createVertexBuffer();
     createIndexBuffer();
     createVertexNormalsBuffer();
+    createTransformMatricesBuffer();
     createUniformBuffers();
-    createDescriptorPool();
+
+    // 6. create actual descriptor sets - after buffer creation
     createDescriptorSets();
+
     createCommandBuffers();
     createSyncObjects();
 }
@@ -309,6 +324,12 @@ void vulkan::cleanup()
     {
         vkDestroyBuffer(device, uniformBuffers[i], nullptr);
         vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
+
+        vkDestroyBuffer(device, transformMatricesBuffer[i], nullptr);
+        vkFreeMemory(device, transformMatricesBufferMemory[i], nullptr);
+
+        vkDestroyBuffer(device, transformMatricesStagingBuffer[i], nullptr);
+        vkFreeMemory(device, transformMatricesStagingBufferMemory[i], nullptr);
     }
 
     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
@@ -494,6 +515,13 @@ void vulkan::createLogicalDevice()
     createInfo.pEnabledFeatures = &deviceFeatures;
     createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+
+    VkPhysicalDeviceShaderDrawParameterFeatures pf{};
+    pf.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
+    pf.shaderDrawParameters = VK_TRUE;
+    pf.pNext = nullptr;
+
+    createInfo.pNext = &pf;
 
     if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
     {
@@ -784,7 +812,7 @@ void vulkan::createGraphicsPipeline()
     scissor.offset = {0, 0};
     scissor.extent = swapChainExtent;
 
-    std::vector<VkDynamicState> dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+    std::array<VkDynamicState, 2> dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
     VkPipelineDynamicStateCreateInfo dynamicState{};
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
@@ -1009,7 +1037,7 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
     for (size_t i = 0; i < indexOffsets.size(); i++)
     {
         uint32_t endingIdx = (i == indexOffsets.size() - 1 ? indices.size() : indexOffsets[i + 1]);
-        vkCmdDrawIndexed(commandBuffer, endingIdx - indexOffsets[i], 1, indexOffsets[i], vertexOffsets[i], 0);
+        vkCmdDrawIndexed(commandBuffer, endingIdx - indexOffsets[i], 1, indexOffsets[i], vertexOffsets[i], i);
     }
 
     // End render pass
@@ -1042,6 +1070,7 @@ void vulkan::drawFrame()
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
+    updateTransformMatrixBuffer(currentFrame);
     updateUniformBuffer(currentFrame);
     vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
@@ -1144,7 +1173,7 @@ void vulkan::recreateSwapChain()
     createFramebuffers();
 }
 
-void vulkan::createDescriptors()
+void vulkan::createVertexBindingDescriptors()
 {
     // vertex coords
     vertexBindingDesc.emplace_back();
@@ -1157,6 +1186,12 @@ void vulkan::createDescriptors()
     vertexBindingDesc[1].binding = 1;
     vertexBindingDesc[1].stride = sizeof(glm::vec3);
     vertexBindingDesc[1].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    //// transform matrices
+    // vertexBindingDesc.emplace_back();
+    // vertexBindingDesc[2].binding = 2;
+    // vertexBindingDesc[2].stride = sizeof(glm::mat4);
+    // vertexBindingDesc[2].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
 
     // vertex coords
     vertexAttrDesc.emplace_back();
@@ -1171,6 +1206,34 @@ void vulkan::createDescriptors()
     vertexAttrDesc[1].location = 1;
     vertexAttrDesc[1].format = VK_FORMAT_R32G32B32_SFLOAT;
     vertexAttrDesc[1].offset = 0; // ewentualnie jako offsetof(struct,field)
+
+    //// transform matrices - first row of mat4
+    // vertexAttrDesc.emplace_back();
+    // vertexAttrDesc[2].binding = 2;
+    // vertexAttrDesc[2].location = 2;
+    // vertexAttrDesc[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    // vertexAttrDesc[2].offset = 0; // ewentualnie jako offsetof(struct,field)
+
+    //// transform matrices - second row of mat4
+    // vertexAttrDesc.emplace_back();
+    // vertexAttrDesc[3].binding = 2;
+    // vertexAttrDesc[3].location = 3;
+    // vertexAttrDesc[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    // vertexAttrDesc[3].offset = 16; // ewentualnie jako offsetof(struct,field)
+
+    //// transform matrices - third row mat4
+    // vertexAttrDesc.emplace_back();
+    // vertexAttrDesc[4].binding = 2;
+    // vertexAttrDesc[4].location = 4;
+    // vertexAttrDesc[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    // vertexAttrDesc[4].offset = 32; // ewentualnie jako offsetof(struct,field)
+
+    //// transform matrices - fourth row of mat4
+    // vertexAttrDesc.emplace_back();
+    // vertexAttrDesc[5].binding = 2;
+    // vertexAttrDesc[5].location = 5;
+    // vertexAttrDesc[5].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    // vertexAttrDesc[5].offset = 48; // ewentualnie jako offsetof(struct,field)
 }
 
 void vulkan::createVertexBuffer()
@@ -1234,6 +1297,11 @@ void vulkan::prepareIndexOffsets(std::vector<uint32_t> data)
 void vulkan::prepareVertexOffsets(std::vector<uint32_t> data)
 {
     vertexOffsets.assign(data.begin(), data.end());
+}
+
+void vulkan::pushTransformMatricesToGpu(std::vector<glm::mat4> data)
+{
+    transformMatrices.assign(data.begin(), data.end());
 }
 
 void vulkan::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
@@ -1302,19 +1370,27 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-void vulkan::createDescriptorSetLayout()
+void vulkan::createDescriptorSetLayouts()
 {
-    VkDescriptorSetLayoutBinding uboLayoutBinding{};
-    uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-    uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+    // uniform buffer descriptor set
+    std::array<VkDescriptorSetLayoutBinding, 2> descriptorSetLayoutBinding{};
+    descriptorSetLayoutBinding[0].binding = 0;
+    descriptorSetLayoutBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorSetLayoutBinding[0].descriptorCount = 1;
+    descriptorSetLayoutBinding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    descriptorSetLayoutBinding[0].pImmutableSamplers = nullptr;
+
+    // ssbo descriptor set
+    descriptorSetLayoutBinding[1].binding = 1;
+    descriptorSetLayoutBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    descriptorSetLayoutBinding[1].descriptorCount = 1;
+    descriptorSetLayoutBinding[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    descriptorSetLayoutBinding[1].pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = 1;
-    layoutInfo.pBindings = &uboLayoutBinding;
+    layoutInfo.bindingCount = descriptorSetLayoutBinding.size();
+    layoutInfo.pBindings = descriptorSetLayoutBinding.data();
 
     if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
     {
@@ -1339,16 +1415,18 @@ void vulkan::createUniformBuffers()
 
 void vulkan::createDescriptorPool()
 {
-    VkDescriptorPoolSize poolSize{};
-    poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSize.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    std::array<VkDescriptorPoolSize, 2> poolSize{};
+    poolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSize[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    poolSize[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    poolSize[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.flags = 0;
-    poolInfo.poolSizeCount = 1;
-    poolInfo.pPoolSizes = &poolSize;
-    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    poolInfo.poolSizeCount = poolSize.size();
+    poolInfo.pPoolSizes = poolSize.data();
+    poolInfo.maxSets = 20;
 
     if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
     {
@@ -1373,38 +1451,52 @@ void vulkan::createDescriptorSets()
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = uniformBuffers[i];
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(UniformBufferObject);
+        std::array<VkDescriptorBufferInfo, 2> bufferInfo{};
+        // UBO buffer info
+        bufferInfo[0].buffer = uniformBuffers[i];
+        bufferInfo[0].offset = 0;
+        bufferInfo[0].range = sizeof(UniformBufferObject);
 
-        VkWriteDescriptorSet descriptorWrite{};
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet = descriptorSets[i];
-        descriptorWrite.dstBinding = 0;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = &bufferInfo;
-        descriptorWrite.pImageInfo = nullptr;       // Optional
-        descriptorWrite.pTexelBufferView = nullptr; // Optional
+        // SSBO Buffer with object data (model transform for now)
+        bufferInfo[1].buffer = transformMatricesBuffer[i];
+        bufferInfo[1].offset = 0;
+        bufferInfo[1].range = transformMatrices.size() * sizeof(transformMatrices[0]);
 
-        vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+        std::array<VkWriteDescriptorSet, 2> descriptorWrite{};
+        // UBO buffer descriptor write
+        descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite[0].dstSet = descriptorSets[i];
+        descriptorWrite[0].dstBinding = 0;
+        descriptorWrite[0].dstArrayElement = 0;
+        descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrite[0].descriptorCount = 1;
+        descriptorWrite[0].pBufferInfo = &bufferInfo[0];
+
+        // UBO buffer descriptor write
+        descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite[1].dstSet = descriptorSets[i];
+        descriptorWrite[1].dstBinding = 1;
+        descriptorWrite[1].dstArrayElement = 0;
+        descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        descriptorWrite[1].descriptorCount = 1;
+        descriptorWrite[1].pBufferInfo = &bufferInfo[1];
+
+        vkUpdateDescriptorSets(device, 2, descriptorWrite.data(), 0, nullptr);
     }
 }
 
 // void vulkan::updateUniformBuffer(void *ubo, size_t size)
+void vulkan::updateUniformBufferEx(UniformBufferObject ubo)
+{
+    local_ubo = ubo;
+}
+
 void vulkan::updateUniformBuffer(uint32_t currentImage)
 {
     void *data;
     vkMapMemory(device, uniformBuffersMemory[currentImage], 0, sizeof(local_ubo), 0, &data);
     memcpy(data, &local_ubo, sizeof(local_ubo));
     vkUnmapMemory(device, uniformBuffersMemory[currentImage]);
-}
-
-void vulkan::updateUniformBufferEx(UniformBufferObject ubo)
-{
-    local_ubo = ubo;
 }
 
 void vulkan::createIndexBuffer()
@@ -1430,30 +1522,37 @@ void vulkan::createIndexBuffer()
     vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
-void vulkan::createVertexNormalsBuffer()
+void vulkan::createTransformMatricesBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(vertexNormals[0]) * vertexNormals.size();
+    VkDeviceSize bufferSize = sizeof(transformMatrices[0]) * transformMatrices.size();
 
-    VkBuffer stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+    transformMatricesBuffer.resize(MAX_FRAMES_IN_FLIGHT);
+    transformMatricesBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
+    transformMatricesStagingBuffer.resize(MAX_FRAMES_IN_FLIGHT);
+    transformMatricesStagingBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
 
-    void *data;
-    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, vertexNormals.data(), static_cast<size_t>(bufferSize));
-    vkUnmapMemory(device, stagingBufferMemory);
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    {
+        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                     transformMatricesStagingBuffer[i], transformMatricesStagingBufferMemory[i]);
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexNormalsBuffer, vertexNormalsBufferMemory);
-
-    copyBuffer(stagingBuffer, vertexNormalsBuffer, bufferSize);
-
-    vkDestroyBuffer(device, stagingBuffer, nullptr);
-    vkFreeMemory(device, stagingBufferMemory, nullptr);
+        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, transformMatricesBuffer[i], transformMatricesBufferMemory[i]);
+    }
 }
 
-void vulkan::createTransformBuffer()
+void vulkan::updateTransformMatrixBuffer(uint32_t currentImage)
+{
+    VkDeviceSize bufferSize = sizeof(transformMatrices[0]) * transformMatrices.size();
+    void *data;
+    vkMapMemory(device, transformMatricesStagingBufferMemory[currentImage], 0, bufferSize, 0, &data);
+    memcpy(data, transformMatrices.data(), static_cast<size_t>(bufferSize));
+    vkUnmapMemory(device, transformMatricesStagingBufferMemory[currentImage]);
+    copyBuffer(transformMatricesStagingBuffer[currentImage], transformMatricesBuffer[currentImage], bufferSize);
+}
+
+void vulkan::createVertexNormalsBuffer()
 {
     VkDeviceSize bufferSize = sizeof(vertexNormals[0]) * vertexNormals.size();
 

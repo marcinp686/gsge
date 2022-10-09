@@ -10,6 +10,7 @@ void gsge::init()
     level = std::make_unique<scene>();
     level->initScene();
     level->prepareFrameData();
+    level->update(0.0f);
     uploadBuffersToGPU();
     renderer->init();
 }
@@ -25,6 +26,7 @@ void gsge::uploadBuffersToGPU()
     renderer->prepareNormalsData(level->getNormalLump().data(), level->getNormalLump().size());
     renderer->prepareIndexOffsets(level->getIndexOffsets());
     renderer->prepareVertexOffsets(level->getVertexOffsets());
+    renderer->pushTransformMatricesToGpu(level->getTransformMatricesLump());
 }
 
 void gsge::mainLoop()
@@ -37,6 +39,7 @@ void gsge::mainLoop()
         glfwPollEvents();
 
         level->update(dt);
+        renderer->pushTransformMatricesToGpu(level->getTransformMatricesLump());
         renderer->updateUniformBufferEx(level->ubo);
         renderer->update();
     }
