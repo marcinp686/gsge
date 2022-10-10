@@ -146,7 +146,7 @@ void vulkan::createInstance()
 
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "Hello Triangle";
+    appInfo.pApplicationName = "SGGE Demo";
     appInfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 3, 0);
     appInfo.pEngineName = "Smart Giraffe Game Engine";
     appInfo.engineVersion = VK_MAKE_API_VERSION(0, 1, 3, 0);

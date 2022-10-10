@@ -45,6 +45,8 @@ class scene
     entt::registry registry;
     entt::entity suzanne, suzanne_smooth, icoSphere, testCube, companionCube, squareFloor, simpleCube, plane;
 
+    std::array<entt::entity, 1000> cubes;
+
     std::vector<uint32_t> vertexOffsets;
     std::vector<uint32_t> indexOffsets;
     std::vector<glm::vec3> vertexLump;

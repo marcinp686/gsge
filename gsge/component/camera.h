@@ -29,8 +29,8 @@ class camera
 
     // Data to calculate projection matrix
     float fov{75};
-    float aspect{8 / 6.f};
-    float zNear{1};
+    float aspect{1920.f / 1080.f};
+    float zNear{0.1};
     float zFar{100};
 
     glm::mat4 projMatrix{glm::identity<glm::mat4>()};
