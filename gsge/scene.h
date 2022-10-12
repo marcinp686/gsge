@@ -45,13 +45,15 @@ class scene
     entt::registry registry;
     entt::entity suzanne, suzanne_smooth, icoSphere, testCube, companionCube, squareFloor, simpleCube, plane;
 
-    int c_arraySize = 5;
-    std::array<entt::entity, 5 * 5 * 5> cubes;
+    int c_arraySize = 20;
+    std::array<entt::entity, 20 * 20 * 20> cubes;
 
-    std::vector<uint32_t> vertexOffsets;
-    std::vector<uint32_t> indexOffsets;
-    std::vector<glm::vec3> vertexLump;
-    std::vector<glm::vec3> normalLump;
-    std::vector<glm::u16> indexLump;
-    std::vector<glm::mat4> transformMatrixLump; // TODO: change model to normal matrix in future
+    std::vector<uint32_t> objects;
+
+    std::vector<uint32_t> vertexBufferOffsets;
+    std::vector<uint32_t> indexBufferOffsets;
+    std::vector<glm::vec3> hostVertexBuffer;
+    std::vector<glm::vec3> hostVertexNormalBuffer;
+    std::vector<glm::u16> hostIndexBuffer;
+    std::vector<glm::mat4> hostTransformMatrixBuffer; // TODO: change model to normal matrix in future
 };

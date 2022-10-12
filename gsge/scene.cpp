@@ -3,8 +3,8 @@
 void scene::initScene()
 {
     // Camera object
-    mainCamera.setPosition(glm::vec3(2.0f, -2.0f, -20.0f));
-    mainCamera.setCenter(glm::vec3(0.0f, 0.0f, 0.0f));
+    mainCamera.setPosition(glm::vec3(6.0f, -6.0f, -40.0f));
+    mainCamera.setCenter(glm::vec3(10.0f, 10.0f, 0.0f));
 
     // Objects in the scene
     suzanne = registry.create();
@@ -22,8 +22,9 @@ void scene::initScene()
             for (size_t z = 0; z < c_arraySize; z++)
             {
                 cubes[i] = registry.create();
-                registry.emplace<component::motion>(cubes[i], glm::vec3(0), glm::vec3(30.0f + i / 100, 15.0f + i / 100, 0.0f));
-                registry.emplace<component::transform>(cubes[i++], glm::vec3(x, y, z), glm::vec3(0.0f), glm::vec3(0.2f));
+                registry.emplace<component::motion>(cubes[i], glm::vec3(0),
+                                                    glm::vec3(30.0f + i / 8000.f, 15.0f + i / 8000.f, 0.0f));
+                registry.emplace<component::transform>(cubes[i++], glm::vec3(x, y, z), glm::vec3(0.0f), glm::vec3(0.5f));
             }
 
     registry.emplace<component::name>(suzanne, "suzanne");
@@ -50,7 +51,7 @@ void scene::initScene()
     registry.emplace<component::motion>(testCube, glm::vec3(0), glm::vec3(0.0f, 0.0f, -15.0f));
     registry.emplace<component::motion>(companionCube, glm::vec3(0), glm::vec3(0.0f, -20.0f, 0.0f));
     registry.emplace<component::motion>(squareFloor, glm::vec3(0), glm::vec3(0.0f, -20.0f, 0.0f));
-    registry.emplace<component::motion>(simpleCube, glm::vec3(0.1f, 0.0f, 0.0f), glm::vec3(30.f, 20.f, 10.f));
+    registry.emplace<component::motion>(simpleCube, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(30.f, 20.f, 10.f));
     // scene.emplace<component::motion>(plane);
 
     registry.emplace<component::transform>(suzanne, glm::vec3(-2.5, -0.5, 0));
@@ -58,8 +59,8 @@ void scene::initScene()
     registry.emplace<component::transform>(icoSphere, glm::vec3(2.5, -1.2, 0));
     registry.emplace<component::transform>(testCube, glm::vec3(-2.5, 1.5, 2.5));
     registry.emplace<component::transform>(companionCube, glm::vec3(1.5, -1, 1.5));
-    registry.emplace<component::transform>(squareFloor, glm::vec3(0, 3, 0));
-    registry.emplace<component::transform>(simpleCube, glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0.5));
+    registry.emplace<component::transform>(squareFloor, glm::vec3(-2, -3, 8));
+    registry.emplace<component::transform>(simpleCube, glm::vec3(-1.5, 0, 3), glm::vec3(0, 0, 0), glm::vec3(0.5));
     // scene.emplace<component::transform>(plane, glm::vec3(0,, 0));
 
     loadModel(suzanne, "models/suzanne.fbx");
@@ -76,6 +77,10 @@ void scene::initScene()
         registry.emplace<component::mesh>(cubes[i]) = registry.get<component::mesh>(simpleCube);
         registry.emplace<component::name>(cubes[i], "cubematrix");
     }
+
+    registry.sort<component::mesh>([](const entt::entity lhs, const entt::entity rhs) { return lhs < rhs; });
+    registry.sort<component::transform, component::mesh>();
+    registry.sort<component::transform, component::motion>();
 }
 
 void scene::loadModel(entt::entity entity, std::string fileName, uint32_t meshId)
@@ -145,7 +150,7 @@ void scene::updateTransformMatrices(float dt)
 {
     auto view = registry.view<component::transform, component::motion>();
 
-    transformMatrixLump.resize(view.size_hint());
+    hostTransformMatrixBuffer.resize(view.size_hint());
 
     for (auto entity : view)
     {
@@ -168,7 +173,7 @@ void scene::updateTransformMatrices(float dt)
 
         // Scale third
         transform.transformMatrix = glm::scale(transform.transformMatrix, transform.scale);
-        transformMatrixLump[static_cast<uint32_t>(entity)] = transform.transformMatrix;
+        hostTransformMatrixBuffer[static_cast<uint32_t>(entity)] = transform.transformMatrix;
     }
 }
 
@@ -188,26 +193,27 @@ void scene::prepareFrameData()
         totIndices += mesh.nIndices;
     }
 
-    vertexLump.reserve(totVertices);
-    normalLump.reserve(totVertices);
-    indexLump.reserve(totIndices);
+    hostVertexBuffer.reserve(totVertices);
+    hostVertexNormalBuffer.reserve(totVertices);
+    hostIndexBuffer.reserve(totIndices);
 
     for (auto entity : view)
     {
         auto &mesh = view.get<component::mesh>(entity);
         auto &name = view.get<component::name>(entity);
 
-        vertexOffsets.emplace_back(static_cast<uint32_t>(vertexLump.size()));
-        indexOffsets.emplace_back(static_cast<uint32_t>(indexLump.size()));
+        vertexBufferOffsets.emplace_back(static_cast<uint32_t>(hostVertexBuffer.size()));
+        indexBufferOffsets.emplace_back(static_cast<uint32_t>(hostIndexBuffer.size()));
 
-        vertexLump.insert(vertexLump.end(), mesh.vertices.begin(), mesh.vertices.end());
-        normalLump.insert(normalLump.end(), mesh.normals.begin(), mesh.normals.end());
-        indexLump.insert(indexLump.end(), mesh.indices.begin(), mesh.indices.end());
+        hostVertexBuffer.insert(hostVertexBuffer.end(), mesh.vertices.begin(), mesh.vertices.end());
+        hostVertexNormalBuffer.insert(hostVertexNormalBuffer.end(), mesh.normals.begin(), mesh.normals.end());
+        hostIndexBuffer.insert(hostIndexBuffer.end(), mesh.indices.begin(), mesh.indices.end());
 
         spdlog::info("Name: {}, faces: {}, vertices: {}", name.value, mesh.nFaces, mesh.nVertices);
     }
     spdlog::info("Total calculated: V={}, N={}, I={}", totVertices, totVertices, totIndices);
-    spdlog::info("Total in vectors: totV={}, totN={}, totI={}", vertexLump.size(), normalLump.size(), indexLump.size());
+    spdlog::info("Total in vectors: totV={}, totN={}, totI={}", hostVertexBuffer.size(), hostVertexNormalBuffer.size(),
+                 hostIndexBuffer.size());
 }
 
 void scene::updateUniformBuffer()
@@ -224,30 +230,30 @@ void scene::updateUniformBuffer()
 
 std::vector<glm::vec3> &scene::getVertexLump()
 {
-    return vertexLump;
+    return hostVertexBuffer;
 }
 
 std::vector<glm::vec3> &scene::getNormalLump()
 {
-    return normalLump;
+    return hostVertexNormalBuffer;
 }
 
 std::vector<glm::u16> &scene::getIndexLump()
 {
-    return indexLump;
+    return hostIndexBuffer;
 }
 
 std::vector<glm::uint32_t> &scene::getVertexOffsets()
 {
-    return vertexOffsets;
+    return vertexBufferOffsets;
 }
 
 std::vector<glm::uint32_t> &scene::getIndexOffsets()
 {
-    return indexOffsets;
+    return indexBufferOffsets;
 }
 
 std::vector<glm::mat4> &scene::getTransformMatricesLump()
 {
-    return transformMatrixLump;
+    return hostTransformMatrixBuffer;
 }
