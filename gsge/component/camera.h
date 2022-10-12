@@ -28,10 +28,10 @@ class camera
     glm::vec3 upVector{0.0f, -1.0f, 0.0f};
 
     // Data to calculate projection matrix
-    float fov{75};
-    float aspect{1920.f / 1080.f};
-    float zNear{0.1};
-    float zFar{100};
+    float fov{75.f};
+    float aspect{800.f / 600.f};
+    float zNear{0.1f};
+    float zFar{100.0f};
 
     glm::mat4 projMatrix{glm::identity<glm::mat4>()};
     glm::mat4 viewMatrix{glm::identity<glm::mat4>()};

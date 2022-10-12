@@ -71,16 +71,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\entt\src;C:\Users\epic007\source\repos\glm\glm;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\VulkanSDK\1.3.224.1\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\VulkanSDK\1.3.224.1\Lib;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\lib;C:\Users\epic007\source\repos\assimp\out\install\x64-Release\lib;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\entt\out\install\x64-Release\include;C:\Users\epic007\source\repos\glm\glm;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\include;C:\VulkanSDK\1.3.224.1\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\VulkanSDK\1.3.224.1\Lib;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\lib;C:\Users\epic007\source\repos\assimp\out\install\x64-Release\lib;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\lib;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)\$(Platform)\Intermediate\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets>
     </CustomBuildBeforeTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\entt\src;C:\Users\epic007\source\repos\glm\glm;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\VulkanSDK\1.3.224.1\Include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
-    <LibraryPath>C:\VulkanSDK\1.3.224.1\Lib;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\lib;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\lib;C:\Users\epic007\source\repos\assimp\out\install\x64-Debug\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\entt\out\install\x64-Debug\include;C:\Users\epic007\source\repos\glm\glm;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\include;C:\VulkanSDK\1.3.224.1\Include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>C:\VulkanSDK\1.3.224.1\Lib;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\lib;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\lib;C:\Users\epic007\source\repos\assimp\out\install\x64-Debug\lib;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Debug\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)\$(Platform)\Intermediate\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets>
@@ -126,7 +126,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;spdlog.lib;zlibstaticd.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;spdlog.lib;zlibstaticd.lib;assimp-vc143-mtd.lib;VulkanMemoryAllocatord.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -161,7 +161,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;spdlog.lib;zlibstatic.lib;assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;spdlog.lib;zlibstatic.lib;assimp-vc143-mt.lib;VulkanMemoryAllocatorrd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>

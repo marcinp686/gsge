@@ -3,8 +3,8 @@
 void scene::initScene()
 {
     // Camera object
-    mainCamera.setPosition(glm::vec3(2.0f, -2.0f, -30.0f));
-    mainCamera.setCenter(glm::vec3(10.0f, 0.0f, 0.0f));
+    mainCamera.setPosition(glm::vec3(2.0f, -2.0f, -20.0f));
+    mainCamera.setCenter(glm::vec3(0.0f, 0.0f, 0.0f));
 
     // Objects in the scene
     suzanne = registry.create();
@@ -14,19 +14,14 @@ void scene::initScene()
     companionCube = registry.create();
     squareFloor = registry.create();
     simpleCube = registry.create();
-    plane = registry.create();
-
-    for (int i = 0; i < cubes.size(); i++)
-    {
-        cubes[i] = registry.create();      
-        registry.emplace<component::name>(cubes[i], "cubematrix");        
-    }
+    // plane = registry.create();
 
     size_t i = 0;
-    for (size_t y = 0; y < 10; y++)
-        for (size_t x = 0; x < 10; x++)
-            for (size_t z = 0; z < 10; z++)
+    for (size_t y = 0; y < c_arraySize; y++)
+        for (size_t x = 0; x < c_arraySize; x++)
+            for (size_t z = 0; z < c_arraySize; z++)
             {
+                cubes[i] = registry.create();
                 registry.emplace<component::motion>(cubes[i], glm::vec3(0), glm::vec3(30.0f + i / 100, 15.0f + i / 100, 0.0f));
                 registry.emplace<component::transform>(cubes[i++], glm::vec3(x, y, z), glm::vec3(0.0f), glm::vec3(0.2f));
             }
@@ -75,15 +70,12 @@ void scene::initScene()
     loadModel(squareFloor, "models/squareFloor.fbx");
     loadModel(simpleCube, "models/simpleCube.fbx");
     // loadModel(plane, "models/plane_1x1.fbx");
-    
+
     for (int i = 0; i < cubes.size(); i++)
     {
-        cubes[i] = registry.create();
         registry.emplace<component::mesh>(cubes[i]) = registry.get<component::mesh>(simpleCube);
         registry.emplace<component::name>(cubes[i], "cubematrix");
-        // registry.emplace<component::motion>(cubes[i], glm::vec3(0), glm::vec3(0.0f, 15.0f, 0.0f));
     }
-
 }
 
 void scene::loadModel(entt::entity entity, std::string fileName, uint32_t meshId)
@@ -153,7 +145,7 @@ void scene::updateTransformMatrices(float dt)
 {
     auto view = registry.view<component::transform, component::motion>();
 
-    transformMatrixLump.clear();
+    transformMatrixLump.resize(view.size_hint());
 
     for (auto entity : view)
     {
@@ -176,7 +168,7 @@ void scene::updateTransformMatrices(float dt)
 
         // Scale third
         transform.transformMatrix = glm::scale(transform.transformMatrix, transform.scale);
-        transformMatrixLump.push_back(transform.transformMatrix);
+        transformMatrixLump[static_cast<uint32_t>(entity)] = transform.transformMatrix;
     }
 }
 
