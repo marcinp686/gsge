@@ -61,7 +61,8 @@ class vulkan
     VkPipelineLayout pipelineLayout;
     VkRenderPass renderPass;
     VkPipeline graphicsPipeline;
-    VkCommandPool commandPool;
+    VkCommandPool graphicsCommandPool;
+    VkCommandPool transferCommandPool;
 
     std::vector<VkVertexInputBindingDescription> vertexBindingDesc;
     std::vector<VkVertexInputAttributeDescription> vertexAttrDesc;
@@ -70,7 +71,8 @@ class vulkan
     VkDescriptorSetLayout descriptorSetLayout;
     std::vector<VkDescriptorSet> descriptorSets;
 
-    std::vector<VkCommandBuffer> commandBuffers;
+    std::vector<VkCommandBuffer> graphicsCommandBuffers;
+    std::vector<VkCommandBuffer> transferCommandBuffers;
     std::vector<VkSemaphore> imageAvailableSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> inFlightFences;
@@ -139,8 +141,10 @@ class vulkan
     void createVertexBindingDescriptors();
     void createGraphicsPipeline();
     void createFramebuffers();
-    void createCommandPool();
-    void createCommandBuffers();
+    void createGraphicsCommandPool();
+    void createTransferCommandPool();
+    void createGraphicsCommandBuffers();
+    void createTransferCommandBuffers();
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
     void createSyncObjects();

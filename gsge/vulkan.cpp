@@ -43,7 +43,8 @@ void vulkan::init()
 
     createDepthResources();
     createFramebuffers();
-    createCommandPool();
+    createGraphicsCommandPool();
+    createTransferCommandPool();
 
     // 4. create descriptor pool
     createDescriptorPool();
@@ -58,7 +59,8 @@ void vulkan::init()
     // 6. create actual descriptor sets - after buffer creation
     createDescriptorSets();
 
-    createCommandBuffers();
+    createGraphicsCommandBuffers();
+    createTransferCommandBuffers();
     createSyncObjects();
 }
 
@@ -356,7 +358,8 @@ void vulkan::cleanup()
         vkDestroyFence(device, inFlightFences[i], nullptr);
     }
 
-    vkDestroyCommandPool(device, commandPool, nullptr);
+    vkDestroyCommandPool(device, graphicsCommandPool, nullptr);
+    vkDestroyCommandPool(device, transferCommandPool, nullptr);
     vkDestroyDevice(device, nullptr);
 
     if (enableValidationLayers)
@@ -946,36 +949,68 @@ void vulkan::createFramebuffers()
     spdlog::info("Created framebuffers");
 }
 
-void vulkan::createCommandPool()
+void vulkan::createGraphicsCommandPool()
 {
     VkCommandPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphics[0];
 
-    if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
+    if (vkCreateCommandPool(device, &poolInfo, nullptr, &graphicsCommandPool) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create command pool!");
     }
 
-    spdlog::info("Created command pool");
+    spdlog::info("Created graphics command pool");
 }
 
-void vulkan::createCommandBuffers()
+void vulkan::createTransferCommandPool()
 {
-    commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    VkCommandPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    poolInfo.queueFamilyIndex = queueFamilyIndices.transfer[2];
+
+    if (vkCreateCommandPool(device, &poolInfo, nullptr, &transferCommandPool) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create command pool!");
+    }
+
+    spdlog::info("Created transfer command pool");
+}
+
+void vulkan::createGraphicsCommandBuffers()
+{
+    graphicsCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool;
+    allocInfo.commandPool = graphicsCommandPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+    allocInfo.commandBufferCount = static_cast<uint32_t>(graphicsCommandBuffers.size());
 
-    if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+    if (vkAllocateCommandBuffers(device, &allocInfo, graphicsCommandBuffers.data()) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate command buffers!");
     }
 
-    spdlog::info("Created command buffer");
+    spdlog::info("Created graphics command buffers");
+}
+
+void vulkan::createTransferCommandBuffers()
+{
+    transferCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = transferCommandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = static_cast<uint32_t>(transferCommandBuffers.size());
+
+    if (vkAllocateCommandBuffers(device, &allocInfo, transferCommandBuffers.data()) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to allocate command buffers!");
+    }
+
+    spdlog::info("Created transfer command buffers");
 }
 
 void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
@@ -1074,8 +1109,8 @@ void vulkan::drawFrame()
     updateUniformBuffer(currentFrame);
     vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
-    vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-    recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+    vkResetCommandBuffer(graphicsCommandBuffers[currentFrame], 0);
+    recordCommandBuffer(graphicsCommandBuffers[currentFrame], imageIndex);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1086,7 +1121,7 @@ void vulkan::drawFrame()
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
+    submitInfo.pCommandBuffers = &graphicsCommandBuffers[currentFrame];
     VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
@@ -1339,7 +1374,7 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = commandPool;
+    allocInfo.commandPool = transferCommandPool;
     allocInfo.commandBufferCount = 1;
 
     VkCommandBuffer commandBuffer;
@@ -1364,10 +1399,10 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &commandBuffer;
 
-    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(graphicsQueue);
+    vkQueueSubmit(transferQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(transferQueue);
 
-    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+    vkFreeCommandBuffers(device, transferCommandPool, 1, &commandBuffer);
 }
 
 void vulkan::createDescriptorSetLayouts()
