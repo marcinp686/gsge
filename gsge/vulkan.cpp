@@ -592,7 +592,7 @@ VkPresentModeKHR vulkan::chooseSwapPresentMode(const std::vector<VkPresentModeKH
         }
     }
 
-    return VK_PRESENT_MODE_FIFO_KHR;
+    return VK_PRESENT_MODE_IMMEDIATE_KHR; //    FIFO_KHR;
 }
 
 vulkan::SwapChainSupportDetails vulkan::querySwapChainSupport(VkPhysicalDevice device)
