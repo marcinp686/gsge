@@ -568,10 +568,7 @@ VkExtent2D vulkan::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities
     }
     else
     {
-        int width, height;
-        glfwGetFramebufferSize(window->getWindow(), &width, &height);
-
-        VkExtent2D actualExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+        VkExtent2D actualExtent = {window->width, window->height};
 
         actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
         actualExtent.height =
@@ -1186,14 +1183,6 @@ void vulkan::cleanupSwapchain()
 
 void vulkan::recreateSwapChain()
 {
-    int width = 0, height = 0;
-    glfwGetFramebufferSize(window->getWindow(), &width, &height);
-    while (width == 0 || height == 0)
-    {
-        glfwGetFramebufferSize(window->getWindow(), &width, &height);
-        glfwWaitEvents();
-    }
-
     vkDeviceWaitIdle(device);
 
     cleanupSwapchain();
@@ -1217,12 +1206,6 @@ void vulkan::createVertexBindingDescriptors()
     vertexBindingDesc[1].stride = sizeof(glm::vec3);
     vertexBindingDesc[1].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-    //// transform matrices
-    // vertexBindingDesc.emplace_back();
-    // vertexBindingDesc[2].binding = 2;
-    // vertexBindingDesc[2].stride = sizeof(glm::mat4);
-    // vertexBindingDesc[2].inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
-
     // vertex coords
     vertexAttrDesc.emplace_back();
     vertexAttrDesc[0].binding = 0;
@@ -1235,35 +1218,7 @@ void vulkan::createVertexBindingDescriptors()
     vertexAttrDesc[1].binding = 1;
     vertexAttrDesc[1].location = 1;
     vertexAttrDesc[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    vertexAttrDesc[1].offset = 0; // ewentualnie jako offsetof(struct,field)
-
-    //// transform matrices - first row of mat4
-    // vertexAttrDesc.emplace_back();
-    // vertexAttrDesc[2].binding = 2;
-    // vertexAttrDesc[2].location = 2;
-    // vertexAttrDesc[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    // vertexAttrDesc[2].offset = 0; // ewentualnie jako offsetof(struct,field)
-
-    //// transform matrices - second row of mat4
-    // vertexAttrDesc.emplace_back();
-    // vertexAttrDesc[3].binding = 2;
-    // vertexAttrDesc[3].location = 3;
-    // vertexAttrDesc[3].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    // vertexAttrDesc[3].offset = 16; // ewentualnie jako offsetof(struct,field)
-
-    //// transform matrices - third row mat4
-    // vertexAttrDesc.emplace_back();
-    // vertexAttrDesc[4].binding = 2;
-    // vertexAttrDesc[4].location = 4;
-    // vertexAttrDesc[4].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    // vertexAttrDesc[4].offset = 32; // ewentualnie jako offsetof(struct,field)
-
-    //// transform matrices - fourth row of mat4
-    // vertexAttrDesc.emplace_back();
-    // vertexAttrDesc[5].binding = 2;
-    // vertexAttrDesc[5].location = 5;
-    // vertexAttrDesc[5].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    // vertexAttrDesc[5].offset = 48; // ewentualnie jako offsetof(struct,field)
+    vertexAttrDesc[1].offset = 0; // ewentualnie jako offsetof(struct,field)    
 }
 
 void vulkan::createVertexBuffer()
