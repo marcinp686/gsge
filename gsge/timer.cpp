@@ -16,7 +16,7 @@ float timer::resetTimer()
 void timer::printTimer()
 {
     auto currentTimer = std::chrono::steady_clock::now();
-    float delta = std::chrono::duration<float, std::chrono::seconds::period>(currentTimer - lastTimer).count();
-    spdlog::error("Function time: {}us", delta * 1000.f);
+    float delta = std::chrono::duration<float, std::chrono::milliseconds::period>(currentTimer - lastTimer).count();
+    spdlog::error("Function time: {}ms", delta);
     return;
 }

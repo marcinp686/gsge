@@ -23,6 +23,7 @@ void gsge::init()
     renderer = std::make_unique<vulkan>(window.get());
 
     level = std::make_unique<scene>();
+    level->mainCamera.setAspect(1600.f / 800.f);
     level->initScene();
     level->prepareFrameData();
     level->update(0.0f);
@@ -47,7 +48,7 @@ void gsge::uploadBuffersToGPU()
 void gsge::mainLoop()
 {
     while (!glfwWindowShouldClose(window->getWindow()))
-        {
+    {
         glfwPollEvents();
         frameStats.update();
 

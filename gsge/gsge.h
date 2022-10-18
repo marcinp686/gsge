@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <format>
 
 #include "vulkan.h"
 
@@ -16,6 +17,9 @@
 
 #include "timer.h"
 #include "scene.h"
+#include "renderer/window.h"
+#include "renderer/settings.h"
+#include "core/stats.h"
 
 class gsge
 {
@@ -28,6 +32,8 @@ class gsge
   private:
     stats frameStats;
     timer frameTimer;
+
+    std::unique_ptr<Window> window;
     std::unique_ptr<vulkan> renderer;
     std::unique_ptr<scene> level;
 

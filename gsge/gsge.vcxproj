@@ -112,6 +112,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -165,6 +166,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <Profile>true</Profile>
     </Link>
     <PostBuildEvent>
       <Command>xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Debug\models /Y /Q
@@ -185,7 +187,10 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
     <ClCompile Include="component\mesh.cpp" />
     <ClCompile Include="component\name.cpp" />
     <ClCompile Include="component\transform.cpp" />
+    <ClCompile Include="core\stats.cpp" />
     <ClCompile Include="gsge.cpp" />
+    <ClCompile Include="renderer\settings.cpp" />
+    <ClCompile Include="renderer\window.cpp" />
     <ClCompile Include="scene.cpp" />
     <ClCompile Include="timer.cpp" />
     <ClCompile Include="vulkan.cpp" />
@@ -199,7 +204,10 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
     <ClInclude Include="component\motion.h" />
     <ClInclude Include="component\name.h" />
     <ClInclude Include="component\transform.h" />
+    <ClInclude Include="core\stats.h" />
     <ClInclude Include="gsge.h" />
+    <ClInclude Include="renderer\settings.h" />
+    <ClInclude Include="renderer\window.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="timer.h" />
