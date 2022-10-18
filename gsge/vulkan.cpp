@@ -13,7 +13,6 @@ void vulkan::update()
 
 void vulkan::init()
 {
-    initWindow();
     createInstance();
     setupDebugMessanger();
     createSurface();
@@ -298,21 +297,6 @@ uint64_t vulkan::rateDeviceSuitability(VkPhysicalDevice device)
     return score;
 }
 
-// static void framebufferResizeCallback(GLFWwindow *window, int width, int height)
-//{
-//     auto app = reinterpret_cast<vulkan *>(glfwGetWindowUserPointer(window->getWindow));
-//     app->framebufferResized = true;
-// }
-
-void vulkan::initWindow()
-{
-    // glfwInit();
-    // glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    // window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Vulkan", nullptr, nullptr);
-    /*glfwSetWindowUserPointer(window, this);
-    glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);*/
-}
-
 void vulkan::cleanup()
 {
     cleanupSwapchain();
@@ -365,9 +349,6 @@ void vulkan::cleanup()
 
     vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
-
-    /* glfwDestroyWindow(window);
-     glfwTerminate();*/
 }
 
 bool vulkan::checkValidationLayerSupport()
@@ -1218,7 +1199,7 @@ void vulkan::createVertexBindingDescriptors()
     vertexAttrDesc[1].binding = 1;
     vertexAttrDesc[1].location = 1;
     vertexAttrDesc[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    vertexAttrDesc[1].offset = 0; // ewentualnie jako offsetof(struct,field)    
+    vertexAttrDesc[1].offset = 0; // ewentualnie jako offsetof(struct,field)
 }
 
 void vulkan::createVertexBuffer()
@@ -1470,7 +1451,6 @@ void vulkan::createDescriptorSets()
     }
 }
 
-// void vulkan::updateUniformBuffer(void *ubo, size_t size)
 void vulkan::updateUniformBufferEx(UniformBufferObject ubo)
 {
     local_ubo = ubo;
