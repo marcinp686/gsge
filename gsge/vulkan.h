@@ -18,16 +18,17 @@
 
 #include "timer.h"
 #include "types.h"
+#include "renderer/window.h"
 
 class vulkan
 {
   public:
-    vulkan();
+    vulkan(Window *_window) : window(_window){};
     ~vulkan();
 
     void init();
     void update();
-    bool framebufferResized = false;
+
     void prepareVertexData(glm::vec3 *dataPtr, size_t length);
     void prepareIndexData(glm::u16 *dataPtr, size_t length);
     void prepareNormalsData(glm::vec3 *dataPtr, size_t len);
@@ -38,7 +39,7 @@ class vulkan
     void updateUniformBuffer(uint32_t currentImage);
     void updateTransformMatrixBuffer(uint32_t currentImage);
 
-    GLFWwindow *window;
+    Window *window;
 
   private:
     const uint32_t WINDOW_WIDTH = 800;

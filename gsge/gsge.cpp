@@ -6,7 +6,22 @@ gsge::~gsge()
 
 void gsge::init()
 {
-    renderer = std::make_unique<vulkan>();
+    window = std::make_unique<Window>();
+
+    // Fullscreen mode
+    // window->settings.windowType = graphicsSettings::windowType::fullScreen;
+    // window->settings.windowSize.width = 1920;
+    // window->settings.windowSize.height = 1080;
+
+    // windowed mode - default
+    window->settings.windowSize.width = 1200;
+    window->settings.windowSize.height = 600;
+
+    window->createWindow();
+    window->setTitle("Please wait");
+
+    renderer = std::make_unique<vulkan>(window.get());
+
     level = std::make_unique<scene>();
     level->initScene();
     level->prepareFrameData();

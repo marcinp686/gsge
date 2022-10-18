@@ -1,9 +1,5 @@
 #include "vulkan.h"
 
-vulkan::vulkan()
-{
-}
-
 vulkan::~vulkan()
 {
     cleanup();
@@ -302,19 +298,19 @@ uint64_t vulkan::rateDeviceSuitability(VkPhysicalDevice device)
     return score;
 }
 
-static void framebufferResizeCallback(GLFWwindow *window, int width, int height)
-{
-    auto app = reinterpret_cast<vulkan *>(glfwGetWindowUserPointer(window));
-    app->framebufferResized = true;
-}
+// static void framebufferResizeCallback(GLFWwindow *window, int width, int height)
+//{
+//     auto app = reinterpret_cast<vulkan *>(glfwGetWindowUserPointer(window->getWindow));
+//     app->framebufferResized = true;
+// }
 
 void vulkan::initWindow()
 {
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Vulkan", nullptr, nullptr);
-    glfwSetWindowUserPointer(window, this);
-    glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+    // glfwInit();
+    // glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    // window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Vulkan", nullptr, nullptr);
+    /*glfwSetWindowUserPointer(window, this);
+    glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);*/
 }
 
 void vulkan::cleanup()
@@ -370,8 +366,8 @@ void vulkan::cleanup()
     vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    /* glfwDestroyWindow(window);
+     glfwTerminate();*/
 }
 
 bool vulkan::checkValidationLayerSupport()
@@ -545,7 +541,7 @@ void vulkan::createQueues()
 
 void vulkan::createSurface()
 {
-    if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
+    if (glfwCreateWindowSurface(instance, window->getWindow(), nullptr, &surface) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create window surface!");
     }
@@ -573,7 +569,7 @@ VkExtent2D vulkan::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities
     else
     {
         int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
+        glfwGetFramebufferSize(window->getWindow(), &width, &height);
 
         VkExtent2D actualExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
 
@@ -1094,9 +1090,8 @@ void vulkan::drawFrame()
     VkResult result =
         vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized)
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window->framebufferResized())
     {
-        framebufferResized = false;
         recreateSwapChain();
         return;
     }
@@ -1192,10 +1187,10 @@ void vulkan::cleanupSwapchain()
 void vulkan::recreateSwapChain()
 {
     int width = 0, height = 0;
-    glfwGetFramebufferSize(window, &width, &height);
+    glfwGetFramebufferSize(window->getWindow(), &width, &height);
     while (width == 0 || height == 0)
     {
-        glfwGetFramebufferSize(window, &width, &height);
+        glfwGetFramebufferSize(window->getWindow(), &width, &height);
         glfwWaitEvents();
     }
 
