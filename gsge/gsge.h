@@ -26,7 +26,8 @@ class gsge
     void mainLoop();
 
   private:
-    timer frameTime;
+    stats frameStats;
+    timer frameTimer;
     std::unique_ptr<vulkan> renderer;
     std::unique_ptr<scene> level;
 
