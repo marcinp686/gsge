@@ -186,7 +186,7 @@ void scene::prepareFrameData()
     uint32_t totVertices = 0;
     uint32_t totIndices = 0;
 
-    spdlog::info("==uploadBuffersToGPU==");
+    spdlog::info("Preparing vertex, normal and index buffers");
 
     for (auto entity : view)
     {
@@ -210,10 +210,7 @@ void scene::prepareFrameData()
         hostVertexBuffer.insert(hostVertexBuffer.end(), mesh.vertices.begin(), mesh.vertices.end());
         hostVertexNormalBuffer.insert(hostVertexNormalBuffer.end(), mesh.normals.begin(), mesh.normals.end());
         hostIndexBuffer.insert(hostIndexBuffer.end(), mesh.indices.begin(), mesh.indices.end());
-
-        spdlog::info("Name: {}, faces: {}, vertices: {}", name.value, mesh.nFaces, mesh.nVertices);
     }
-    spdlog::info("Total calculated: V={}, N={}, I={}", totVertices, totVertices, totIndices);
     spdlog::info("Total in vectors: totV={}, totN={}, totI={}", hostVertexBuffer.size(), hostVertexNormalBuffer.size(),
                  hostIndexBuffer.size());
 }
@@ -223,7 +220,6 @@ void scene::updateUniformBuffer()
     auto &tr = registry.get<component::transform>(simpleCube);
 
     ubo.model = tr.transformMatrix;
-    // glm::transpose(tr.transformMatrix);
     ubo.view = mainCamera.getViewMatrix();
     ubo.proj = mainCamera.getProjMatrix();
     ubo.normal = ubo.model;
