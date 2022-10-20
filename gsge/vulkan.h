@@ -19,6 +19,7 @@
 #include "timer.h"
 #include "types.h"
 #include "renderer/window.h"
+#include "renderer/instance.h"
 
 class vulkan
 {
@@ -42,9 +43,10 @@ class vulkan
     Window *window;
 
   private:
+    Instance instance;
+
     const int MAX_FRAMES_IN_FLIGHT = 2;
 
-    VkInstance instance;
     VkDebugUtilsMessengerEXT debugMessenger;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkPhysicalDeviceFeatures deviceFeatures;
@@ -77,8 +79,6 @@ class vulkan
     std::vector<VkFence> inFlightFences;
     uint32_t currentFrame = 0;
 
-    std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
-    std::vector<const char *> instanceExtensions = {VK_EXT_DEBUG_UTILS_EXTENSION_NAME};
     std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
     std::vector<VkImage> swapChainImages;
     std::vector<VkImageView> swapChainImageViews;
@@ -118,15 +118,6 @@ class vulkan
     void loadShaders();
     VkShaderModule createShaderModule(const std::vector<char> &code);
 
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                                                        VkDebugUtilsMessageTypeFlagsEXT messageType,
-                                                        const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-                                                        void *pUserData);
-
-    void initWindow();
-    void createInstance();
-    bool checkValidationLayerSupport();
-    void setupDebugMessanger();
     void pickPhysicalDevice();
     uint64_t rateDeviceSuitability(VkPhysicalDevice device);
     void findQueueFamilies();
