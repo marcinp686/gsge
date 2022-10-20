@@ -31,7 +31,6 @@ class gsge
 
   private:
     stats frameStats;
-    timer frameTimer;
 
     std::unique_ptr<Window> window;
     std::unique_ptr<vulkan> renderer;

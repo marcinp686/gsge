@@ -18,7 +18,7 @@ void gsge::init()
     window->settings.windowSize.height = 600;
 
     window->createWindow();
-    window->setTitle("Please wait");
+    window->setTitle("Giraffe Game Engine");
 
     renderer = std::make_unique<vulkan>(window.get());
 
