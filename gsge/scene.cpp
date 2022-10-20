@@ -23,8 +23,9 @@ void scene::initScene()
             {
                 cubes[i] = registry.create();
                 registry.emplace<component::motion>(cubes[i], glm::vec3(0),
-                                                    glm::vec3(30.0f + i / 8000.f, 15.0f + i / 8000.f, 0.0f));
-                registry.emplace<component::transform>(cubes[i++], glm::vec3(x, y, z), glm::vec3(0.0f), glm::vec3(0.5f));
+                                                    glm::radians(glm::vec3(30.0f + i / 8000.f, 15.0f + i / 8000.f, 0.0f)));
+                registry.emplace<component::transform>(cubes[i++], glm::vec3(x * 2.f, y * 2.f, z * 2.f), glm::vec3(0.0f),
+                                                       glm::vec3(0.5f));
             }
 
     registry.emplace<component::name>(suzanne, "suzanne");
@@ -45,13 +46,13 @@ void scene::initScene()
     registry.emplace<component::mesh>(simpleCube);
     // scene.emplace<component::mesh>(plane);
 
-    registry.emplace<component::motion>(suzanne, glm::vec3(0), glm::vec3(0.0f, -60.0f, 0.0f));
-    registry.emplace<component::motion>(suzanne_smooth, glm::vec3(0), glm::vec3(0.0f, 45.0f, 0.0f));
-    registry.emplace<component::motion>(icoSphere, glm::vec3(0), glm::vec3(0.0f, 30.0f, 0.0f));
-    registry.emplace<component::motion>(testCube, glm::vec3(0), glm::vec3(0.0f, 0.0f, -15.0f));
-    registry.emplace<component::motion>(companionCube, glm::vec3(0), glm::vec3(0.0f, -20.0f, 0.0f));
-    registry.emplace<component::motion>(squareFloor, glm::vec3(0), glm::vec3(0.0f, -20.0f, 0.0f));
-    registry.emplace<component::motion>(simpleCube, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(30.f, 20.f, 10.f));
+    registry.emplace<component::motion>(suzanne, glm::vec3(0), glm::radians(glm::vec3(0.0f, -60.0f, 0.0f)));
+    registry.emplace<component::motion>(suzanne_smooth, glm::vec3(0), glm::radians(glm::vec3(0.0f, 45.0f, 0.0f)));
+    registry.emplace<component::motion>(icoSphere, glm::vec3(0), glm::radians(glm::vec3(0.0f, 30.0f, 0.0f)));
+    registry.emplace<component::motion>(testCube, glm::vec3(0), glm::radians(glm::vec3(0.0f, 0.0f, -15.0f)));
+    registry.emplace<component::motion>(companionCube, glm::vec3(0), glm::radians(glm::vec3(0.0f, -20.0f, 0.0f)));
+    registry.emplace<component::motion>(squareFloor, glm::vec3(0), glm::radians(glm::vec3(0.0f, -20.0f, 0.0f)));
+    registry.emplace<component::motion>(simpleCube, glm::vec3(0.0f, 0.0f, 0.0f), glm::radians(glm::vec3(30.f, 20.f, 10.f)));
     // scene.emplace<component::motion>(plane);
 
     registry.emplace<component::transform>(suzanne, glm::vec3(-2.5, -0.5, 0));
@@ -166,12 +167,9 @@ void scene::updateTransformMatrices(float dt)
         transform.transformMatrix = glm::translate(glm::mat4(1.0f), transform.position);
 
         // Rotation second
-        transform.transformMatrix =
-            glm::rotate(transform.transformMatrix, glm::radians(transform.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-        transform.transformMatrix =
-            glm::rotate(transform.transformMatrix, glm::radians(transform.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-        transform.transformMatrix =
-            glm::rotate(transform.transformMatrix, glm::radians(transform.rotation.z), glm::vec3(0.0f, 0.0f, 0.1f));
+        transform.transformMatrix = glm::rotate(transform.transformMatrix, transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+        transform.transformMatrix = glm::rotate(transform.transformMatrix, transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+        transform.transformMatrix = glm::rotate(transform.transformMatrix, transform.rotation.z, glm::vec3(0.0f, 0.0f, 0.1f));
 
         // Scale third
         transform.transformMatrix = glm::scale(transform.transformMatrix, transform.scale);
