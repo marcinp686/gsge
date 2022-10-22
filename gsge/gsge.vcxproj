@@ -211,6 +211,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
     <ClInclude Include="gsge.h" />
     <ClInclude Include="renderer\instance.h" />
     <ClInclude Include="renderer\settings.h" />
+    <ClInclude Include="renderer\Surface.h" />
     <ClInclude Include="renderer\window.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="scene.h" />

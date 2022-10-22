@@ -113,6 +113,9 @@
     <ClInclude Include="renderer\instance.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="renderer\Surface.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\per_vertex_light_shader.frag">

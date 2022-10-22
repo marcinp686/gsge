@@ -6,10 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gsge", "gsge\gsge.vcxproj", "{AF746779-8CC5-4AC5-8A56-22793CB0B81A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementy rozwiązania", "Elementy rozwiązania", "{F872FFB8-435F-489D-985F-532D6B0AEA6D}"
-	ProjectSection(SolutionItems) = preProject
-		gsge\component\motion.cpp = gsge\component\motion.cpp
-		gsge\component\motion.h = gsge\component\motion.h
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
