@@ -20,6 +20,7 @@
 #include "types.h"
 #include "renderer/window.h"
 #include "renderer/instance.h"
+#include "renderer/surface.h"
 
 class vulkan
 {
@@ -44,6 +45,7 @@ class vulkan
 
   private:
     std::unique_ptr<Instance> instance;
+    std::unique_ptr<Surface> surface;
 
     const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -53,7 +55,7 @@ class vulkan
     VkQueue presentQueue;
     VkQueue graphicsQueue;
     VkQueue transferQueue;
-    VkSurfaceKHR surface;
+    // VkSurfaceKHR surface;
     VkSwapchainKHR swapChain;
     VkFormat swapChainImageFormat = VK_FORMAT_B8G8R8A8_SRGB;
     VkExtent2D swapChainExtent;

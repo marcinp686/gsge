@@ -193,6 +193,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
     <ClCompile Include="gsge.cpp" />
     <ClCompile Include="renderer\instance.cpp" />
     <ClCompile Include="renderer\settings.cpp" />
+    <ClCompile Include="renderer\surface.cpp" />
     <ClCompile Include="renderer\window.cpp" />
     <ClCompile Include="scene.cpp" />
     <ClCompile Include="timer.cpp" />
@@ -211,7 +212,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
     <ClInclude Include="gsge.h" />
     <ClInclude Include="renderer\instance.h" />
     <ClInclude Include="renderer\settings.h" />
-    <ClInclude Include="renderer\Surface.h" />
+    <ClInclude Include="renderer\surface.h" />
     <ClInclude Include="renderer\window.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="scene.h" />

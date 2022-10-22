@@ -47,7 +47,7 @@ void gsge::uploadBuffersToGPU()
 
 void gsge::mainLoop()
 {
-    while (!glfwWindowShouldClose(window->getWindow()))
+    while (!glfwWindowShouldClose(window->get_handle()))
     {
         glfwPollEvents();
         frameStats.update();

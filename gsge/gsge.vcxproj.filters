@@ -63,6 +63,9 @@
     <ClCompile Include="renderer\instance.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
+    <ClCompile Include="renderer\surface.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vulkan.h">
@@ -113,7 +116,7 @@
     <ClInclude Include="renderer\instance.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
-    <ClInclude Include="renderer\Surface.h">
+    <ClInclude Include="renderer\surface.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
   </ItemGroup>

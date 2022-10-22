@@ -8,14 +8,13 @@ vulkan::~vulkan()
 void vulkan::update()
 {
     drawFrame();
-    vkDeviceWaitIdle(device);
+    // vkDeviceWaitIdle(device);
 }
 
 void vulkan::init()
 {
     instance = std::make_unique<Instance>();
-
-    createSurface();
+    surface = std::make_unique<Surface>(instance->get_handle(), window->get_handle());
 
     pickPhysicalDevice();
 
@@ -111,7 +110,7 @@ void vulkan::pickPhysicalDevice()
 {
     // query the number of devices in system
     uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(instance->get(), &deviceCount, nullptr);
+    vkEnumeratePhysicalDevices(instance->get_handle(), &deviceCount, nullptr);
 
     if (deviceCount == 0)
     {
@@ -119,7 +118,7 @@ void vulkan::pickPhysicalDevice()
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
-    vkEnumeratePhysicalDevices(instance->get(), &deviceCount, devices.data());
+    vkEnumeratePhysicalDevices(instance->get_handle(), &deviceCount, devices.data());
 
     // Use an ordered map to automatically sort candidates by increasing score
     std::multimap<uint64_t, VkPhysicalDevice> candidates;
@@ -231,16 +230,9 @@ void vulkan::cleanup()
     vkDestroyCommandPool(device, graphicsCommandPool, nullptr);
     vkDestroyCommandPool(device, transferCommandPool, nullptr);
     vkDestroyDevice(device, nullptr);
-
-    /*if (enableValidationLayers)
-    {
-        DestroyDebugUtilsMessengerEXT(instance->get(), debugMessenger, nullptr);
-    }*/
-
-    vkDestroySurfaceKHR(instance->get(), surface, nullptr);
+    
+    surface.reset();
     instance.reset();
-
-    // vkDestroyInstance(instance->get(), nullptr);
 }
 
 void vulkan::findQueueFamilies()
@@ -263,7 +255,7 @@ void vulkan::findQueueFamilies()
         // Check for presentation support in Queue i;
 
         VkBool32 presentationSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentationSupport);
+        vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface->get_handle(), &presentationSupport);
 
         if (presentationSupport == VK_TRUE)
         {
@@ -384,10 +376,10 @@ void vulkan::createQueues()
 
 void vulkan::createSurface()
 {
-    if (glfwCreateWindowSurface(instance->get(), window->getWindow(), nullptr, &surface) != VK_SUCCESS)
+    /*if (glfwCreateWindowSurface(instance->get(), window->get_handle(), nullptr, &surface) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create window surface!");
-    }
+    }*/
 }
 
 VkSurfaceFormatKHR vulkan::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats)
@@ -438,24 +430,24 @@ vulkan::SwapChainSupportDetails vulkan::querySwapChainSupport(VkPhysicalDevice d
 {
     SwapChainSupportDetails details;
 
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface->get_handle(), &details.capabilities);
 
     uint32_t formatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface->get_handle(), &formatCount, nullptr);
 
     if (formatCount != 0)
     {
         details.formats.resize(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface->get_handle(), &formatCount, details.formats.data());
     }
 
     uint32_t presentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface->get_handle(), &presentModeCount, nullptr);
 
     if (presentModeCount != 0)
     {
         details.presentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface->get_handle(), &presentModeCount, details.presentModes.data());
     }
 
     return details;
@@ -479,7 +471,7 @@ void vulkan::createSwapChain()
 
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = surface;
+    createInfo.surface = surface->get_handle();
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
