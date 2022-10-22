@@ -51,7 +51,7 @@ bool Window::framebufferResized()
     return true;
 }
 
-GLFWwindow *Window::getWindow()
+GLFWwindow *Window::get_handle() const
 {
     return window;
 }

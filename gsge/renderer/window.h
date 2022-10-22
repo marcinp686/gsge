@@ -18,7 +18,7 @@ class Window
     void setTitle(const char *title);
     bool framebufferResized(); // did framebuffer dimensions change
 
-    GLFWwindow *getWindow();
+    GLFWwindow *get_handle() const;
 
     graphicsSettings settings;
 

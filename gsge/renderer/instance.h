@@ -14,7 +14,7 @@ class Instance
     Instance();
     ~Instance();
 
-    VkInstance get() const;
+    VkInstance get_handle() const;
 
   private:
     VkInstance instance{VK_NULL_HANDLE};
