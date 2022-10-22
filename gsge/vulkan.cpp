@@ -13,7 +13,10 @@ void vulkan::update()
 
 void vulkan::init()
 {
+    instance = std::make_unique<Instance>();
+
     createSurface();
+
     pickPhysicalDevice();
 
     findQueueFamilies();
@@ -108,7 +111,7 @@ void vulkan::pickPhysicalDevice()
 {
     // query the number of devices in system
     uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(instance.get(), &deviceCount, nullptr);
+    vkEnumeratePhysicalDevices(instance->get(), &deviceCount, nullptr);
 
     if (deviceCount == 0)
     {
@@ -116,7 +119,7 @@ void vulkan::pickPhysicalDevice()
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
-    vkEnumeratePhysicalDevices(instance.get(), &deviceCount, devices.data());
+    vkEnumeratePhysicalDevices(instance->get(), &deviceCount, devices.data());
 
     // Use an ordered map to automatically sort candidates by increasing score
     std::multimap<uint64_t, VkPhysicalDevice> candidates;
@@ -229,13 +232,15 @@ void vulkan::cleanup()
     vkDestroyCommandPool(device, transferCommandPool, nullptr);
     vkDestroyDevice(device, nullptr);
 
-    if (enableValidationLayers)
+    /*if (enableValidationLayers)
     {
-        DestroyDebugUtilsMessengerEXT(instance.get(), debugMessenger, nullptr);
-    }
+        DestroyDebugUtilsMessengerEXT(instance->get(), debugMessenger, nullptr);
+    }*/
 
-    vkDestroySurfaceKHR(instance.get(), surface, nullptr);
-    vkDestroyInstance(instance.get(), nullptr);
+    vkDestroySurfaceKHR(instance->get(), surface, nullptr);
+    instance.reset();
+
+    // vkDestroyInstance(instance->get(), nullptr);
 }
 
 void vulkan::findQueueFamilies()
@@ -379,7 +384,7 @@ void vulkan::createQueues()
 
 void vulkan::createSurface()
 {
-    if (glfwCreateWindowSurface(instance.get(), window->getWindow(), nullptr, &surface) != VK_SUCCESS)
+    if (glfwCreateWindowSurface(instance->get(), window->getWindow(), nullptr, &surface) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create window surface!");
     }

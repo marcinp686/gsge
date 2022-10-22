@@ -43,11 +43,10 @@ class vulkan
     Window *window;
 
   private:
-    Instance instance;
+    std::unique_ptr<Instance> instance;
 
     const int MAX_FRAMES_IN_FLIGHT = 2;
 
-    VkDebugUtilsMessengerEXT debugMessenger;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkPhysicalDeviceFeatures deviceFeatures;
     VkDevice device;
