@@ -21,6 +21,7 @@
 #include "renderer/window.h"
 #include "renderer/instance.h"
 #include "renderer/surface.h"
+#include "renderer/device.h"
 
 class vulkan
 {
@@ -46,16 +47,10 @@ class vulkan
   private:
     std::unique_ptr<Instance> instance;
     std::unique_ptr<Surface> surface;
+    std::unique_ptr<Device> device;
 
     const int MAX_FRAMES_IN_FLIGHT = 2;
 
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    VkPhysicalDeviceFeatures deviceFeatures;
-    VkDevice device;
-    VkQueue presentQueue;
-    VkQueue graphicsQueue;
-    VkQueue transferQueue;
-    // VkSurfaceKHR surface;
     VkSwapchainKHR swapChain;
     VkFormat swapChainImageFormat = VK_FORMAT_B8G8R8A8_SRGB;
     VkExtent2D swapChainExtent;
@@ -80,7 +75,6 @@ class vulkan
     std::vector<VkFence> inFlightFences;
     uint32_t currentFrame = 0;
 
-    std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
     std::vector<VkImage> swapChainImages;
     std::vector<VkImageView> swapChainImageViews;
     std::vector<VkFramebuffer> swapChainFramebuffers;
@@ -119,16 +113,13 @@ class vulkan
     void loadShaders();
     VkShaderModule createShaderModule(const std::vector<char> &code);
 
-    void pickPhysicalDevice();
-    uint64_t rateDeviceSuitability(VkPhysicalDevice device);
-    void findQueueFamilies();
-    void printQueueFamilies();
-    void createLogicalDevice();
-    void createQueues();
-    void createSurface();
     void createSwapChain();
+    void cleanupSwapchain();
+    void recreateSwapChain();
     void createImageViews();
+    
     void createRenderPass();
+
     void createVertexBindingDescriptors();
     void createGraphicsPipeline();
     void createFramebuffers();
@@ -139,8 +130,7 @@ class vulkan
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
     void createSyncObjects();
-    void cleanupSwapchain();
-    void recreateSwapChain();
+    
     void createVertexBuffer();
     void createIndexBuffer();
     void createVertexNormalsBuffer();
@@ -166,16 +156,6 @@ class vulkan
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
-
-    struct FamilyIndices
-    {
-        std::vector<uint32_t> graphics;
-        std::vector<uint32_t> compute;
-        std::vector<uint32_t> transfer;
-        std::vector<uint32_t> sparse_binding;
-        std::vector<uint32_t> protectedMem;
-        std::vector<uint32_t> present;
-    } queueFamilyIndices;
 
     struct SwapChainSupportDetails
     {
