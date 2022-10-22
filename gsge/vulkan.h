@@ -22,6 +22,8 @@
 #include "renderer/instance.h"
 #include "renderer/surface.h"
 #include "renderer/device.h"
+#include "renderer/swapchain.h"
+#include "renderer/renderPass.h"
 
 class vulkan
 {
@@ -48,15 +50,12 @@ class vulkan
     std::unique_ptr<Instance> instance;
     std::unique_ptr<Surface> surface;
     std::unique_ptr<Device> device;
+    std::unique_ptr<Swapchain> swapchain;
+    std::unique_ptr<RenderPass> renderPass;
 
     const int MAX_FRAMES_IN_FLIGHT = 2;
 
-    VkSwapchainKHR swapChain;
-    VkFormat swapChainImageFormat = VK_FORMAT_B8G8R8A8_SRGB;
-    VkExtent2D swapChainExtent;
-
     VkPipelineLayout pipelineLayout;
-    VkRenderPass renderPass;
     VkPipeline graphicsPipeline;
     VkCommandPool graphicsCommandPool;
     VkCommandPool transferCommandPool;
@@ -75,10 +74,6 @@ class vulkan
     std::vector<VkFence> inFlightFences;
     uint32_t currentFrame = 0;
 
-    std::vector<VkImage> swapChainImages;
-    std::vector<VkImageView> swapChainImageViews;
-    std::vector<VkFramebuffer> swapChainFramebuffers;
-
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
     VkBuffer indexBuffer;
@@ -96,10 +91,6 @@ class vulkan
 
     UniformBufferObject local_ubo;
 
-    VkImage depthImage;
-    VkDeviceMemory depthImageMemory;
-    VkImageView depthImageView;
-
     std::vector<glm::vec3> vertices;
     std::vector<glm::u16> indices;
     std::vector<glm::vec3> vertexNormals;
@@ -113,16 +104,11 @@ class vulkan
     void loadShaders();
     VkShaderModule createShaderModule(const std::vector<char> &code);
 
-    void createSwapChain();
-    void cleanupSwapchain();
-    void recreateSwapChain();
-    void createImageViews();
-    
-    void createRenderPass();
+    void cleanup();
 
     void createVertexBindingDescriptors();
     void createGraphicsPipeline();
-    void createFramebuffers();
+
     void createGraphicsCommandPool();
     void createTransferCommandPool();
     void createGraphicsCommandBuffers();
@@ -130,7 +116,7 @@ class vulkan
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
     void createSyncObjects();
-    
+
     void createVertexBuffer();
     void createIndexBuffer();
     void createVertexNormalsBuffer();
@@ -144,27 +130,6 @@ class vulkan
     void createUniformBuffers();
     void createDescriptorPool();
     void createDescriptorSets();
-    void createDepthResources();
-
-    void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
-                     VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory);
-
-    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
-
-    void cleanup();
-
-    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
-    VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
-    VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
-
-    struct SwapChainSupportDetails
-    {
-        VkSurfaceCapabilitiesKHR capabilities;
-        std::vector<VkSurfaceFormatKHR> formats;
-        std::vector<VkPresentModeKHR> presentModes;
-    };
-
-    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
 #ifdef NDEBUG
     const bool enableValidationLayers = false;

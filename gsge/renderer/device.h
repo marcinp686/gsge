@@ -16,6 +16,10 @@ class Device
     VkDevice get_handle() const;
     VkPhysicalDevice getPhysicalDeviceHandle() const;
 
+    void querySurfaceCapabilities();
+    void enumerateSurfaceFormats();
+    void enumerateSurfacePresentModes();
+
     uint32_t getGraphicsQueueFamilyIdx();
     uint32_t getTransferQueueFamilyIdx();
     uint32_t getPresentQueueFamilyIdx();
@@ -23,6 +27,10 @@ class Device
     VkQueue getGraphicsQueue() const;
     VkQueue getTransferQueue() const;
     VkQueue getPresentQueue() const;
+
+    VkSurfaceCapabilitiesKHR getSurfaceCapabilities() const;
+    std::vector<VkSurfaceFormatKHR> getSurfaceFormats() const;
+    std::vector<VkPresentModeKHR> getSurfacePresentModes() const;
 
   private:
     VkInstance instance;
@@ -33,6 +41,10 @@ class Device
     VkQueue presentQueue;
     VkQueue graphicsQueue;
     VkQueue transferQueue;
+
+    VkSurfaceCapabilitiesKHR surfaceCapabilities;
+    std::vector<VkSurfaceFormatKHR> surfaceFormats;
+    std::vector<VkPresentModeKHR> surfacePresentModes;
 
     VkPhysicalDeviceFeatures deviceFeatures{};
     std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};

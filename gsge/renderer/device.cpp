@@ -6,6 +6,9 @@ Device::Device(VkInstance instance, VkSurfaceKHR surface) : instance(instance), 
     findQueueFamilies();
     createLogicalDevice();
     createQueues();
+    querySurfaceCapabilities();
+    enumerateSurfaceFormats();
+    enumerateSurfacePresentModes();
 }
 
 Device::~Device()
@@ -51,6 +54,35 @@ VkQueue Device::getTransferQueue() const
 VkQueue Device::getPresentQueue() const
 {
     return presentQueue;
+}
+
+void Device::querySurfaceCapabilities()
+{
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
+}
+
+void Device::enumerateSurfaceFormats()
+{
+    uint32_t formatCount;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);
+
+    if (formatCount != 0)
+    {
+        surfaceFormats.resize(formatCount);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, surfaceFormats.data());
+    }
+}
+
+void Device::enumerateSurfacePresentModes()
+{
+    uint32_t presentModeCount;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
+
+    if (presentModeCount != 0)
+    {
+        surfacePresentModes.resize(presentModeCount);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, surfacePresentModes.data());
+    }
 }
 
 void Device::pickPhysicalDevice()
@@ -239,4 +271,19 @@ void Device::createQueues()
     infoMsg << "Device queues created: Presentation=" << presentQueue << "   Graphics=" << graphicsQueue
             << "   Transfer=" << transferQueue;
     spdlog::info(infoMsg.str());
+}
+
+VkSurfaceCapabilitiesKHR Device::getSurfaceCapabilities() const
+{
+    return surfaceCapabilities;
+}
+
+std::vector<VkSurfaceFormatKHR> Device::getSurfaceFormats() const
+{
+    return surfaceFormats;
+}
+
+std::vector<VkPresentModeKHR> Device::getSurfacePresentModes() const
+{
+    return surfacePresentModes;
 }

@@ -31,7 +31,7 @@ class camera
     float fov{75.f};
     float aspect{800.f / 600.f};
     float zNear{0.1f};
-    float zFar{100.0f};
+    float zFar{150.0f};
 
     glm::mat4 projMatrix{glm::identity<glm::mat4>()};
     glm::mat4 viewMatrix{glm::identity<glm::mat4>()};
