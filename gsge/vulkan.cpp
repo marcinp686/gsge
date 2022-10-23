@@ -17,9 +17,7 @@ void vulkan::init()
     device = std::make_unique<Device>(instance->get_handle(), surface->get_handle());
     swapchain = std::make_unique<Swapchain>(device.get(), window, surface.get());
     renderPass = std::make_unique<RenderPass>(device.get(), swapchain.get());
-
-    swapchain->bindRenderPass(renderPass.get());
-    swapchain->createFramebuffers();
+    framebuffer = std::make_unique<Framebuffer>(device.get(), swapchain.get(), renderPass.get());
 
     // 1. Create vertex binding descriptors for vertex stage buffers
     createVertexBindingDescriptors();
@@ -131,6 +129,7 @@ void vulkan::cleanup()
     vkDestroyPipeline(device->get_handle(), graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(device->get_handle(), pipelineLayout, nullptr);
 
+    framebuffer.reset();
     renderPass.reset();
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
@@ -386,7 +385,7 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
     clearValues[1].depthStencil = {1.0f, 0};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = renderPass->get_handle();
-    renderPassInfo.framebuffer = swapchain->getFramebuffer(imageIndex);
+    renderPassInfo.framebuffer = framebuffer->getBuffer(imageIndex);
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = swapchain->getExtent();
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -451,6 +450,8 @@ void vulkan::drawFrame()
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window->framebufferResized())
     {
         swapchain->recreate();
+        framebuffer.reset();
+        framebuffer = std::make_unique<Framebuffer>(device.get(), swapchain.get(), renderPass.get());
         return;
     }
     else if (result != VK_SUCCESS)

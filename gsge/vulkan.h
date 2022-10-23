@@ -24,6 +24,7 @@
 #include "renderer/device.h"
 #include "renderer/swapchain.h"
 #include "renderer/renderPass.h"
+#include "renderer/framebuffer.h"
 
 class vulkan
 {
@@ -52,6 +53,7 @@ class vulkan
     std::unique_ptr<Device> device;
     std::unique_ptr<Swapchain> swapchain;
     std::unique_ptr<RenderPass> renderPass;
+    std::unique_ptr<Framebuffer> framebuffer;
 
     const int MAX_FRAMES_IN_FLIGHT = 2;
 

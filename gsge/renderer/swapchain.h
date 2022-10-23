@@ -22,40 +22,24 @@ class Swapchain
     void cleanup();
     void recreate();
 
-    void createFramebuffers();
-    void bindRenderPass(RenderPass *bRenderPass);
-
     VkSwapchainKHR &get_handle();
-    VkFormat &getImageFormat();
     VkExtent2D &getExtent();
-    VkFramebuffer &getFramebuffer(uint32_t index);
+    uint32_t getImageCount() const;
+    VkFormat getImageFormat() const;
+    std::vector<VkImage> getImages();
 
   private:
     VkSwapchainKHR swapchain;
     VkFormat imageFormat = VK_FORMAT_B8G8R8A8_SRGB;
     VkExtent2D extent;
+    uint32_t imageCount{0};
 
     Device *device;
     Window *window;
     Surface *surface;
     RenderPass *renderPass;
 
-    std::vector<VkImage> images;
-    std::vector<VkImageView> imageViews;
-    std::vector<VkFramebuffer> framebuffers;
-
-    VkImage depthImage;
-    VkDeviceMemory depthImageMemory;
-    VkImageView depthImageView;
-
     VkSurfaceFormatKHR chooseSwapSurfaceFormat();
     VkExtent2D chooseSwapExtent();
     VkPresentModeKHR chooseSwapPresentMode();
-    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
-    void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
-                     VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory);
-    void createImageViews();
-
-    void createDepthResources();
-    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 };
