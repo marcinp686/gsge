@@ -99,7 +99,6 @@ VkShaderModule vulkan::createShaderModule(const std::vector<char> &code)
 void vulkan::cleanup()
 {
     vkDeviceWaitIdle(device->get_handle());
-    swapchain->cleanup();
 
     // destroy uniform buffers
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -447,10 +446,10 @@ void vulkan::drawFrame()
     VkResult result = vkAcquireNextImageKHR(device->get_handle(), swapchain->get_handle(), UINT64_MAX,
                                             imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window->framebufferResized())
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR /*|| window->framebufferResized()*/)
     {
-        swapchain->recreate();
-        framebuffer.reset(new Framebuffer(device.get(), swapchain.get(), renderPass.get()));       
+        swapchain.reset(new Swapchain(device.get(), window, surface.get()));
+        framebuffer.reset(new Framebuffer(device.get(), swapchain.get(), renderPass.get()));
         return;
     }
     else if (result != VK_SUCCESS)

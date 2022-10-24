@@ -21,15 +21,14 @@ class Swapchain
 
     void create();
     void cleanup();
-    void recreate();
 
     VkSwapchainKHR &get_handle();
     VkExtent2D &getExtent();
     uint32_t getImageCount() const;
     VkFormat getImageFormat() const;
-    VkImage getImage(uint32_t index) const;
-    VkImageView getImageView(uint32_t index) const;
-    VkImageView getDepthImageView() const;
+    VkImage &getImage(uint32_t index);
+    VkImageView &getImageView(uint32_t index);
+    VkImageView &getDepthImageView();
 
   private:
     VkSwapchainKHR swapchain;

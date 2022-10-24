@@ -2,6 +2,7 @@
 
 Swapchain::Swapchain(Device *device, Window *window, Surface *surface) : device(device), window(window), surface(surface)
 {
+    device->querySurfaceCapabilities();
     create();
     createImages();
     createImageViews();
@@ -13,6 +14,7 @@ void Swapchain::createImages()
     vkGetSwapchainImagesKHR(device->get_handle(), swapchain, &imageCount, nullptr);
     images.resize(imageCount);
     vkGetSwapchainImagesKHR(device->get_handle(), swapchain, &imageCount, images.data());
+    spdlog::info("Created swapchain images");
 }
 
 Swapchain::~Swapchain()
@@ -60,18 +62,7 @@ void Swapchain::create()
     extent = swapExtent;
     imageFormat = surfaceFormat.format;
 
-    spdlog::info("Swap chain created with " + std::to_string(imageCount) + " vkImage(s)");
-}
-
-void Swapchain::recreate()
-{
-    vkDeviceWaitIdle(device->get_handle());
-    device->querySurfaceCapabilities();
-    cleanup();
-    create();
-    createImages();
-    createImageViews();
-    createDepthResources();
+    spdlog::info("Created swapchain with " + std::to_string(imageCount) + " images");
 }
 
 void Swapchain::cleanup()
@@ -148,17 +139,17 @@ VkFormat Swapchain::getImageFormat() const
     return imageFormat;
 }
 
-VkImage Swapchain::getImage(uint32_t index) const
+VkImage &Swapchain::getImage(uint32_t index)
 {
     return images[index];
 }
 
-VkImageView Swapchain::getImageView(uint32_t index) const
+VkImageView &Swapchain::getImageView(uint32_t index)
 {
     return imageViews[index];
 }
 
-VkImageView Swapchain::getDepthImageView() const
+VkImageView &Swapchain::getDepthImageView()
 {
     return depthImageView;
 }
@@ -177,7 +168,7 @@ void Swapchain::createImageViews()
         imageViews[i] = createImageView(images[i], imageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
-    spdlog::info("Created image views");
+    spdlog::info("Created swapchain image views");
 }
 
 VkImageView Swapchain::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags)
