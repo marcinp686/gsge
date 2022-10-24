@@ -450,8 +450,7 @@ void vulkan::drawFrame()
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window->framebufferResized())
     {
         swapchain->recreate();
-        framebuffer.reset();
-        framebuffer = std::make_unique<Framebuffer>(device.get(), swapchain.get(), renderPass.get());
+        framebuffer.reset(new Framebuffer(device.get(), swapchain.get(), renderPass.get()));       
         return;
     }
     else if (result != VK_SUCCESS)

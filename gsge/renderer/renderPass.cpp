@@ -18,7 +18,7 @@ RenderPass::RenderPass(Device *_device, Swapchain *_swapchain) : device(_device)
     colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentDescription depthAttachment{};
-    depthAttachment.format = VK_FORMAT_D32_SFLOAT; // todo - w  tutorialu jest inaczej
+    depthAttachment.format = VK_FORMAT_D32_SFLOAT; // TODO: Add method to find supported depth format
     depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
