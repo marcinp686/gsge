@@ -52,7 +52,29 @@ void gsge::mainLoop()
         glfwPollEvents();
         frameStats.update();
 
+        if (glfwGetKey(window->get_handle(), GLFW_KEY_A) == GLFW_PRESS)
+        {
+            glm::vec3 camPos = level->mainCamera.getPosition();
+            level->mainCamera.setPosition(glm::vec3(camPos.x - 10.0f * frameStats.dt, camPos.y, camPos.z));
+        };
+        if (glfwGetKey(window->get_handle(), GLFW_KEY_D) == GLFW_PRESS)
+        {
+            glm::vec3 camPos = level->mainCamera.getPosition();
+            level->mainCamera.setPosition(glm::vec3(camPos.x + 10.0f * frameStats.dt, camPos.y, camPos.z));
+        };
+        if (glfwGetKey(window->get_handle(), GLFW_KEY_W) == GLFW_PRESS)
+        {
+            glm::vec3 camPos = level->mainCamera.getPosition();
+            level->mainCamera.setPosition(glm::vec3(camPos.x, camPos.y - 10.0f * frameStats.dt, camPos.z));
+        };
+        if (glfwGetKey(window->get_handle(), GLFW_KEY_S) == GLFW_PRESS)
+        {
+            glm::vec3 camPos = level->mainCamera.getPosition();
+            level->mainCamera.setPosition(glm::vec3(camPos.x, camPos.y + 10.0f * frameStats.dt, camPos.z));
+        };
+
         level->update(frameStats.dt);
+
         renderer->pushTransformMatricesToGpu(level->getTransformMatricesLump());
         renderer->updateUniformBufferEx(level->ubo);
         renderer->update();

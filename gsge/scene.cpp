@@ -140,13 +140,13 @@ void scene::loadModel(entt::entity entity, std::string fileName, uint32_t meshId
     meshComp.nIndices = nFaces * 3;
     meshComp.nFaces = nFaces;
 }
-float tt = 0;
+// float tt = 0;
 void scene::update(float deltaTime)
 {
     updateTransformMatrices(deltaTime);
     updateUniformBuffer();
-    mainCamera.setPosition(glm::vec3(-40.0f + tt * 3, -6.0f, -60.f));
-    tt += deltaTime;
+    // mainCamera.setPosition(glm::vec3(-40.0f + tt * 3, -6.0f, -60.f));
+    // tt += deltaTime;
 }
 
 void scene::updateTransformMatrices(float dt)

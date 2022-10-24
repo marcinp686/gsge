@@ -21,6 +21,11 @@ glm::mat4 &camera::getProjViewMatrix()
     return pvMatrix;
 }
 
+glm::vec3 &camera::getPosition()
+{
+    return position;
+}
+
 void camera::setPosition(glm::vec3 _position)
 {
     position = _position;

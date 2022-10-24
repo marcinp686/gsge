@@ -12,6 +12,7 @@ class camera
     glm::mat4 &getViewMatrix();
     glm::mat4 &getProjMatrix();
     glm::mat4 &getProjViewMatrix();
+    glm::vec3 &getPosition();
 
     void setPosition(glm::vec3 _position);
     void setCenter(glm::vec3 _center);
