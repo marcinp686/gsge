@@ -15,7 +15,6 @@
 
 #include <glm/glm.hpp>
 
-#include "timer.h"
 #include "scene.h"
 #include "renderer/window.h"
 #include "renderer/settings.h"
@@ -37,4 +36,9 @@ class gsge
     std::unique_ptr<scene> level;
 
     void uploadBuffersToGPU();
+
+    // TODO: temporary - move to specialised class
+    double currentMouseXpos{0}, currentMouseYpos{0};
+    double mouseDX{0}, mouseDY{0};
+    double oldMouseXpos{0}, oldMouseYpos{0};
 };

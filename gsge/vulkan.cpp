@@ -448,8 +448,10 @@ void vulkan::drawFrame()
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR /*|| window->framebufferResized()*/)
     {
+        vkDeviceWaitIdle(device->get_handle());
         swapchain.reset(new Swapchain(device.get(), window, surface.get()));
         framebuffer.reset(new Framebuffer(device.get(), swapchain.get(), renderPass.get()));
+        swapchainAspectChanged = true;
         return;
     }
     else if (result != VK_SUCCESS)
@@ -865,6 +867,24 @@ void vulkan::updateTransformMatrixBuffer(uint32_t currentImage)
     memcpy(data, transformMatrices.data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(device->get_handle(), transformMatricesStagingBufferMemory[currentImage]);
     copyBuffer(transformMatricesStagingBuffer[currentImage], transformMatricesBuffer[currentImage], bufferSize);
+}
+
+bool vulkan::viewAspectChanged()
+{
+    if (swapchainAspectChanged)
+    {
+        swapchainAspectChanged = false;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+float vulkan::getViewAspect()
+{
+    return static_cast<float>(swapchain->getExtent().width) / static_cast<float>(swapchain->getExtent().height);
 }
 
 void vulkan::createVertexNormalsBuffer()

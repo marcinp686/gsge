@@ -23,12 +23,13 @@ void gsge::init()
     renderer = std::make_unique<vulkan>(window.get());
 
     level = std::make_unique<scene>();
-    level->mainCamera.setAspect(1600.f / 800.f);
+
     level->initScene();
     level->prepareFrameData();
     level->update(0.0f);
     uploadBuffersToGPU();
     renderer->init();
+    level->mainCamera.setAspect(renderer->getViewAspect());
 }
 
 void gsge::cleanup()
@@ -105,5 +106,7 @@ void gsge::mainLoop()
         renderer->pushTransformMatricesToGpu(level->getTransformMatricesLump());
         renderer->updateUniformBufferEx(level->ubo);
         renderer->update();
+        if (renderer->viewAspectChanged())
+            level->mainCamera.setAspect(renderer->getViewAspect());
     }
 }

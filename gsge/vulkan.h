@@ -45,6 +45,9 @@ class vulkan
     void updateUniformBuffer(uint32_t currentImage);
     void updateTransformMatrixBuffer(uint32_t currentImage);
 
+    bool viewAspectChanged();
+    float getViewAspect();
+
     Window *window;
 
   private:
@@ -56,6 +59,7 @@ class vulkan
     std::unique_ptr<Framebuffer> framebuffer;
 
     const int MAX_FRAMES_IN_FLIGHT = 2;
+    bool swapchainAspectChanged = true;
 
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
