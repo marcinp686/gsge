@@ -51,6 +51,18 @@ bool Window::framebufferResized()
     return true;
 }
 
+void Window::setFullScreenMode()
+{
+    glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, 1920, 1080, GLFW_DONT_CARE);
+    settings.windowType = graphicsSettings::windowType::fullScreen;
+}
+
+void Window::setWindowedMode()
+{
+    glfwSetWindowMonitor(window, NULL, 100, 100, settings.windowSize.width, settings.windowSize.height, GLFW_DONT_CARE);
+    settings.windowType = graphicsSettings::windowType::windowed;
+}
+
 GLFWwindow *Window::get_handle() const
 {
     return window;

@@ -17,6 +17,8 @@ class Window
     void createWindow();
     void setTitle(const char *title);
     bool framebufferResized(); // did framebuffer dimensions change
+    void setFullScreenMode();
+    void setWindowedMode();
 
     GLFWwindow *get_handle() const;
 
