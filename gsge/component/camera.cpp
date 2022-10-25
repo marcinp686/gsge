@@ -1,4 +1,5 @@
 #include "camera.h"
+#include <spdlog/spdlog.h>
 
 camera::camera()
 {
@@ -26,51 +27,96 @@ glm::vec3 &camera::getPosition()
     return position;
 }
 
-void camera::setPosition(glm::vec3 _position)
+void camera::setPosition(glm::vec3 newPosition)
 {
-    position = _position;
+    position = newPosition;
     updateViewMatrix();
 }
 
-void camera::setCenter(glm::vec3 _center)
+void camera::setCenter(glm::vec3 newCenter)
 {
-    center = _center;
+    center = newCenter;
     updateViewMatrix();
 }
 
-void camera::setUpVector(glm::vec3 _upVector)
+void camera::setUpVector(glm::vec3 newUpVector)
 {
-    upVector = _upVector;
+    up = newUpVector;
     updateViewMatrix();
 }
 
-void camera::setFov(float _fov)
+void camera::setFov(float newFov)
 {
-    fov = _fov;
+    fov = newFov;
     updateProjMatrix();
 }
 
-void camera::setAspect(float _aspect)
+void camera::setAspect(float newAspect)
 {
-    aspect = _aspect;
+    aspect = newAspect;
     updateProjMatrix();
 }
 
-void camera::setZNear(float _zNear)
+void camera::setZNear(float newZNear)
 {
-    zNear = _zNear;
+    zNear = newZNear;
     updateProjMatrix();
 }
 
-void camera::setZFar(float _zFar)
+void camera::setZFar(float newZFar)
 {
-    zFar = _zFar;
+    zFar = newZFar;
     updateProjMatrix();
+}
+
+void camera::update(float dt, float mouseDx, float mouseDy)
+{
+    yaw += (mouseDx * sensitivityX);
+    pitch += (mouseDy * sensitivityY);
+
+    if (pitch > 89.0f)
+        pitch = 89.0f;
+    if (pitch < -89.0f)
+        pitch = -89.0f;
+
+    glm::vec3 direction{};
+    direction.x = -sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = -sin(glm::radians(pitch));
+    direction.z = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front = glm::normalize(direction);
+
+    // spdlog::warn("P={:.1f}, Y={:.1f}, [{:.1f}, {:.1f}, {:.1f}] ", pitch, yaw, front.x, front.y, front.z);
+
+    updateViewMatrix();
+}
+
+void camera::strafeLeft(float dt)
+{
+    position -= glm::normalize(glm::cross(front, up)) * speed * dt;
+    updateViewMatrix();
+}
+
+void camera::strafeRight(float dt)
+{
+    position += glm::normalize(glm::cross(front, up)) * speed * dt;
+    updateViewMatrix();
+}
+
+void camera::moveForward(float dt)
+{
+    position += front * speed * dt;
+    updateViewMatrix();
+}
+
+void camera::moveBackward(float dt)
+{
+    position -= front * speed * dt;
+    updateViewMatrix();
 }
 
 void camera::updateViewMatrix()
 {
-    viewMatrix = glm::lookAt(position, center, upVector);
+    viewMatrix = glm::lookAt(position, position + front, up);
     updatePVMatrix();
 }
 

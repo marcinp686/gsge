@@ -3,8 +3,7 @@
 void scene::initScene()
 {
     // Camera object
-    mainCamera.setPosition(glm::vec3(6.0f, -6.0f, -40.0f));
-    mainCamera.setCenter(glm::vec3(10.0f, 10.0f, 0.0f));
+    mainCamera.setPosition(glm::vec3(0.0f, 0.0f, -40.0f));
 
     // Objects in the scene
     suzanne = registry.create();
@@ -140,13 +139,11 @@ void scene::loadModel(entt::entity entity, std::string fileName, uint32_t meshId
     meshComp.nIndices = nFaces * 3;
     meshComp.nFaces = nFaces;
 }
-// float tt = 0;
+
 void scene::update(float deltaTime)
 {
     updateTransformMatrices(deltaTime);
     updateUniformBuffer();
-    // mainCamera.setPosition(glm::vec3(-40.0f + tt * 3, -6.0f, -60.f));
-    // tt += deltaTime;
 }
 
 void scene::updateTransformMatrices(float dt)

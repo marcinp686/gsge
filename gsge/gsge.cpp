@@ -47,30 +47,57 @@ void gsge::uploadBuffersToGPU()
 
 void gsge::mainLoop()
 {
+    glfwSetInputMode(window->get_handle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     while (!glfwWindowShouldClose(window->get_handle()))
     {
         glfwPollEvents();
         frameStats.update();
 
+        glfwGetCursorPos(window->get_handle(), &currentMouseXpos, &currentMouseYpos);
+        if (oldMouseXpos != currentMouseXpos)
+        {
+            mouseDX = oldMouseXpos - currentMouseXpos;
+            oldMouseXpos = currentMouseXpos;
+        }
+        else
+            mouseDX = 0;
+
+        if (oldMouseYpos != currentMouseYpos)
+        {
+            mouseDY = oldMouseYpos - currentMouseYpos;
+            oldMouseYpos = currentMouseYpos;
+        }
+        else
+            mouseDY = 0;
+
+        if (mouseDX || mouseDY)
+        {
+            level->mainCamera.update(frameStats.dt, mouseDX, mouseDY);
+        }
+
         if (glfwGetKey(window->get_handle(), GLFW_KEY_A) == GLFW_PRESS)
         {
-            glm::vec3 camPos = level->mainCamera.getPosition();
-            level->mainCamera.setPosition(glm::vec3(camPos.x - 10.0f * frameStats.dt, camPos.y, camPos.z));
+            level->mainCamera.strafeLeft(frameStats.dt);
         };
         if (glfwGetKey(window->get_handle(), GLFW_KEY_D) == GLFW_PRESS)
         {
-            glm::vec3 camPos = level->mainCamera.getPosition();
-            level->mainCamera.setPosition(glm::vec3(camPos.x + 10.0f * frameStats.dt, camPos.y, camPos.z));
+            level->mainCamera.strafeRight(frameStats.dt);
         };
         if (glfwGetKey(window->get_handle(), GLFW_KEY_W) == GLFW_PRESS)
         {
-            glm::vec3 camPos = level->mainCamera.getPosition();
-            level->mainCamera.setPosition(glm::vec3(camPos.x, camPos.y - 10.0f * frameStats.dt, camPos.z));
+            level->mainCamera.moveForward(frameStats.dt);
         };
         if (glfwGetKey(window->get_handle(), GLFW_KEY_S) == GLFW_PRESS)
         {
-            glm::vec3 camPos = level->mainCamera.getPosition();
-            level->mainCamera.setPosition(glm::vec3(camPos.x, camPos.y + 10.0f * frameStats.dt, camPos.z));
+            level->mainCamera.moveBackward(frameStats.dt);
+        };
+        if (glfwGetKey(window->get_handle(), GLFW_KEY_F) == GLFW_PRESS)
+        {
+            if (window->settings.windowType == graphicsSettings::windowType::windowed)
+                window->setFullScreenMode();
+            else
+                window->setWindowedMode();
         };
 
         level->update(frameStats.dt);
