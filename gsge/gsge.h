@@ -19,6 +19,7 @@
 #include "renderer/window.h"
 #include "renderer/settings.h"
 #include "core/stats.h"
+#include "controller/mouse.h"
 
 class gsge
 {
@@ -32,13 +33,9 @@ class gsge
     stats frameStats;
 
     std::unique_ptr<Window> window;
+    std::unique_ptr<Mouse> mouse;
     std::unique_ptr<vulkan> renderer;
     std::unique_ptr<scene> level;
 
     void uploadBuffersToGPU();
-
-    // TODO: temporary - move to specialised class
-    double currentMouseXpos{0}, currentMouseYpos{0};
-    double mouseDX{0}, mouseDY{0};
-    double oldMouseXpos{0}, oldMouseYpos{0};
 };

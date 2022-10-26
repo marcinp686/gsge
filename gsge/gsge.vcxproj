@@ -189,6 +189,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
     <ClCompile Include="component\mesh.cpp" />
     <ClCompile Include="component\name.cpp" />
     <ClCompile Include="component\transform.cpp" />
+    <ClCompile Include="controller\mouse.cpp" />
     <ClCompile Include="core\stats.cpp" />
     <ClCompile Include="gsge.cpp" />
     <ClCompile Include="renderer\device.cpp" />
@@ -212,6 +213,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
     <ClInclude Include="component\motion.h" />
     <ClInclude Include="component\name.h" />
     <ClInclude Include="component\transform.h" />
+    <ClInclude Include="controller\mouse.h" />
     <ClInclude Include="core\stats.h" />
     <ClInclude Include="gsge.h" />
     <ClInclude Include="renderer\device.h" />

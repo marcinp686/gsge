@@ -20,15 +20,18 @@ void gsge::init()
     window->createWindow();
     window->setTitle("Giraffe Game Engine");
 
+    mouse = std::make_unique<Mouse>(window.get());
     renderer = std::make_unique<vulkan>(window.get());
 
     level = std::make_unique<scene>();
-
     level->initScene();
     level->prepareFrameData();
     level->update(0.0f);
+
     uploadBuffersToGPU();
+
     renderer->init();
+
     level->mainCamera.setAspect(renderer->getViewAspect());
 }
 
@@ -48,35 +51,18 @@ void gsge::uploadBuffersToGPU()
 
 void gsge::mainLoop()
 {
-    glfwSetInputMode(window->get_handle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
     while (!glfwWindowShouldClose(window->get_handle()))
     {
         glfwPollEvents();
         frameStats.update();
+        mouse->update();
 
-        glfwGetCursorPos(window->get_handle(), &currentMouseXpos, &currentMouseYpos);
-        if (oldMouseXpos != currentMouseXpos)
+        if (mouse->dx != 0 || mouse->dy != 0)
         {
-            mouseDX = oldMouseXpos - currentMouseXpos;
-            oldMouseXpos = currentMouseXpos;
-        }
-        else
-            mouseDX = 0;
-
-        if (oldMouseYpos != currentMouseYpos)
-        {
-            mouseDY = oldMouseYpos - currentMouseYpos;
-            oldMouseYpos = currentMouseYpos;
-        }
-        else
-            mouseDY = 0;
-
-        if (mouseDX || mouseDY)
-        {
-            level->mainCamera.update(frameStats.dt, mouseDX, mouseDY);
+            level->mainCamera.update(frameStats.dt, mouse->dx, mouse->dy);
         }
 
+        // W S A D controls
         if (glfwGetKey(window->get_handle(), GLFW_KEY_A) == GLFW_PRESS)
         {
             level->mainCamera.strafeLeft(frameStats.dt);
@@ -93,6 +79,14 @@ void gsge::mainLoop()
         {
             level->mainCamera.moveBackward(frameStats.dt);
         };
+
+        // ESC exits application
+        if (glfwGetKey(window->get_handle(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        {
+            break;
+        };
+
+        // Toggle full screen and windowed mode
         if (glfwGetKey(window->get_handle(), GLFW_KEY_F) == GLFW_PRESS)
         {
             if (window->settings.windowType == graphicsSettings::windowType::windowed)
@@ -106,6 +100,7 @@ void gsge::mainLoop()
         renderer->pushTransformMatricesToGpu(level->getTransformMatricesLump());
         renderer->updateUniformBufferEx(level->ubo);
         renderer->update();
+
         if (renderer->viewAspectChanged())
             level->mainCamera.setAspect(renderer->getViewAspect());
     }
