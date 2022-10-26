@@ -5,6 +5,11 @@ timer::timer()
     lastTimer = std::chrono::steady_clock::now();
 }
 
+timer::timer(std::string name) : name(name)
+{
+    lastTimer = std::chrono::steady_clock::now();
+}
+
 float timer::resetTimer()
 {
     auto currentTimer = std::chrono::steady_clock::now();
@@ -17,6 +22,6 @@ void timer::printTimer()
 {
     auto currentTimer = std::chrono::steady_clock::now();
     float delta = std::chrono::duration<float, std::chrono::milliseconds::period>(currentTimer - lastTimer).count();
-    spdlog::error("Function time: {}ms", delta);
+    spdlog::info("{} function time: {}ms", name, delta);
     return;
 }
