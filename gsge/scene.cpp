@@ -157,7 +157,8 @@ void scene::updateTransformMatrices(float dt)
         auto &transform = view.get<component::transform>(entity);
         auto &motion = view.get<component::motion>(entity);
 
-        transform.position += motion.velocity * dt;
+        if (motion.velocity != glm::vec3(0))
+            transform.position += motion.velocity * dt;
         transform.rotation += motion.rotation * dt;
 
         // Translation first - Matrix multiplication is not commutative, which means their order is important
