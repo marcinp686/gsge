@@ -148,6 +148,7 @@ void scene::update(float deltaTime)
 
 void scene::updateTransformMatrices(float dt)
 {
+    EASY_FUNCTION();
     auto view = registry.view<component::transform, component::motion>();
 
     hostTransformMatrixBuffer.resize(view.size_hint());
@@ -213,6 +214,7 @@ void scene::prepareFrameData()
 
 void scene::updateUniformBuffer()
 {
+    EASY_FUNCTION();
     auto &tr = registry.get<component::transform>(simpleCube);
 
     ubo.model = tr.transformMatrix;

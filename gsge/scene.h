@@ -14,6 +14,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
+#include <easy/profiler.h>
+
 #include "component/component.h"
 #include "component/camera.h"
 #include "types.h"

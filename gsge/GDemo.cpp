@@ -1,9 +1,12 @@
 ﻿#include <iostream>
 
 #include "gsge.h"
+#include <easy/profiler.h>
 
 int main()
 {
+    EASY_PROFILER_ENABLE;
+    profiler::startListen();
     gsge app;
 
     try

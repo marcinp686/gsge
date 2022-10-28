@@ -7,6 +7,7 @@ vulkan::~vulkan()
 
 void vulkan::update()
 {
+    EASY_FUNCTION(profiler::colors::Green200);
     drawFrame();
 }
 
@@ -439,7 +440,9 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
 
 void vulkan::drawFrame()
 {
-    vkWaitForFences(device->get_handle(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    EASY_FUNCTION(profiler::colors::Green400);
+    EASY_VALUE("currentFrame", currentFrame);
+    // wait until queue has finished processing previous command buffer
 
     uint32_t imageIndex;
 

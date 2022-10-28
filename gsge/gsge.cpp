@@ -51,8 +51,10 @@ void gsge::uploadBuffersToGPU()
 
 void gsge::mainLoop()
 {
+    EASY_MAIN_THREAD;
     while (!glfwWindowShouldClose(window->get_handle()))
     {
+        EASY_BLOCK("mainLoop", profiler::colors::Blue200);
         glfwPollEvents();
         frameStats.update();
         mouse->update();

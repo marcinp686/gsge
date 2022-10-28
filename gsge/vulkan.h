@@ -15,8 +15,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <GLFW/glfw3.h>
+#include <easy/profiler.h>
+#include <easy/arbitrary_value.h>
 
-#include "timer.h"
 #include "types.h"
 #include "renderer/window.h"
 #include "renderer/instance.h"
