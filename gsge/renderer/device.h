@@ -47,7 +47,7 @@ class Device
     std::vector<VkPresentModeKHR> surfacePresentModes;
 
     VkPhysicalDeviceFeatures deviceFeatures{};
-    std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+    std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME};
 
     void pickPhysicalDevice();
     uint64_t rateDeviceSuitability(VkPhysicalDevice device);

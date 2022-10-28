@@ -210,6 +210,10 @@ void vulkan::createGraphicsPipeline()
     viewportState.scissorCount = 1;
     viewportState.pScissors = &scissor;
 
+    VkPipelineRasterizationStateRasterizationOrderAMD orderAMD = {};
+    orderAMD.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_RASTERIZATION_ORDER_AMD;
+    orderAMD.rasterizationOrder = VK_RASTERIZATION_ORDER_RELAXED_AMD;
+
     VkPipelineRasterizationStateCreateInfo rasterizer{};
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
@@ -222,6 +226,7 @@ void vulkan::createGraphicsPipeline()
     rasterizer.depthBiasConstantFactor = 0.0f; // Optional
     rasterizer.depthBiasClamp = 0.0f;          // Optional
     rasterizer.depthBiasSlopeFactor = 0.0f;    // Optional
+    rasterizer.pNext = &orderAMD;
 
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -453,8 +458,8 @@ void vulkan::drawFrame()
     // TODO Actually we need swapchain->getImagesCount() sets of data for buffers, we get inconsisten data otherwise, maybe not?
 
     updateTransformMatrixBuffer(currentFrame);
-    updateUniformBuffer(currentFrame);    
-    
+    updateUniformBuffer(currentFrame);
+
     uint32_t imageIndex;
 
     // Acquire next available image
