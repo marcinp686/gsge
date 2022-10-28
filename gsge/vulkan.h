@@ -76,9 +76,10 @@ class vulkan
 
     std::vector<VkCommandBuffer> graphicsCommandBuffers;
     std::vector<VkCommandBuffer> transferCommandBuffers;
-    std::vector<VkSemaphore> imageAvailableSemaphores;
+    std::vector<VkSemaphore> imageAquiredSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
-    std::vector<VkFence> inFlightFences;
+    std::vector<VkFence> drawingFinishedFences;
+    std::vector<VkFence> transferFinishedFences;
     uint32_t currentFrame = 0;
 
     VkBuffer vertexBuffer;

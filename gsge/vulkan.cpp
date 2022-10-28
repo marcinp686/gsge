@@ -36,9 +36,14 @@ void vulkan::init()
     createDescriptorPool();
 
     // 5. create buffers for descriptor sets data
+    createSyncObjects();
+    createTransferCommandBuffers();
     createVertexBuffer();
+    vkQueueWaitIdle(device->getTransferQueue());
     createIndexBuffer();
+    vkQueueWaitIdle(device->getTransferQueue());
     createVertexNormalsBuffer();
+    vkQueueWaitIdle(device->getTransferQueue());
     createTransformMatricesBuffer();
     createUniformBuffers();
 
@@ -46,8 +51,6 @@ void vulkan::init()
     createDescriptorSets();
 
     createGraphicsCommandBuffers();
-    createTransferCommandBuffers();
-    createSyncObjects();
 }
 
 void vulkan::loadShaders()
@@ -134,9 +137,10 @@ void vulkan::cleanup()
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        vkDestroySemaphore(device->get_handle(), imageAvailableSemaphores[i], nullptr);
+        vkDestroySemaphore(device->get_handle(), imageAquiredSemaphores[i], nullptr);
         vkDestroySemaphore(device->get_handle(), renderFinishedSemaphores[i], nullptr);
-        vkDestroyFence(device->get_handle(), inFlightFences[i], nullptr);
+        vkDestroyFence(device->get_handle(), drawingFinishedFences[i], nullptr);
+        vkDestroyFence(device->get_handle(), transferFinishedFences[i], nullptr);
     }
 
     vkDestroyCommandPool(device->get_handle(), graphicsCommandPool, nullptr);
@@ -326,7 +330,7 @@ void vulkan::createTransferCommandPool()
 
     if (vkCreateCommandPool(device->get_handle(), &poolInfo, nullptr, &transferCommandPool) != VK_SUCCESS)
     {
-        throw std::runtime_error("failed to create command pool!");
+        throw std::runtime_error("failed to create transfer command pool!");
     }
 
     spdlog::info("Created transfer command pool");
@@ -443,11 +447,19 @@ void vulkan::drawFrame()
     EASY_FUNCTION(profiler::colors::Green400);
     EASY_VALUE("currentFrame", currentFrame);
     // wait until queue has finished processing previous command buffer
+    // meaning that it is on the CPU (driver) side, not GPU drawing
+    vkWaitForFences(device->get_handle(), 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
+    vkWaitForFences(device->get_handle(), 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
+    // TODO Actually we need swapchain->getImagesCount() sets of data for buffers, we get inconsisten data otherwise, maybe not?
 
+    updateTransformMatrixBuffer(currentFrame);
+    updateUniformBuffer(currentFrame);    
+    
     uint32_t imageIndex;
 
+    // Acquire next available image
     VkResult result = vkAcquireNextImageKHR(device->get_handle(), swapchain->get_handle(), UINT64_MAX,
-                                            imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+                                            imageAquiredSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR /*|| window->framebufferResized()*/)
     {
@@ -462,28 +474,30 @@ void vulkan::drawFrame()
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
-    updateTransformMatrixBuffer(currentFrame);
-    updateUniformBuffer(currentFrame);
-    vkResetFences(device->get_handle(), 1, &inFlightFences[currentFrame]);
+    //  Reset a fence indicating that drawing has been finished
+    vkResetFences(device->get_handle(), 1, &drawingFinishedFences[currentFrame]);
 
     vkResetCommandBuffer(graphicsCommandBuffers[currentFrame], 0);
     recordCommandBuffer(graphicsCommandBuffers[currentFrame], imageIndex);
 
+    //  Queue submit info, synchronisation objects
+    //   - wait until image has been acquired from swapchain before, meaning it is ready for use
+    VkSemaphore waitSemaphores[] = {imageAquiredSemaphores[currentFrame]};
+    //  - signal a semaphore when processing of command buffer is finished
+    VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
+    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-    VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
-    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = signalSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &graphicsCommandBuffers[currentFrame];
-    VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = signalSemaphores;
 
-    if (vkQueueSubmit(device->getGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS)
+    if (vkQueueSubmit(device->getGraphicsQueue(), 1, &submitInfo, drawingFinishedFences[currentFrame]) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to submit draw command buffer!");
     }
@@ -499,6 +513,7 @@ void vulkan::drawFrame()
     presentInfo.pImageIndices = &imageIndex;
     presentInfo.pResults = nullptr; // Optional
 
+    // Queue presentation of current frame's image after renderFinishedSemaphore
     vkQueuePresentKHR(device->getPresentQueue(), &presentInfo);
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -506,9 +521,10 @@ void vulkan::drawFrame()
 
 void vulkan::createSyncObjects()
 {
-    imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    imageAquiredSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+    drawingFinishedFences.resize(MAX_FRAMES_IN_FLIGHT);
+    transferFinishedFences.resize(MAX_FRAMES_IN_FLIGHT);
 
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -518,9 +534,10 @@ void vulkan::createSyncObjects()
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        if (vkCreateSemaphore(device->get_handle(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
+        if (vkCreateSemaphore(device->get_handle(), &semaphoreInfo, nullptr, &imageAquiredSemaphores[i]) != VK_SUCCESS ||
             vkCreateSemaphore(device->get_handle(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-            vkCreateFence(device->get_handle(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
+            vkCreateFence(device->get_handle(), &fenceInfo, nullptr, &drawingFinishedFences[i]) != VK_SUCCESS ||
+            vkCreateFence(device->get_handle(), &fenceInfo, nullptr, &transferFinishedFences[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create synchronization objects for a frame!");
         }
@@ -657,38 +674,41 @@ void vulkan::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryP
 
 void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 {
-    VkCommandBufferAllocateInfo allocInfo{};
+    /*VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandPool = transferCommandPool;
     allocInfo.commandBufferCount = 1;
 
     VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(device->get_handle(), &allocInfo, &commandBuffer);
+    vkAllocateCommandBuffers(device->get_handle(), &allocInfo, &commandBuffer);*/
+
+    vkResetFences(device->get_handle(), 1, &transferFinishedFences[currentFrame]);
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    vkBeginCommandBuffer(transferCommandBuffers[currentFrame], &beginInfo);
 
     VkBufferCopy copyRegion{};
     copyRegion.srcOffset = 0; // Optional
     copyRegion.dstOffset = 0; // Optional
     copyRegion.size = size;
-    vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+    vkCmdCopyBuffer(transferCommandBuffers[currentFrame], srcBuffer, dstBuffer, 1, &copyRegion);
 
-    vkEndCommandBuffer(commandBuffer);
+    vkEndCommandBuffer(transferCommandBuffers[currentFrame]);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffer;
+    submitInfo.pCommandBuffers = &transferCommandBuffers[currentFrame];
 
-    vkQueueSubmit(device->getTransferQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(device->getTransferQueue());
+    vkQueueSubmit(device->getTransferQueue(), 1, &submitInfo, transferFinishedFences[currentFrame]);
 
-    vkFreeCommandBuffers(device->get_handle(), transferCommandPool, 1, &commandBuffer);
+    // vkQueueWaitIdle(device->getTransferQueue());
+
+    /*vkFreeCommandBuffers(device->get_handle(), transferCommandPool, MAX_FRAMES_IN_FLIGHT, &transferCommandBuffers);*/
 }
 
 void vulkan::createDescriptorSetLayouts()
