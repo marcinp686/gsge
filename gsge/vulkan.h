@@ -79,7 +79,7 @@ class vulkan
     std::vector<VkSemaphore> imageAquiredSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> drawingFinishedFences;
-    std::vector<VkFence> transferFinishedFences;
+    std::vector<VkSemaphore> transferFinishedSemaphores;
     uint32_t currentFrame = 0;
 
     VkBuffer vertexBuffer;
@@ -133,7 +133,7 @@ class vulkan
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
                       VkDeviceMemory &bufferMemory);
-    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, bool withSemaphores);
     void createDescriptorSetLayouts();
     void createUniformBuffers();
     void createDescriptorPool();

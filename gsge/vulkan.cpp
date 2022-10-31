@@ -139,8 +139,8 @@ void vulkan::cleanup()
     {
         vkDestroySemaphore(device->get_handle(), imageAquiredSemaphores[i], nullptr);
         vkDestroySemaphore(device->get_handle(), renderFinishedSemaphores[i], nullptr);
+        vkDestroySemaphore(device->get_handle(), transferFinishedSemaphores[i], nullptr);
         vkDestroyFence(device->get_handle(), drawingFinishedFences[i], nullptr);
-        vkDestroyFence(device->get_handle(), transferFinishedFences[i], nullptr);
     }
 
     vkDestroyCommandPool(device->get_handle(), graphicsCommandPool, nullptr);
@@ -453,9 +453,9 @@ void vulkan::drawFrame()
     EASY_VALUE("currentFrame", currentFrame);
     // wait until queue has finished processing previous command buffer
     // meaning that it is on the CPU (driver) side, not GPU drawing
+
     vkWaitForFences(device->get_handle(), 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
-    vkWaitForFences(device->get_handle(), 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
-    // TODO Actually we need swapchain->getImagesCount() sets of data for buffers, we get inconsisten data otherwise, maybe not?
+    // vkWaitForFences(device->get_handle(), 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     updateTransformMatrixBuffer(currentFrame);
     updateUniformBuffer(currentFrame);
@@ -487,14 +487,15 @@ void vulkan::drawFrame()
 
     //  Queue submit info, synchronisation objects
     //   - wait until image has been acquired from swapchain before, meaning it is ready for use
-    VkSemaphore waitSemaphores[] = {imageAquiredSemaphores[currentFrame]};
+    //   - wait until updated transform and uniform buffer have been copied to device moemory
+    VkSemaphore waitSemaphores[] = {imageAquiredSemaphores[currentFrame], transferFinishedSemaphores[currentFrame]};
     //  - signal a semaphore when processing of command buffer is finished
     VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.waitSemaphoreCount = 2;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
@@ -529,7 +530,7 @@ void vulkan::createSyncObjects()
     imageAquiredSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     drawingFinishedFences.resize(MAX_FRAMES_IN_FLIGHT);
-    transferFinishedFences.resize(MAX_FRAMES_IN_FLIGHT);
+    transferFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -542,7 +543,7 @@ void vulkan::createSyncObjects()
         if (vkCreateSemaphore(device->get_handle(), &semaphoreInfo, nullptr, &imageAquiredSemaphores[i]) != VK_SUCCESS ||
             vkCreateSemaphore(device->get_handle(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
             vkCreateFence(device->get_handle(), &fenceInfo, nullptr, &drawingFinishedFences[i]) != VK_SUCCESS ||
-            vkCreateFence(device->get_handle(), &fenceInfo, nullptr, &transferFinishedFences[i]) != VK_SUCCESS)
+            vkCreateSemaphore(device->get_handle(), &semaphoreInfo, nullptr, &transferFinishedSemaphores[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create synchronization objects for a frame!");
         }
@@ -596,7 +597,7 @@ void vulkan::createVertexBuffer()
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
 
-    copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+    copyBuffer(stagingBuffer, vertexBuffer, bufferSize, false);
     vkDestroyBuffer(device->get_handle(), stagingBuffer, nullptr);
     vkFreeMemory(device->get_handle(), stagingBufferMemory, nullptr);
 }
@@ -677,19 +678,8 @@ void vulkan::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryP
     vkBindBufferMemory(device->get_handle(), buffer, bufferMemory, 0);
 }
 
-void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, bool withSemaphores)
 {
-    /*VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = transferCommandPool;
-    allocInfo.commandBufferCount = 1;
-
-    VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(device->get_handle(), &allocInfo, &commandBuffer);*/
-
-    vkResetFences(device->get_handle(), 1, &transferFinishedFences[currentFrame]);
-
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -704,16 +694,20 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
 
     vkEndCommandBuffer(transferCommandBuffers[currentFrame]);
 
+    VkSemaphore signalSemaphores[] = {transferFinishedSemaphores[currentFrame]};
+
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &transferCommandBuffers[currentFrame];
 
-    vkQueueSubmit(device->getTransferQueue(), 1, &submitInfo, transferFinishedFences[currentFrame]);
+    if (withSemaphores)
+    {
+        submitInfo.pSignalSemaphores = signalSemaphores;
+        submitInfo.signalSemaphoreCount = 1;
+    }
 
-    // vkQueueWaitIdle(device->getTransferQueue());
-
-    /*vkFreeCommandBuffers(device->get_handle(), transferCommandPool, MAX_FRAMES_IN_FLIGHT, &transferCommandBuffers);*/
+    vkQueueSubmit(device->getTransferQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 }
 
 void vulkan::createDescriptorSetLayouts()
@@ -861,7 +855,7 @@ void vulkan::createIndexBuffer()
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
-    copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+    copyBuffer(stagingBuffer, indexBuffer, bufferSize, false);
 
     vkDestroyBuffer(device->get_handle(), stagingBuffer, nullptr);
     vkFreeMemory(device->get_handle(), stagingBufferMemory, nullptr);
@@ -894,7 +888,7 @@ void vulkan::updateTransformMatrixBuffer(uint32_t currentImage)
     vkMapMemory(device->get_handle(), transformMatricesStagingBufferMemory[currentImage], 0, bufferSize, 0, &data);
     memcpy(data, transformMatrices.data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(device->get_handle(), transformMatricesStagingBufferMemory[currentImage]);
-    copyBuffer(transformMatricesStagingBuffer[currentImage], transformMatricesBuffer[currentImage], bufferSize);
+    copyBuffer(transformMatricesStagingBuffer[currentImage], transformMatricesBuffer[currentImage], bufferSize, true);
 }
 
 bool vulkan::viewAspectChanged()
@@ -932,7 +926,7 @@ void vulkan::createVertexNormalsBuffer()
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexNormalsBuffer, vertexNormalsBufferMemory);
 
-    copyBuffer(stagingBuffer, vertexNormalsBuffer, bufferSize);
+    copyBuffer(stagingBuffer, vertexNormalsBuffer, bufferSize, false);
 
     vkDestroyBuffer(device->get_handle(), stagingBuffer, nullptr);
     vkFreeMemory(device->get_handle(), stagingBufferMemory, nullptr);
