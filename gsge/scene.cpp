@@ -163,16 +163,58 @@ void scene::updateTransformMatrices(float dt)
         transform.rotation += motion.rotation * dt;
 
         // Translation first - Matrix multiplication is not commutative, which means their order is important
-        transform.transformMatrix = glm::translate(glm::mat4(1.0f), transform.position);
+        // transform.transformMatrix = glm::translate(glm::mat4(1.0f), transform.position);
 
-        // Rotation second
-        transform.transformMatrix = glm::rotate(transform.transformMatrix, transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-        transform.transformMatrix = glm::rotate(transform.transformMatrix, transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-        transform.transformMatrix = glm::rotate(transform.transformMatrix, transform.rotation.z, glm::vec3(0.0f, 0.0f, 0.1f));
+        float sin_g = sin(transform.rotation.x);
+        float cos_g = cos(transform.rotation.x);
+        float sin_b = sin(transform.rotation.y);
+        float cos_b = cos(transform.rotation.y);
+        float sin_a = sin(transform.rotation.z);
+        float cos_a = cos(transform.rotation.z);
 
-        // Scale third
-        transform.transformMatrix = glm::scale(transform.transformMatrix, transform.scale);
-        hostTransformMatrixBuffer[static_cast<uint32_t>(entity)] = transform.transformMatrix;
+        /*float r11 = cos_y * cos_z;
+        float r12 = sin_z * sin_y * cos_x - cos_x * sin_z;
+        float r13 = cos_z * sin_y * cos_x + sin_x * sin_z;
+
+        float r21 = cos_y * sin_z;
+        float r22 = sin_z * sin_y * sin_x + cos_x * cos_z;
+        float r23 = cos_x * sin_y * sin_z - sin_z * cos_x;
+
+        float r31 = -sin_y;
+        float r32 = sin_x * cos_y;
+        float r33 = cos_x * cos_y;*/
+
+        float r11 = cos_a * cos_b;
+        float r12 = cos_a * sin_b * sin_g - sin_a * cos_g;
+        float r13 = cos_a * sin_b * cos_g + sin_a * sin_g;
+
+        float r21 = sin_a * cos_b;
+        float r22 = sin_a * sin_b * sin_g + cos_a * cos_g;
+        float r23 = sin_a * sin_b * cos_g - cos_a * sin_g;
+
+        float r31 = -sin_b;
+        float r32 = cos_b * sin_g;
+        float r33 = cos_b * cos_g;
+
+        glm::mat4 transformMatrix{{r11 * transform.scale.x, r12 * transform.scale.y, r13 * transform.scale.z, 0.f},
+                                  {r21 * transform.scale.x, r22 * transform.scale.y, r23 * transform.scale.z, 0.f},
+                                  {r31 * transform.scale.x, r32 * transform.scale.y, r33 * transform.scale.z, 0.f},
+                                  {transform.position.x, transform.position.y, transform.position.z, 1.f}};
+
+        // glm::mat4 rot{{r11, r21, r31, 0.f},
+        //               {r12, r22, r32, 0.f},
+        //               {r13, r23, r33, 0.f},
+        //               {transform.position.x, transform.position.y, transform.position.z, 1.f}};
+
+        //// Rotation second
+        // transform.transformMatrix = glm::rotate(transform.transformMatrix, transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+        // transform.transformMatrix = glm::rotate(transform.transformMatrix, transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+        // transform.transformMatrix = glm::rotate(transform.transformMatrix, transform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+
+        //// Scale third
+        // transform.transformMatrix = glm::scale(transform.transformMatrix, transform.scale);
+        //// hostTransformMatrixBuffer[static_cast<uint32_t>(entity)] = transform.transformMatrix;
+        hostTransformMatrixBuffer[static_cast<uint32_t>(entity)] = transformMatrix;
     }
 }
 
