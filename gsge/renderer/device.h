@@ -46,11 +46,18 @@ class Device
     std::vector<VkSurfaceFormatKHR> surfaceFormats;
     std::vector<VkPresentModeKHR> surfacePresentModes;
 
-    VkPhysicalDeviceFeatures deviceFeatures{};
-    std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME};
+    VkPhysicalDeviceFeatures vulkan10Features{};
+    VkPhysicalDeviceVulkan13Features vulkan13features{};
+    VkPhysicalDeviceVulkan12Features vulkan12features{};
+    VkPhysicalDeviceVulkan11Features vulkan11features{};
+
+    VkPhysicalDeviceFeatures2 deviceFeatures{};
+
+    std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME,
+                                                  VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME};
 
     void pickPhysicalDevice();
-    uint64_t rateDeviceSuitability(VkPhysicalDevice device);
+    uint64_t rateDeviceSuitability(VkPhysicalDevice dev);
     void findQueueFamilies();
     void createLogicalDevice();
     void createQueues();

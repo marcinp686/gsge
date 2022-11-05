@@ -102,10 +102,10 @@ void Device::pickPhysicalDevice()
     // Use an ordered map to automatically sort candidates by increasing score
     std::multimap<uint64_t, VkPhysicalDevice> candidates;
 
-    for (const auto &device : devices)
+    for (const auto &dev : devices)
     {
-        uint64_t score = rateDeviceSuitability(device);
-        candidates.insert(std::make_pair(score, device));
+        uint64_t score = rateDeviceSuitability(dev);
+        candidates.insert(std::make_pair(score, dev));
     }
 
     // Check if the best candidate is suitable at all
@@ -119,16 +119,39 @@ void Device::pickPhysicalDevice()
     }
 }
 
-uint64_t Device::rateDeviceSuitability(VkPhysicalDevice device)
+uint64_t Device::rateDeviceSuitability(VkPhysicalDevice dev)
 {
-    VkPhysicalDeviceProperties2 deviceProperties2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
+    VkPhysicalDeviceMaintenance4Properties deviceMaintenance4Properties{};
+    deviceMaintenance4Properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES;
 
-    VkPhysicalDeviceMaintenance4Properties deviceMaintenance4Properties{
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES};
+    VkPhysicalDeviceProperties2 deviceProperties2{};
+    deviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
     deviceProperties2.pNext = &deviceMaintenance4Properties;
 
-    vkGetPhysicalDeviceProperties2(device, &deviceProperties2);
-    vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+    vkGetPhysicalDeviceProperties2(dev, &deviceProperties2);
+
+    // TODO: Stupid idea. deviceFeatures is passed to vkCreateDevice.pNext so all available features are enabled. Be more
+    // selective.
+
+    // Get Vulkan 1.0 device features
+    vkGetPhysicalDeviceFeatures(dev, &vulkan10Features);
+
+    // Vulkan 1.3 device features struct
+    vulkan13features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+
+    // Vulkan 1.2 device features struct
+    vulkan12features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    vulkan12features.pNext = &vulkan13features;
+
+    // Vulkan 1.1 device features struct
+    vulkan11features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+    vulkan11features.pNext = &vulkan12features;
+
+    // Query available features
+    deviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    deviceFeatures.features = vulkan10Features;
+    deviceFeatures.pNext = &vulkan11features;
+    vkGetPhysicalDeviceFeatures2(dev, &deviceFeatures);
 
     uint64_t score = 0;
 
@@ -153,14 +176,12 @@ uint64_t Device::rateDeviceSuitability(VkPhysicalDevice device)
     score += deviceProperties2.properties.limits.maxImageDimension2D;
 
     // Application can't function without geometry shaders
-    if (!deviceFeatures.geometryShader)
+    if (!deviceFeatures.features.geometryShader)
     {
         return 0;
     }
 
-    spdlog::info("Device " + deviceInfoStr.str() + " score: " + std::to_string(score));
-
-    // deviceFeatures.wideLines = VK_TRUE;
+    spdlog::info("Device " + deviceInfoStr.str() + " score: " + std::to_string(score)); 
 
     return score;
 }
@@ -241,22 +262,23 @@ void Device::createLogicalDevice()
     queueCreateInfo[2].queueCount = 1;
     queueCreateInfo[2].pQueuePriorities = &presentQueuePriority;
 
-    VkDeviceCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    createInfo.pQueueCreateInfos = queueCreateInfo;
-    createInfo.queueCreateInfoCount = 3;
-    createInfo.pEnabledFeatures = &deviceFeatures;
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
-    createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+    VkDeviceCreateInfo deviceCreateInfo{};
+    deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    deviceCreateInfo.pQueueCreateInfos = queueCreateInfo;
+    deviceCreateInfo.queueCreateInfoCount = 3;
+    deviceCreateInfo.pEnabledFeatures = VK_NULL_HANDLE;
+    deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+    deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
+    deviceCreateInfo.pNext = &deviceFeatures;
 
-    VkPhysicalDeviceShaderDrawParameterFeatures pf{};
+    /*VkPhysicalDeviceShaderDrawParameterFeatures pf{};
     pf.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
     pf.shaderDrawParameters = VK_TRUE;
     pf.pNext = nullptr;
 
-    createInfo.pNext = &pf;
-
-    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+    deviceCreateInfo.pNext = &pf;*/
+    VkResult result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
+    if (result != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create logical device!");
     }
