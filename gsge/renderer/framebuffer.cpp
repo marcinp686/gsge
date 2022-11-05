@@ -30,7 +30,7 @@ void Framebuffer::createFramebuffers()
 
     buffers.resize(imageCount);
 
-    for (size_t i = 0; i < imageCount; i++)
+    for (uint32_t i = 0; i < imageCount; i++)
     {
         std::array<VkImageView, 2> attachments = {swapchain->getImageView(i), swapchain->getDepthImageView()};
 

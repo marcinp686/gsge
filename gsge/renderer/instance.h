@@ -20,8 +20,8 @@ class Instance
     VkInstance instance{VK_NULL_HANDLE};
     VkDebugUtilsMessengerEXT debugMessenger;
 
-    std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
-    std::vector<const char *> instanceExtensions = {VK_EXT_DEBUG_UTILS_EXTENSION_NAME};
+    std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation", "VK_LAYER_KHRONOS_synchronization2"};
+    std::vector<const char *> instanceExtensions = {VK_EXT_DEBUG_UTILS_EXTENSION_NAME, "VK_KHR_get_physical_device_properties2"};
 
     bool checkValidationLayerSupport();
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
