@@ -4,13 +4,16 @@
 
 namespace component
 {
-struct transform
+struct alignas(32) transform
 {
     // transform(glm::vec3 pos) : position(pos){};
 
-    glm::vec3 position{0.f, 0.f, 0.f};
-    glm::vec3 rotation{0.f, 0.f, 0.f}; // in radians
-    glm::vec3 scale{1.0f, 1.0f, 1.0f};
-    glm::mat4 transformMatrix{1.0f};
+    alignas(16) glm::vec3 position{0.f, 0.f, 0.f};
+    // float p1{1.f};                                 // padding
+    alignas(16) glm::vec3 rotation{0.f, 0.f, 0.f}; // in radians
+    // float p2{0.f};                                 // padding
+    alignas(16) glm::vec3 scale{1.0f, 1.0f, 1.0f};
+    // float p3{0.f}; // padding
+    alignas(16) glm::mat4 transformMatrix{1.0f};
 };
 } // namespace component
