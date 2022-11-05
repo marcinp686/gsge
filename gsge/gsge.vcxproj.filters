@@ -149,6 +149,9 @@
     <ClInclude Include="controller\mouse.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="component\material.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\per_vertex_light_shader.frag">
@@ -204,5 +207,10 @@
     <Natvis Include="..\..\glm\util\glm.natvis">
       <Filter>Natvis</Filter>
     </Natvis>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="tmatrix.asm">
+      <Filter>Pliki źródłowe</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

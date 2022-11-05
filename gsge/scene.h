@@ -18,6 +18,7 @@
 
 #include "component/component.h"
 #include "component/camera.h"
+#include "component/material.h"
 #include "types.h"
 #include "timer.h"
 

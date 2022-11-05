@@ -1,4 +1,5 @@
 #include "scene.h"
+#include <intrin.h>
 
 void scene::initScene()
 {
@@ -13,7 +14,6 @@ void scene::initScene()
     companionCube = registry.create();
     squareFloor = registry.create();
     simpleCube = registry.create();
-    // plane = registry.create();
 
     size_t i = 0;
     for (size_t y = 0; y < c_arraySize; y++)
@@ -21,10 +21,13 @@ void scene::initScene()
             for (size_t z = 0; z < c_arraySize; z++)
             {
                 cubes[i] = registry.create();
+                // registry.emplace<component::material>(cubes[i], glm::vec4(1.f, 0.f, 0.f, 1.f));
                 registry.emplace<component::motion>(cubes[i], glm::vec3(0),
                                                     glm::radians(glm::vec3(30.0f + i / 8000.f, 15.0f + i / 8000.f, 0.0f)));
-                registry.emplace<component::transform>(cubes[i++], glm::vec3(x * 2.f, y * 2.f, z * 2.f), glm::vec3(0.0f),
-                                                       glm::vec3(0.5f));
+                auto &transform = registry.emplace<component::transform>(cubes[i++]);
+                transform.position = glm::vec3(x * 2.f, y * 2.f, z * 2.f);
+                transform.rotation = glm::vec3(0.0f);
+                transform.scale = glm::vec3(0.5f);
             }
 
     registry.emplace<component::name>(suzanne, "suzanne");
@@ -34,7 +37,6 @@ void scene::initScene()
     registry.emplace<component::name>(companionCube, "companionCube");
     registry.emplace<component::name>(squareFloor, "squareFloor");
     registry.emplace<component::name>(simpleCube, "simpleCube");
-    // scene.emplace<component::name>(plane, "plane");
 
     registry.emplace<component::mesh>(suzanne);
     registry.emplace<component::mesh>(suzanne_smooth);
@@ -43,25 +45,22 @@ void scene::initScene()
     registry.emplace<component::mesh>(companionCube);
     registry.emplace<component::mesh>(squareFloor);
     registry.emplace<component::mesh>(simpleCube);
-    // scene.emplace<component::mesh>(plane);
 
     registry.emplace<component::motion>(suzanne, glm::vec3(0), glm::radians(glm::vec3(0.0f, -60.0f, 0.0f)));
-    registry.emplace<component::motion>(suzanne_smooth, glm::vec3(0), glm::radians(glm::vec3(0.0f, 45.0f, 0.0f)));
+    registry.emplace<component::motion>(suzanne_smooth, glm::vec3(0), glm::radians(glm::vec3(0.0f, 60.0f, 0.0f)));
     registry.emplace<component::motion>(icoSphere, glm::vec3(0), glm::radians(glm::vec3(0.0f, 30.0f, 0.0f)));
     registry.emplace<component::motion>(testCube, glm::vec3(0), glm::radians(glm::vec3(0.0f, 0.0f, -15.0f)));
     registry.emplace<component::motion>(companionCube, glm::vec3(0), glm::radians(glm::vec3(0.0f, -20.0f, 0.0f)));
     registry.emplace<component::motion>(squareFloor, glm::vec3(0), glm::radians(glm::vec3(0.0f, -20.0f, 0.0f)));
     registry.emplace<component::motion>(simpleCube, glm::vec3(0.0f, 0.0f, 0.0f), glm::radians(glm::vec3(30.f, 20.f, 10.f)));
-    // scene.emplace<component::motion>(plane);
 
     registry.emplace<component::transform>(suzanne, glm::vec3(-2.5, -0.5, 0));
     registry.emplace<component::transform>(suzanne_smooth, glm::vec3(2.5, 1, 2));
     registry.emplace<component::transform>(icoSphere, glm::vec3(2.5, -1.2, 0));
     registry.emplace<component::transform>(testCube, glm::vec3(-2.5, 1.5, 2.5));
-    registry.emplace<component::transform>(companionCube, glm::vec3(1.5, -1, 1.5));
+    registry.emplace<component::transform>(companionCube, glm::vec3(4.5, -3, 1.5)).scale = {3, 3, 3};
     registry.emplace<component::transform>(squareFloor, glm::vec3(-2, -3, 8));
-    registry.emplace<component::transform>(simpleCube, glm::vec3(-1.5, 0, 3), glm::vec3(0, 0, 0), glm::vec3(0.5));
-    // scene.emplace<component::transform>(plane, glm::vec3(0,, 0));
+    registry.emplace<component::transform>(simpleCube, glm::vec3(-1.5, 0, 3));
 
     loadModel(suzanne, "models/suzanne.fbx");
     loadModel(suzanne_smooth, "models/suzanne_smooth.fbx");
@@ -70,7 +69,6 @@ void scene::initScene()
     loadModel(companionCube, "models/CompanionCube.fbx");
     loadModel(squareFloor, "models/squareFloor.fbx");
     loadModel(simpleCube, "models/simpleCube.fbx");
-    // loadModel(plane, "models/plane_1x1.fbx");
 
     for (int i = 0; i < cubes.size(); i++)
     {
@@ -146,6 +144,8 @@ void scene::update(float deltaTime)
     updateUniformBuffer();
 }
 
+extern "C" void updateTransformMatrix(const float *ptr, const float *pSinCos);
+
 void scene::updateTransformMatrices(float dt)
 {
     EASY_FUNCTION();
@@ -160,10 +160,10 @@ void scene::updateTransformMatrices(float dt)
 
         if (motion.velocity != glm::vec3(0))
             transform.position += motion.velocity * dt;
+
         transform.rotation += motion.rotation * dt;
 
-        // Translation first - Matrix multiplication is not commutative, which means their order is important
-        // transform.transformMatrix = glm::translate(glm::mat4(1.0f), transform.position);
+        // updateTransformMatrix((const float *)&transform, &sincosTable[0]);
 
         float sin_g = sin(transform.rotation.x);
         float cos_g = cos(transform.rotation.x);
@@ -171,18 +171,6 @@ void scene::updateTransformMatrices(float dt)
         float cos_b = cos(transform.rotation.y);
         float sin_a = sin(transform.rotation.z);
         float cos_a = cos(transform.rotation.z);
-
-        /*float r11 = cos_y * cos_z;
-        float r12 = sin_z * sin_y * cos_x - cos_x * sin_z;
-        float r13 = cos_z * sin_y * cos_x + sin_x * sin_z;
-
-        float r21 = cos_y * sin_z;
-        float r22 = sin_z * sin_y * sin_x + cos_x * cos_z;
-        float r23 = cos_x * sin_y * sin_z - sin_z * cos_x;
-
-        float r31 = -sin_y;
-        float r32 = sin_x * cos_y;
-        float r33 = cos_x * cos_y;*/
 
         float r11 = cos_a * cos_b;
         float r12 = cos_a * sin_b * sin_g - sin_a * cos_g;
@@ -201,19 +189,6 @@ void scene::updateTransformMatrices(float dt)
                                   {r31 * transform.scale.x, r32 * transform.scale.y, r33 * transform.scale.z, 0.f},
                                   {transform.position.x, transform.position.y, transform.position.z, 1.f}};
 
-        // glm::mat4 rot{{r11, r21, r31, 0.f},
-        //               {r12, r22, r32, 0.f},
-        //               {r13, r23, r33, 0.f},
-        //               {transform.position.x, transform.position.y, transform.position.z, 1.f}};
-
-        //// Rotation second
-        // transform.transformMatrix = glm::rotate(transform.transformMatrix, transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-        // transform.transformMatrix = glm::rotate(transform.transformMatrix, transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-        // transform.transformMatrix = glm::rotate(transform.transformMatrix, transform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-
-        //// Scale third
-        // transform.transformMatrix = glm::scale(transform.transformMatrix, transform.scale);
-        //// hostTransformMatrixBuffer[static_cast<uint32_t>(entity)] = transform.transformMatrix;
         hostTransformMatrixBuffer[static_cast<uint32_t>(entity)] = transformMatrix;
     }
 }
@@ -241,7 +216,6 @@ void scene::prepareFrameData()
     for (auto entity : view)
     {
         auto &mesh = view.get<component::mesh>(entity);
-        auto &name = view.get<component::name>(entity);
 
         vertexBufferOffsets.emplace_back(static_cast<uint32_t>(hostVertexBuffer.size()));
         indexBufferOffsets.emplace_back(static_cast<uint32_t>(hostIndexBuffer.size()));

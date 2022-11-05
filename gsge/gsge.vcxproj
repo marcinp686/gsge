@@ -54,6 +54,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -124,6 +125,8 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <DisableSpecificWarnings>26495;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -160,6 +163,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <DisableSpecificWarnings>26495;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -211,6 +215,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
   <ItemGroup>
     <ClInclude Include="component\camera.h" />
     <ClInclude Include="component\component.h" />
+    <ClInclude Include="component\material.h" />
     <ClInclude Include="component\mesh.h" />
     <ClInclude Include="component\motion.h" />
     <ClInclude Include="component\name.h" />
@@ -315,7 +320,14 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
       <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</BuildInParallel>
     </CustomBuild>
   </ItemGroup>
+  <ItemGroup>
+    <MASM Include="tmatrix.asm">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+    </MASM>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
 </Project>
