@@ -139,7 +139,7 @@ void vulkan::cleanup()
     {
         vkDestroySemaphore(device->get_handle(), imageAquiredSemaphores[i], nullptr);
         vkDestroySemaphore(device->get_handle(), renderFinishedSemaphores[i], nullptr);
-        vkDestroySemaphore(device->get_handle(), transferFinishedSemaphores[i], nullptr);
+        vkDestroyFence(device->get_handle(), transferFinishedFences[i], nullptr);
         vkDestroyFence(device->get_handle(), drawingFinishedFences[i], nullptr);
     }
 
@@ -175,9 +175,9 @@ void vulkan::createGraphicsPipeline()
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = vertexBindingDesc.size();
+    vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(vertexBindingDesc.size());
     vertexInputInfo.pVertexBindingDescriptions = vertexBindingDesc.data();
-    vertexInputInfo.vertexAttributeDescriptionCount = vertexAttrDesc.size();
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttrDesc.size());
     vertexInputInfo.pVertexAttributeDescriptions = vertexAttrDesc.data();
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
@@ -387,6 +387,25 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
         throw std::runtime_error("failed to begin recording command buffer!");
     }
 
+    // Memory buffer barrier
+    VkBufferMemoryBarrier2 memBarrier{};
+    memBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
+    memBarrier.pNext = VK_NULL_HANDLE;
+    memBarrier.dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT;
+    memBarrier.dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT;
+    memBarrier.srcQueueFamilyIndex = device->getTransferQueueFamilyIdx();
+    memBarrier.dstQueueFamilyIndex = device->getGraphicsQueueFamilyIdx();
+    memBarrier.buffer = transformMatricesBuffer[currentFrame];
+    memBarrier.offset = 0;
+    memBarrier.size = VK_WHOLE_SIZE;
+
+    VkDependencyInfo depInfo{};
+    depInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+    depInfo.pBufferMemoryBarriers = &memBarrier;
+    depInfo.bufferMemoryBarrierCount = 1;
+
+    vkCmdPipelineBarrier2(graphicsCommandBuffers[currentFrame], &depInfo);
+
     // Begin render pass
     VkRenderPassBeginInfo renderPassInfo{};
     std::array<VkClearValue, 2> clearValues{};
@@ -431,7 +450,7 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
                             0, nullptr);
 
     // Draw commands
-    for (size_t i = 0; i < indexOffsets.size(); i++)
+    for (uint32_t i = 0; i < indexOffsets.size(); i++)
     {
         uint32_t endingIdx = (i == indexOffsets.size() - 1 ? indices.size() : indexOffsets[i + 1]);
         vkCmdDrawIndexed(commandBuffer, endingIdx - indexOffsets[i], 1, indexOffsets[i], vertexOffsets[i], i);
@@ -451,16 +470,11 @@ void vulkan::drawFrame()
 {
     EASY_FUNCTION(profiler::colors::Green400);
     EASY_VALUE("currentFrame", currentFrame);
-    // wait until queue has finished processing previous command buffer
-    // meaning that it is on the CPU (driver) side, not GPU drawing
-
-    vkWaitForFences(device->get_handle(), 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
-    // vkWaitForFences(device->get_handle(), 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
-
-    updateTransformMatrixBuffer(currentFrame);
-    updateUniformBuffer(currentFrame);
 
     uint32_t imageIndex;
+
+    // wait until queue has finished processing previous graphicsCommandBuffers[currentFrame]
+    vkWaitForFences(device->get_handle(), 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
 
     // Acquire next available image
     VkResult result = vkAcquireNextImageKHR(device->get_handle(), swapchain->get_handle(), UINT64_MAX,
@@ -472,38 +486,46 @@ void vulkan::drawFrame()
         swapchain.reset(new Swapchain(device.get(), window, surface.get()));
         framebuffer.reset(new Framebuffer(device.get(), swapchain.get(), renderPass.get()));
         swapchainAspectChanged = true;
-        return;
+        vkAcquireNextImageKHR(device->get_handle(), swapchain->get_handle(), UINT64_MAX, imageAquiredSemaphores[currentFrame],
+                              VK_NULL_HANDLE, &imageIndex);
+        // return;
     }
     else if (result != VK_SUCCESS)
     {
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
+    updateTransformMatrixBuffer(currentFrame);
+    updateUniformBuffer(currentFrame);
+
     //  Reset a fence indicating that drawing has been finished
     vkResetFences(device->get_handle(), 1, &drawingFinishedFences[currentFrame]);
-
-    vkResetCommandBuffer(graphicsCommandBuffers[currentFrame], 0);
     recordCommandBuffer(graphicsCommandBuffers[currentFrame], imageIndex);
 
-    //  Queue submit info, synchronisation objects
-    //   - wait until image has been acquired from swapchain before, meaning it is ready for use
-    //   - wait until updated transform and uniform buffer have been copied to device moemory
-    VkSemaphore waitSemaphores[] = {imageAquiredSemaphores[currentFrame], transferFinishedSemaphores[currentFrame]};
-    //  - signal a semaphore when processing of command buffer is finished
-    VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
-    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    //  Queue submit info
 
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.waitSemaphoreCount = 2;
-    submitInfo.pWaitSemaphores = waitSemaphores;
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = signalSemaphores;
-    submitInfo.pWaitDstStageMask = waitStages;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &graphicsCommandBuffers[currentFrame];
+    VkCommandBufferSubmitInfo commandBufferSubmitInfo{};
+    commandBufferSubmitInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
+    commandBufferSubmitInfo.commandBuffer = graphicsCommandBuffers[currentFrame];
 
-    if (vkQueueSubmit(device->getGraphicsQueue(), 1, &submitInfo, drawingFinishedFences[currentFrame]) != VK_SUCCESS)
+    VkSemaphoreSubmitInfo imageAquiredSemaphoreSubmitInfo{};
+    imageAquiredSemaphoreSubmitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
+    imageAquiredSemaphoreSubmitInfo.semaphore = imageAquiredSemaphores[currentFrame];
+
+    VkSemaphoreSubmitInfo renderFinishedSemaphoreSubmitInfo{};
+    renderFinishedSemaphoreSubmitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
+    renderFinishedSemaphoreSubmitInfo.semaphore = renderFinishedSemaphores[currentFrame];
+
+    VkSubmitInfo2 submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
+    submitInfo.waitSemaphoreInfoCount = 1;
+    submitInfo.pWaitSemaphoreInfos = &imageAquiredSemaphoreSubmitInfo;
+    submitInfo.signalSemaphoreInfoCount = 1;
+    submitInfo.pSignalSemaphoreInfos = &renderFinishedSemaphoreSubmitInfo;
+    submitInfo.commandBufferInfoCount = 1;
+    submitInfo.pCommandBufferInfos = &commandBufferSubmitInfo;
+
+    if (vkQueueSubmit2(device->getGraphicsQueue(), 1, &submitInfo, drawingFinishedFences[currentFrame]) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to submit draw command buffer!");
     }
@@ -511,15 +533,13 @@ void vulkan::drawFrame()
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = signalSemaphores;
-
-    VkSwapchainKHR swapChains[] = {swapchain->get_handle()};
+    presentInfo.pWaitSemaphores = &renderFinishedSemaphores[currentFrame];
     presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = swapChains;
+    presentInfo.pSwapchains = &swapchain->get_handle();
     presentInfo.pImageIndices = &imageIndex;
-    presentInfo.pResults = nullptr; // Optional
+    presentInfo.pResults = nullptr;
 
-    // Queue presentation of current frame's image after renderFinishedSemaphore
+    // Queue presentation of current frame's image after renderFinishedSemaphore[currentFrame] is signalled
     vkQueuePresentKHR(device->getPresentQueue(), &presentInfo);
 
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -530,7 +550,7 @@ void vulkan::createSyncObjects()
     imageAquiredSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     drawingFinishedFences.resize(MAX_FRAMES_IN_FLIGHT);
-    transferFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    transferFinishedFences.resize(MAX_FRAMES_IN_FLIGHT);
 
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -543,12 +563,11 @@ void vulkan::createSyncObjects()
         if (vkCreateSemaphore(device->get_handle(), &semaphoreInfo, nullptr, &imageAquiredSemaphores[i]) != VK_SUCCESS ||
             vkCreateSemaphore(device->get_handle(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
             vkCreateFence(device->get_handle(), &fenceInfo, nullptr, &drawingFinishedFences[i]) != VK_SUCCESS ||
-            vkCreateSemaphore(device->get_handle(), &semaphoreInfo, nullptr, &transferFinishedSemaphores[i]) != VK_SUCCESS)
+            vkCreateFence(device->get_handle(), &fenceInfo, nullptr, &transferFinishedFences[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create synchronization objects for a frame!");
         }
     }
-    spdlog::info("Created sync objects");
 }
 
 void vulkan::createVertexBindingDescriptors()
@@ -684,30 +703,54 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
+    /*VkCommandBufferResetFlags rflags = {};
+    vkResetCommandBuffer(transferCommandBuffers[currentFrame], rflags);*/
+    vkWaitForFences(device->get_handle(), 1, &transferFinishedFences[currentFrame], VK_FALSE, 2000000000);
+    vkResetFences(device->get_handle(), 1, &transferFinishedFences[currentFrame]);
+
     vkBeginCommandBuffer(transferCommandBuffers[currentFrame], &beginInfo);
 
     VkBufferCopy copyRegion{};
     copyRegion.srcOffset = 0; // Optional
     copyRegion.dstOffset = 0; // Optional
     copyRegion.size = size;
+
     vkCmdCopyBuffer(transferCommandBuffers[currentFrame], srcBuffer, dstBuffer, 1, &copyRegion);
-
-    vkEndCommandBuffer(transferCommandBuffers[currentFrame]);
-
-    VkSemaphore signalSemaphores[] = {transferFinishedSemaphores[currentFrame]};
-
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &transferCommandBuffers[currentFrame];
 
     if (withSemaphores)
     {
-        submitInfo.pSignalSemaphores = signalSemaphores;
-        submitInfo.signalSemaphoreCount = 1;
-    }
 
-    vkQueueSubmit(device->getTransferQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+        // Memory buffer barrier
+        VkBufferMemoryBarrier2 memBarrier{};
+        memBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
+        memBarrier.pNext = VK_NULL_HANDLE;
+        memBarrier.srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        memBarrier.srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT;
+        memBarrier.srcQueueFamilyIndex = device->getTransferQueueFamilyIdx();
+        memBarrier.dstQueueFamilyIndex = device->getGraphicsQueueFamilyIdx();
+        memBarrier.buffer = transformMatricesBuffer[currentFrame];
+        memBarrier.offset = 0;
+        memBarrier.size = VK_WHOLE_SIZE;
+
+        VkDependencyInfo depInfo{};
+        depInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+        depInfo.pBufferMemoryBarriers = &memBarrier;
+        depInfo.bufferMemoryBarrierCount = 1;
+
+        vkCmdPipelineBarrier2(transferCommandBuffers[currentFrame], &depInfo);
+    }
+    vkEndCommandBuffer(transferCommandBuffers[currentFrame]);
+
+    VkCommandBufferSubmitInfo cbSubmitInfo{};
+    cbSubmitInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
+    cbSubmitInfo.commandBuffer = transferCommandBuffers[currentFrame];
+
+    VkSubmitInfo2 submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
+    submitInfo.commandBufferInfoCount = 1;
+    submitInfo.pCommandBufferInfos = &cbSubmitInfo;
+
+    vkQueueSubmit2(device->getTransferQueue(), 1, &submitInfo, transferFinishedFences[currentFrame]);
 }
 
 void vulkan::createDescriptorSetLayouts()
@@ -729,7 +772,7 @@ void vulkan::createDescriptorSetLayouts()
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = descriptorSetLayoutBinding.size();
+    layoutInfo.bindingCount = static_cast<uint32_t>(descriptorSetLayoutBinding.size());
     layoutInfo.pBindings = descriptorSetLayoutBinding.data();
 
     if (vkCreateDescriptorSetLayout(device->get_handle(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
@@ -764,7 +807,7 @@ void vulkan::createDescriptorPool()
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.flags = 0;
-    poolInfo.poolSizeCount = poolSize.size();
+    poolInfo.poolSizeCount = static_cast<uint32_t>(poolSize.size());
     poolInfo.pPoolSizes = poolSize.data();
     poolInfo.maxSets = 20;
 

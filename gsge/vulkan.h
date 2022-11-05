@@ -59,6 +59,7 @@ class vulkan
     std::unique_ptr<RenderPass> renderPass;
     std::unique_ptr<Framebuffer> framebuffer;
 
+    uint32_t currentFrame = 0;
     const int MAX_FRAMES_IN_FLIGHT = 2;
     bool swapchainAspectChanged = true;
 
@@ -76,11 +77,11 @@ class vulkan
 
     std::vector<VkCommandBuffer> graphicsCommandBuffers;
     std::vector<VkCommandBuffer> transferCommandBuffers;
+
     std::vector<VkSemaphore> imageAquiredSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
     std::vector<VkFence> drawingFinishedFences;
-    std::vector<VkSemaphore> transferFinishedSemaphores;
-    uint32_t currentFrame = 0;
+    std::vector<VkFence> transferFinishedFences;
 
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
