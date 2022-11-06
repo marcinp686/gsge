@@ -46,12 +46,13 @@ class Device
     std::vector<VkSurfaceFormatKHR> surfaceFormats;
     std::vector<VkPresentModeKHR> surfacePresentModes;
 
-    VkPhysicalDeviceFeatures vulkan10Features{};
-    VkPhysicalDeviceVulkan13Features vulkan13features{};
-    VkPhysicalDeviceVulkan12Features vulkan12features{};
-    VkPhysicalDeviceVulkan11Features vulkan11features{};
-
-    VkPhysicalDeviceFeatures2 deviceFeatures{};
+    struct physicalDeviceFeatures
+    {
+        VkPhysicalDeviceFeatures2 v10{};
+        VkPhysicalDeviceVulkan11Features v11{};
+        VkPhysicalDeviceVulkan12Features v12{};
+        VkPhysicalDeviceVulkan13Features v13{};
+    } physDevFeaturesAvailable, physDevFeaturesSelected;
 
     std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME,
                                                   VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME};
@@ -61,6 +62,7 @@ class Device
     void findQueueFamilies();
     void createLogicalDevice();
     void createQueues();
+    void selectPhysicalDevFeatures();
 
     struct FamilyIndices
     {

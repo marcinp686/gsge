@@ -3,6 +3,7 @@
 Device::Device(VkInstance instance, VkSurfaceKHR surface) : instance(instance), surface(surface)
 {
     pickPhysicalDevice();
+    selectPhysicalDevFeatures();
     findQueueFamilies();
     createLogicalDevice();
     createQueues();
@@ -130,28 +131,21 @@ uint64_t Device::rateDeviceSuitability(VkPhysicalDevice dev)
 
     vkGetPhysicalDeviceProperties2(dev, &deviceProperties2);
 
-    // TODO: Stupid idea. deviceFeatures is passed to vkCreateDevice.pNext so all available features are enabled. Be more
-    // selective.
-
-    // Get Vulkan 1.0 device features
-    vkGetPhysicalDeviceFeatures(dev, &vulkan10Features);
-
     // Vulkan 1.3 device features struct
-    vulkan13features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+    physDevFeaturesAvailable.v13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
 
     // Vulkan 1.2 device features struct
-    vulkan12features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    vulkan12features.pNext = &vulkan13features;
+    physDevFeaturesAvailable.v12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    physDevFeaturesAvailable.v12.pNext = &physDevFeaturesAvailable.v13;
 
     // Vulkan 1.1 device features struct
-    vulkan11features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
-    vulkan11features.pNext = &vulkan12features;
+    physDevFeaturesAvailable.v11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+    physDevFeaturesAvailable.v11.pNext = &physDevFeaturesAvailable.v12;
 
-    // Query available features
-    deviceFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    deviceFeatures.features = vulkan10Features;
-    deviceFeatures.pNext = &vulkan11features;
-    vkGetPhysicalDeviceFeatures2(dev, &deviceFeatures);
+    // Query available features for Vulkan 1.0-1.3
+    physDevFeaturesAvailable.v10.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    physDevFeaturesAvailable.v10.pNext = &physDevFeaturesAvailable.v11;
+    vkGetPhysicalDeviceFeatures2(dev, &physDevFeaturesAvailable.v10);
 
     uint64_t score = 0;
 
@@ -176,12 +170,12 @@ uint64_t Device::rateDeviceSuitability(VkPhysicalDevice dev)
     score += deviceProperties2.properties.limits.maxImageDimension2D;
 
     // Application can't function without geometry shaders
-    if (!deviceFeatures.features.geometryShader)
+    if (!physDevFeaturesAvailable.v10.features.geometryShader)
     {
         return 0;
     }
 
-    spdlog::info("Device " + deviceInfoStr.str() + " score: " + std::to_string(score)); 
+    spdlog::info("Device " + deviceInfoStr.str() + " score: " + std::to_string(score));
 
     return score;
 }
@@ -269,14 +263,8 @@ void Device::createLogicalDevice()
     deviceCreateInfo.pEnabledFeatures = VK_NULL_HANDLE;
     deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
     deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
-    deviceCreateInfo.pNext = &deviceFeatures;
+    deviceCreateInfo.pNext = &physDevFeaturesSelected.v10;
 
-    /*VkPhysicalDeviceShaderDrawParameterFeatures pf{};
-    pf.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
-    pf.shaderDrawParameters = VK_TRUE;
-    pf.pNext = nullptr;
-
-    deviceCreateInfo.pNext = &pf;*/
     VkResult result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
     if (result != VK_SUCCESS)
     {
@@ -293,6 +281,13 @@ void Device::createQueues()
     infoMsg << "Device queues created: Presentation=" << presentQueue << "   Graphics=" << graphicsQueue
             << "   Transfer=" << transferQueue;
     spdlog::info(infoMsg.str());
+}
+
+void Device::selectPhysicalDevFeatures()
+{
+    // TODO: Stupid idea. All available features are enabled. Be more selective.
+    physDevFeaturesSelected = physDevFeaturesAvailable;
+    physDevFeaturesSelected.v10.features.robustBufferAccess = VK_FALSE;
 }
 
 VkSurfaceCapabilitiesKHR Device::getSurfaceCapabilities() const
