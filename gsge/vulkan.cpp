@@ -474,9 +474,14 @@ void vulkan::drawFrame()
     uint32_t imageIndex;
 
     // wait until queue has finished processing previous graphicsCommandBuffers[currentFrame]
-    vkWaitForFences(device->get_handle(), 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
+    EASY_BLOCK("Wait for Fence");
+
+    VkResult res1 = vkWaitForFences(device->get_handle(), 1, &drawingFinishedFences[currentFrame], VK_FALSE, 0);
+    EASY_VALUE("F1", (uint32_t)res1);
+    EASY_END_BLOCK;
 
     // Acquire next available image
+    EASY_BLOCK("Aquire next img");
     VkResult result = vkAcquireNextImageKHR(device->get_handle(), swapchain->get_handle(), UINT64_MAX,
                                             imageAquiredSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
@@ -484,26 +489,33 @@ void vulkan::drawFrame()
     {
         vkDeviceWaitIdle(device->get_handle());
         swapchain.reset(new Swapchain(device.get(), window, surface.get()));
+        renderPass.reset(new RenderPass(device.get(), swapchain.get()));
         framebuffer.reset(new Framebuffer(device.get(), swapchain.get(), renderPass.get()));
         swapchainAspectChanged = true;
-        vkAcquireNextImageKHR(device->get_handle(), swapchain->get_handle(), UINT64_MAX, imageAquiredSemaphores[currentFrame],
-                              VK_NULL_HANDLE, &imageIndex);
-        // return;
+        vkDeviceWaitIdle(device->get_handle());
+        /*vkAcquireNextImageKHR(device->get_handle(), swapchain->get_handle(), UINT64_MAX, imageAquiredSemaphores[currentFrame],
+                              VK_NULL_HANDLE, &imageIndex);*/
+        return;
     }
     else if (result != VK_SUCCESS)
     {
         throw std::runtime_error("failed to acquire swap chain image!");
     }
+    EASY_END_BLOCK;
 
+    EASY_BLOCK("Update buffers");
     updateTransformMatrixBuffer(currentFrame);
     updateUniformBuffer(currentFrame);
+    EASY_END_BLOCK;
 
+    EASY_BLOCK("Record command bufer");
     //  Reset a fence indicating that drawing has been finished
     vkResetFences(device->get_handle(), 1, &drawingFinishedFences[currentFrame]);
     recordCommandBuffer(graphicsCommandBuffers[currentFrame], imageIndex);
-
+    EASY_END_BLOCK;
     //  Queue submit info
 
+    EASY_BLOCK("Queue submit");
     VkCommandBufferSubmitInfo commandBufferSubmitInfo{};
     commandBufferSubmitInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
     commandBufferSubmitInfo.commandBuffer = graphicsCommandBuffers[currentFrame];
@@ -529,7 +541,9 @@ void vulkan::drawFrame()
     {
         throw std::runtime_error("failed to submit draw command buffer!");
     }
+    EASY_END_BLOCK;
 
+    EASY_BLOCK("Present");
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.waitSemaphoreCount = 1;
@@ -541,7 +555,7 @@ void vulkan::drawFrame()
 
     // Queue presentation of current frame's image after renderFinishedSemaphore[currentFrame] is signalled
     vkQueuePresentKHR(device->getPresentQueue(), &presentInfo);
-
+    EASY_END_BLOCK;
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
@@ -703,8 +717,6 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    /*VkCommandBufferResetFlags rflags = {};
-    vkResetCommandBuffer(transferCommandBuffers[currentFrame], rflags);*/
     vkWaitForFences(device->get_handle(), 1, &transferFinishedFences[currentFrame], VK_FALSE, 2000000000);
     vkResetFences(device->get_handle(), 1, &transferFinishedFences[currentFrame]);
 
