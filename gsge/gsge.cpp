@@ -14,7 +14,7 @@ void gsge::init()
     // window->settings.windowSize.height = 1080;
 
     // windowed mode - default
-    window->settings.windowSize.width = 1200;
+    window->settings.windowSize.width = 1000;
     window->settings.windowSize.height = 600;
 
     window->createWindow();

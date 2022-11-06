@@ -17,6 +17,7 @@ void Window::createWindow()
     if (settings.windowType == graphicsSettings::windowType::windowed)
     {
         window = glfwCreateWindow(settings.windowSize.width, settings.windowSize.height, "Vulkan", nullptr, nullptr);
+        glfwSetWindowPos(window, 700, 100);
     }
     else
     {
