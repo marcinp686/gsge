@@ -66,6 +66,8 @@ Instance::Instance()
 
     VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
 
+    setupDebugMessanger();
+
     if (result != VK_SUCCESS)
     {
         throw std::runtime_error("[ERROR] Vulkan instance creation failed.");
