@@ -20,9 +20,12 @@ class Window
     void setFullScreenMode();
     void setWindowedMode();
 
-    GLFWwindow *get_handle() const;
-
     graphicsSettings settings;
+
+    operator GLFWwindow *()
+    {
+        return window;
+    }
 
   private:
     GLFWwindow *window = nullptr;

@@ -8,12 +8,15 @@
 #include <vulkan/vulkan.h>
 #include <spdlog/spdlog.h>
 
+#include "instance.h"
+#include "surface.h"
+
 class Device
 {
   public:
-    Device(VkInstance instance, VkSurfaceKHR surface);
+    Device(std::shared_ptr<Instance> &instance, std::shared_ptr<Surface> &surface);
     ~Device();
-    VkDevice get_handle() const;
+    
     VkPhysicalDevice getPhysicalDeviceHandle() const;
 
     void querySurfaceCapabilities();
@@ -32,10 +35,17 @@ class Device
     std::vector<VkSurfaceFormatKHR> getSurfaceFormats() const;
     std::vector<VkPresentModeKHR> getSurfacePresentModes() const;
 
+    operator VkDevice()
+    {
+        return device;
+    }
+
   private:
-    VkInstance instance;
-    VkSurfaceKHR surface;
     VkDevice device;
+
+    std::shared_ptr<Instance> instance;
+    std::shared_ptr<Surface> surface;
+
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
     VkQueue presentQueue;

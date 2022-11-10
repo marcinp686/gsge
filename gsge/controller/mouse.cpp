@@ -1,16 +1,16 @@
 #include "Mouse.h"
 
-Mouse::Mouse(Window *window) : window(window)
+Mouse::Mouse(std::shared_ptr<Window> &window) : window(window)
 {
-    glfwSetInputMode(window->get_handle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwGetCursorPos(window->get_handle(), &x, &y);
+    glfwSetInputMode(*window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwGetCursorPos(*window, &x, &y);
     oldX = x;
     oldY = y;
 }
 
 void Mouse::update()
 {
-    glfwGetCursorPos(window->get_handle(), &x, &y);
+    glfwGetCursorPos(*window, &x, &y);
     if (oldX != x)
     {
         dx = oldX - x;

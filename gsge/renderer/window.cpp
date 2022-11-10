@@ -64,11 +64,6 @@ void Window::setWindowedMode()
     settings.windowType = graphicsSettings::windowType::windowed;
 }
 
-GLFWwindow *Window::get_handle() const
-{
-    return window;
-}
-
 static void framebufferResizeCallback(GLFWwindow *window, int width, int height)
 {
 }

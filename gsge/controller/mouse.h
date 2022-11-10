@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <GLFW/glfw3.h>
 
 #include "../renderer/window.h"
@@ -16,7 +17,7 @@ class Mouse
      *
      * \param window [in] Pointer to window class instance
      */
-    Mouse(Window *window);
+    Mouse(std::shared_ptr<Window> &window);
 
     /**
      * \brief Update mouse position and deltas
@@ -30,7 +31,7 @@ class Mouse
     double dy{0}; ///< Delta of Y mouse coordinate since previous call of update()
 
   private:
-    Window *window; ///< Pointer to window class instance
+    std::shared_ptr<Window> window; ///< Pointer to window class instance
 
     double  oldX{0}, oldY{0};
 };

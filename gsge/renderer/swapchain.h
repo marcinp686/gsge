@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <memory>
 
 #include <vulkan/vulkan.h>
 
@@ -15,20 +16,24 @@ class RenderPass;
 class Swapchain
 {
   public:
-    Swapchain(Device *device, Window *window, Surface *surface);
-    void createImages();
+    Swapchain(std::shared_ptr<Device> &device, std::shared_ptr<Window> &window, std::shared_ptr<Surface> &surface);    
     ~Swapchain();
-
+    
+    void createImages();
     void create();
     void cleanup();
 
-    VkSwapchainKHR &get_handle();
     VkExtent2D &getExtent();
     uint32_t getImageCount() const;
     VkFormat getImageFormat() const;
     VkImage &getImage(uint32_t index);
     VkImageView &getImageView(uint32_t index);
     VkImageView &getDepthImageView();
+
+    operator VkSwapchainKHR()
+    {
+        return swapchain;
+    }
 
   private:
     VkSwapchainKHR swapchain;
@@ -43,10 +48,10 @@ class Swapchain
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
 
-    Device *device;
-    Window *window;
-    Surface *surface;
-    RenderPass *renderPass;
+    std::shared_ptr<Device> device;
+    std::shared_ptr<Window> window;
+    std::shared_ptr<Surface> surface;
+    std::shared_ptr<RenderPass> renderPass;
 
     VkSurfaceFormatKHR chooseSwapSurfaceFormat();
     VkExtent2D chooseSwapExtent();

@@ -6,7 +6,7 @@ gsge::~gsge()
 
 void gsge::init()
 {
-    window = std::make_unique<Window>();
+    window = std::make_shared<Window>();
 
     // Fullscreen mode
     // window->settings.windowType = graphicsSettings::windowType::fullScreen;
@@ -20,8 +20,8 @@ void gsge::init()
     window->createWindow();
     window->setTitle("Giraffe Game Engine");
 
-    mouse = std::make_unique<Mouse>(window.get());
-    renderer = std::make_unique<vulkan>(window.get());
+    mouse = std::make_unique<Mouse>(window);
+    renderer = std::make_unique<vulkan>(window);
 
     level = std::make_unique<scene>();
     level->initScene();
@@ -52,7 +52,7 @@ void gsge::uploadBuffersToGPU()
 void gsge::mainLoop()
 {
     EASY_MAIN_THREAD;
-    while (!glfwWindowShouldClose(window->get_handle()))
+    while (!glfwWindowShouldClose(*window))
     {
         EASY_BLOCK("mainLoop", profiler::colors::Blue200);
         glfwPollEvents();
@@ -65,31 +65,31 @@ void gsge::mainLoop()
         }
 
         // W S A D controls
-        if (glfwGetKey(window->get_handle(), GLFW_KEY_A) == GLFW_PRESS)
+        if (glfwGetKey(*window, GLFW_KEY_A) == GLFW_PRESS)
         {
             level->mainCamera.strafeLeft(frameStats.dt);
         };
-        if (glfwGetKey(window->get_handle(), GLFW_KEY_D) == GLFW_PRESS)
+        if (glfwGetKey(*window, GLFW_KEY_D) == GLFW_PRESS)
         {
             level->mainCamera.strafeRight(frameStats.dt);
         };
-        if (glfwGetKey(window->get_handle(), GLFW_KEY_W) == GLFW_PRESS)
+        if (glfwGetKey(*window, GLFW_KEY_W) == GLFW_PRESS)
         {
             level->mainCamera.moveForward(frameStats.dt);
         };
-        if (glfwGetKey(window->get_handle(), GLFW_KEY_S) == GLFW_PRESS)
+        if (glfwGetKey(*window, GLFW_KEY_S) == GLFW_PRESS)
         {
             level->mainCamera.moveBackward(frameStats.dt);
         };
 
         // ESC exits application
-        if (glfwGetKey(window->get_handle(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        if (glfwGetKey(*window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         {
             break;
         };
 
         // Toggle full screen and windowed mode
-        if (glfwGetKey(window->get_handle(), GLFW_KEY_F) == GLFW_PRESS)
+        if (glfwGetKey(*window, GLFW_KEY_F) == GLFW_PRESS)
         {
             if (window->settings.windowType == graphicsSettings::windowType::windowed)
                 window->setFullScreenMode();

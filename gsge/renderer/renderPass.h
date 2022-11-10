@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 
 #include <vulkan/vulkan.h>
 
@@ -10,13 +11,17 @@ class Swapchain;
 class RenderPass
 {
   public:
-    RenderPass(Device *device, Swapchain *swapchain);
+    RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchain> &swapchain);
     ~RenderPass();
-    VkRenderPass &get_handle();
+    
+    operator VkRenderPass()
+    {
+        return renderPass;
+    }
 
   private:
     VkRenderPass renderPass;
 
-    Device *device;
-    Swapchain *swapchain;
+    std::shared_ptr<Device> device;
+    std::shared_ptr<Swapchain> swapchain;
 };

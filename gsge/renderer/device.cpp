@@ -1,6 +1,6 @@
 #include "device.h"
 
-Device::Device(VkInstance instance, VkSurfaceKHR surface) : instance(instance), surface(surface)
+Device::Device(std::shared_ptr<Instance>& instance, std::shared_ptr<Surface>& surface) : instance(instance), surface(surface)
 {
     pickPhysicalDevice();
     selectPhysicalDevFeatures();
@@ -15,11 +15,6 @@ Device::Device(VkInstance instance, VkSurfaceKHR surface) : instance(instance), 
 Device::~Device()
 {
     vkDestroyDevice(device, nullptr);
-}
-
-VkDevice Device::get_handle() const
-{
-    return device;
 }
 
 VkPhysicalDevice Device::getPhysicalDeviceHandle() const
@@ -59,30 +54,30 @@ VkQueue Device::getPresentQueue() const
 
 void Device::querySurfaceCapabilities()
 {
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, *surface, &surfaceCapabilities);
 }
 
 void Device::enumerateSurfaceFormats()
 {
     uint32_t formatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, *surface, &formatCount, nullptr);
 
     if (formatCount != 0)
     {
         surfaceFormats.resize(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, surfaceFormats.data());
+        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, *surface, &formatCount, surfaceFormats.data());
     }
 }
 
 void Device::enumerateSurfacePresentModes()
 {
     uint32_t presentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, *surface, &presentModeCount, nullptr);
 
     if (presentModeCount != 0)
     {
         surfacePresentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, surfacePresentModes.data());
+        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, *surface, &presentModeCount, surfacePresentModes.data());
     }
 }
 
@@ -90,7 +85,7 @@ void Device::pickPhysicalDevice()
 {
     // query the number of devices in system
     uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+    vkEnumeratePhysicalDevices(*instance, &deviceCount, nullptr);
 
     if (deviceCount == 0)
     {
@@ -98,7 +93,7 @@ void Device::pickPhysicalDevice()
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
-    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+    vkEnumeratePhysicalDevices(*instance, &deviceCount, devices.data());
 
     // Use an ordered map to automatically sort candidates by increasing score
     std::multimap<uint64_t, VkPhysicalDevice> candidates;
@@ -200,7 +195,7 @@ void Device::findQueueFamilies()
         // Check for presentation support in Queue i;
 
         VkBool32 presentationSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentationSupport);
+        vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, *surface, &presentationSupport);
 
         if (presentationSupport == VK_TRUE)
         {

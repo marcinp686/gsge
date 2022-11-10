@@ -1,8 +1,8 @@
 #include "renderPass.h"
 
-RenderPass::RenderPass(Device *_device, Swapchain *_swapchain) : device(_device), swapchain(_swapchain)
+RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchain> &swapchain)
+    : device(device), swapchain(swapchain)
 {
-
     VkAttachmentDescription colorAttachment{};
     colorAttachment.format = swapchain->getImageFormat();
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -56,7 +56,7 @@ RenderPass::RenderPass(Device *_device, Swapchain *_swapchain) : device(_device)
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    if (vkCreateRenderPass(device->get_handle(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
+    if (vkCreateRenderPass(*device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create render pass!");
     }
@@ -66,10 +66,5 @@ RenderPass::RenderPass(Device *_device, Swapchain *_swapchain) : device(_device)
 
 RenderPass::~RenderPass()
 {
-    vkDestroyRenderPass(device->get_handle(), renderPass, nullptr);
-}
-
-VkRenderPass &RenderPass::get_handle()
-{
-    return renderPass;
+    vkDestroyRenderPass(*device, renderPass, nullptr);
 }

@@ -13,12 +13,12 @@ void vulkan::update()
 
 void vulkan::init()
 {
-    instance = std::make_unique<Instance>();
-    surface = std::make_unique<Surface>(instance->get_handle(), window->get_handle());
-    device = std::make_unique<Device>(instance->get_handle(), surface->get_handle());
-    swapchain = std::make_unique<Swapchain>(device.get(), window, surface.get());
-    renderPass = std::make_unique<RenderPass>(device.get(), swapchain.get());
-    framebuffer = std::make_unique<Framebuffer>(device.get(), swapchain.get(), renderPass.get());
+    instance = std::make_shared<Instance>();
+    surface = std::make_shared<Surface>(instance, window);
+    device = std::make_shared<Device>(instance, surface);
+    swapchain = std::make_shared<Swapchain>(device, window, surface);
+    renderPass = std::make_shared<RenderPass>(device, swapchain);
+    framebuffer = std::make_shared<Framebuffer>(device, swapchain, renderPass);
 
     // 1. Create vertex binding descriptors for vertex stage buffers
     createVertexBindingDescriptors();
@@ -92,7 +92,7 @@ VkShaderModule vulkan::createShaderModule(const std::vector<char> &code)
     createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
     VkShaderModule shaderModule;
-    if (vkCreateShaderModule(device->get_handle(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+    if (vkCreateShaderModule(*device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create shader module!");
     }
@@ -102,49 +102,49 @@ VkShaderModule vulkan::createShaderModule(const std::vector<char> &code)
 
 void vulkan::cleanup()
 {
-    vkDeviceWaitIdle(device->get_handle());
+    vkDeviceWaitIdle(*device);
 
     // destroy uniform buffers
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        vkDestroyBuffer(device->get_handle(), uniformBuffers[i], nullptr);
-        vkFreeMemory(device->get_handle(), uniformBuffersMemory[i], nullptr);
+        vkDestroyBuffer(*device, uniformBuffers[i], nullptr);
+        vkFreeMemory(*device, uniformBuffersMemory[i], nullptr);
 
-        vkDestroyBuffer(device->get_handle(), transformMatricesBuffer[i], nullptr);
-        vkFreeMemory(device->get_handle(), transformMatricesBufferMemory[i], nullptr);
+        vkDestroyBuffer(*device, transformMatricesBuffer[i], nullptr);
+        vkFreeMemory(*device, transformMatricesBufferMemory[i], nullptr);
 
-        vkDestroyBuffer(device->get_handle(), transformMatricesStagingBuffer[i], nullptr);
-        vkFreeMemory(device->get_handle(), transformMatricesStagingBufferMemory[i], nullptr);
+        vkDestroyBuffer(*device, transformMatricesStagingBuffer[i], nullptr);
+        vkFreeMemory(*device, transformMatricesStagingBufferMemory[i], nullptr);
     }
 
-    vkDestroyDescriptorPool(device->get_handle(), descriptorPool, nullptr);
-    vkDestroyDescriptorSetLayout(device->get_handle(), descriptorSetLayout, nullptr);
+    vkDestroyDescriptorPool(*device, descriptorPool, nullptr);
+    vkDestroyDescriptorSetLayout(*device, descriptorSetLayout, nullptr);
 
-    vkDestroyBuffer(device->get_handle(), vertexBuffer, nullptr);
-    vkFreeMemory(device->get_handle(), vertexBufferMemory, nullptr);
+    vkDestroyBuffer(*device, vertexBuffer, nullptr);
+    vkFreeMemory(*device, vertexBufferMemory, nullptr);
 
-    vkDestroyBuffer(device->get_handle(), indexBuffer, nullptr);
-    vkFreeMemory(device->get_handle(), indexBufferMemory, nullptr);
+    vkDestroyBuffer(*device, indexBuffer, nullptr);
+    vkFreeMemory(*device, indexBufferMemory, nullptr);
 
-    vkDestroyBuffer(device->get_handle(), vertexNormalsBuffer, nullptr);
-    vkFreeMemory(device->get_handle(), vertexNormalsBufferMemory, nullptr);
+    vkDestroyBuffer(*device, vertexNormalsBuffer, nullptr);
+    vkFreeMemory(*device, vertexNormalsBufferMemory, nullptr);
 
-    vkDestroyPipeline(device->get_handle(), graphicsPipeline, nullptr);
-    vkDestroyPipelineLayout(device->get_handle(), pipelineLayout, nullptr);
+    vkDestroyPipeline(*device, graphicsPipeline, nullptr);
+    vkDestroyPipelineLayout(*device, pipelineLayout, nullptr);
 
     framebuffer.reset();
     renderPass.reset();
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        vkDestroySemaphore(device->get_handle(), imageAquiredSemaphores[i], nullptr);
-        vkDestroySemaphore(device->get_handle(), renderFinishedSemaphores[i], nullptr);
-        vkDestroyFence(device->get_handle(), transferFinishedFences[i], nullptr);
-        vkDestroyFence(device->get_handle(), drawingFinishedFences[i], nullptr);
+        vkDestroySemaphore(*device, imageAquiredSemaphores[i], nullptr);
+        vkDestroySemaphore(*device, renderFinishedSemaphores[i], nullptr);
+        vkDestroyFence(*device, transferFinishedFences[i], nullptr);
+        vkDestroyFence(*device, drawingFinishedFences[i], nullptr);
     }
 
-    vkDestroyCommandPool(device->get_handle(), graphicsCommandPool, nullptr);
-    vkDestroyCommandPool(device->get_handle(), transferCommandPool, nullptr);
+    vkDestroyCommandPool(*device, graphicsCommandPool, nullptr);
+    vkDestroyCommandPool(*device, transferCommandPool, nullptr);
 
     swapchain.reset();
     device.reset();
@@ -276,7 +276,7 @@ void vulkan::createGraphicsPipeline()
     // pipelineLayoutInfo.pushConstantRangeCount = 0;
     // pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
-    if (vkCreatePipelineLayout(device->get_handle(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+    if (vkCreatePipelineLayout(*device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create pipeline layout!");
     }
@@ -294,19 +294,18 @@ void vulkan::createGraphicsPipeline()
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = &dynamicState;
     pipelineInfo.layout = pipelineLayout;
-    pipelineInfo.renderPass = renderPass->get_handle();
+    pipelineInfo.renderPass = *renderPass;
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
     pipelineInfo.basePipelineIndex = -1;              // Optional
 
-    if (vkCreateGraphicsPipelines(device->get_handle(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) !=
-        VK_SUCCESS)
+    if (vkCreateGraphicsPipelines(*device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create graphics pipeline!");
     }
 
-    vkDestroyShaderModule(device->get_handle(), fragShaderModule, nullptr);
-    vkDestroyShaderModule(device->get_handle(), vertShaderModule, nullptr);
+    vkDestroyShaderModule(*device, fragShaderModule, nullptr);
+    vkDestroyShaderModule(*device, vertShaderModule, nullptr);
 
     spdlog::info("Created graphics pipeline");
 }
@@ -318,7 +317,7 @@ void vulkan::createGraphicsCommandPool()
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolInfo.queueFamilyIndex = device->getGraphicsQueueFamilyIdx();
 
-    if (vkCreateCommandPool(device->get_handle(), &poolInfo, nullptr, &graphicsCommandPool) != VK_SUCCESS)
+    if (vkCreateCommandPool(*device, &poolInfo, nullptr, &graphicsCommandPool) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create command pool!");
     }
@@ -333,7 +332,7 @@ void vulkan::createTransferCommandPool()
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolInfo.queueFamilyIndex = device->getTransferQueueFamilyIdx();
 
-    if (vkCreateCommandPool(device->get_handle(), &poolInfo, nullptr, &transferCommandPool) != VK_SUCCESS)
+    if (vkCreateCommandPool(*device, &poolInfo, nullptr, &transferCommandPool) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create transfer command pool!");
     }
@@ -350,7 +349,7 @@ void vulkan::createGraphicsCommandBuffers()
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = static_cast<uint32_t>(graphicsCommandBuffers.size());
 
-    if (vkAllocateCommandBuffers(device->get_handle(), &allocInfo, graphicsCommandBuffers.data()) != VK_SUCCESS)
+    if (vkAllocateCommandBuffers(*device, &allocInfo, graphicsCommandBuffers.data()) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate command buffers!");
     }
@@ -367,7 +366,7 @@ void vulkan::createTransferCommandBuffers()
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = static_cast<uint32_t>(transferCommandBuffers.size());
 
-    if (vkAllocateCommandBuffers(device->get_handle(), &allocInfo, transferCommandBuffers.data()) != VK_SUCCESS)
+    if (vkAllocateCommandBuffers(*device, &allocInfo, transferCommandBuffers.data()) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate command buffers!");
     }
@@ -412,8 +411,8 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
     clearValues[0].color = {0.05f, 0.05f, 0.05f, 1.0f};
     clearValues[1].depthStencil = {1.0f, 0};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass->get_handle();
-    renderPassInfo.framebuffer = framebuffer->getBuffer(imageIndex);
+    renderPassInfo.renderPass = *renderPass;
+    renderPassInfo.framebuffer = (*framebuffer)[imageIndex];
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = swapchain->getExtent();
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -476,24 +475,24 @@ void vulkan::drawFrame()
     // wait until queue has finished processing previous graphicsCommandBuffers[currentFrame]
     EASY_BLOCK("Wait for Fence");
 
-    VkResult res1 = vkWaitForFences(device->get_handle(), 1, &drawingFinishedFences[currentFrame], VK_FALSE, 0);
+    VkResult res1 = vkWaitForFences(*device, 1, &drawingFinishedFences[currentFrame], VK_FALSE, 0);
     EASY_VALUE("F1", (uint32_t)res1);
     EASY_END_BLOCK;
 
     // Acquire next available image
     EASY_BLOCK("Aquire next img");
-    VkResult result = vkAcquireNextImageKHR(device->get_handle(), swapchain->get_handle(), UINT64_MAX,
-                                            imageAquiredSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+    VkResult result =
+        vkAcquireNextImageKHR(*device, *swapchain, UINT64_MAX, imageAquiredSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR /*|| window->framebufferResized()*/)
     {
-        vkDeviceWaitIdle(device->get_handle());
-        swapchain.reset(new Swapchain(device.get(), window, surface.get()));
-        renderPass.reset(new RenderPass(device.get(), swapchain.get()));
-        framebuffer.reset(new Framebuffer(device.get(), swapchain.get(), renderPass.get()));
+        vkDeviceWaitIdle(*device);
+        swapchain.reset(new Swapchain(device, window, surface));
+        renderPass.reset(new RenderPass(device, swapchain));
+        framebuffer.reset(new Framebuffer(device, swapchain, renderPass));
         swapchainAspectChanged = true;
-        vkDeviceWaitIdle(device->get_handle());
-        /*vkAcquireNextImageKHR(device->get_handle(), swapchain->get_handle(), UINT64_MAX, imageAquiredSemaphores[currentFrame],
+        vkDeviceWaitIdle(*device);
+        /*vkAcquireNextImageKHR(*device, swapchain->get_handle(), UINT64_MAX, imageAquiredSemaphores[currentFrame],
                               VK_NULL_HANDLE, &imageIndex);*/
         return;
     }
@@ -510,7 +509,7 @@ void vulkan::drawFrame()
 
     EASY_BLOCK("Record command bufer");
     //  Reset a fence indicating that drawing has been finished
-    vkResetFences(device->get_handle(), 1, &drawingFinishedFences[currentFrame]);
+    vkResetFences(*device, 1, &drawingFinishedFences[currentFrame]);
     recordCommandBuffer(graphicsCommandBuffers[currentFrame], imageIndex);
     EASY_END_BLOCK;
     //  Queue submit info
@@ -544,12 +543,13 @@ void vulkan::drawFrame()
     EASY_END_BLOCK;
 
     EASY_BLOCK("Present");
+    VkSwapchainKHR swapchains = {*swapchain};
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = &renderFinishedSemaphores[currentFrame];
     presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = &swapchain->get_handle();
+    presentInfo.pSwapchains = &swapchains;
     presentInfo.pImageIndices = &imageIndex;
     presentInfo.pResults = nullptr;
 
@@ -574,10 +574,10 @@ void vulkan::createSyncObjects()
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        if (vkCreateSemaphore(device->get_handle(), &semaphoreInfo, nullptr, &imageAquiredSemaphores[i]) != VK_SUCCESS ||
-            vkCreateSemaphore(device->get_handle(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-            vkCreateFence(device->get_handle(), &fenceInfo, nullptr, &drawingFinishedFences[i]) != VK_SUCCESS ||
-            vkCreateFence(device->get_handle(), &fenceInfo, nullptr, &transferFinishedFences[i]) != VK_SUCCESS)
+        if (vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &imageAquiredSemaphores[i]) != VK_SUCCESS ||
+            vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
+            vkCreateFence(*device, &fenceInfo, nullptr, &drawingFinishedFences[i]) != VK_SUCCESS ||
+            vkCreateFence(*device, &fenceInfo, nullptr, &transferFinishedFences[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create synchronization objects for a frame!");
         }
@@ -623,16 +623,16 @@ void vulkan::createVertexBuffer()
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
     void *data;
-    vkMapMemory(device->get_handle(), stagingBufferMemory, 0, bufferSize, 0, &data);
+    vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data);
     memcpy(data, vertices.data(), static_cast<size_t>(bufferSize));
-    vkUnmapMemory(device->get_handle(), stagingBufferMemory);
+    vkUnmapMemory(*device, stagingBufferMemory);
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
 
     copyBuffer(stagingBuffer, vertexBuffer, bufferSize, false);
-    vkDestroyBuffer(device->get_handle(), stagingBuffer, nullptr);
-    vkFreeMemory(device->get_handle(), stagingBufferMemory, nullptr);
+    vkDestroyBuffer(*device, stagingBuffer, nullptr);
+    vkFreeMemory(*device, stagingBufferMemory, nullptr);
 }
 
 uint32_t vulkan::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
@@ -690,25 +690,25 @@ void vulkan::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryP
     bufferInfo.usage = usage;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateBuffer(device->get_handle(), &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
+    if (vkCreateBuffer(*device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create buffer!");
     }
 
     VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(device->get_handle(), buffer, &memRequirements);
+    vkGetBufferMemoryRequirements(*device, buffer, &memRequirements);
 
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-    if (vkAllocateMemory(device->get_handle(), &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+    if (vkAllocateMemory(*device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate buffer memory!");
     }
 
-    vkBindBufferMemory(device->get_handle(), buffer, bufferMemory, 0);
+    vkBindBufferMemory(*device, buffer, bufferMemory, 0);
 }
 
 void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, bool withSemaphores)
@@ -717,8 +717,8 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    vkWaitForFences(device->get_handle(), 1, &transferFinishedFences[currentFrame], VK_FALSE, 2000000000);
-    vkResetFences(device->get_handle(), 1, &transferFinishedFences[currentFrame]);
+    vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_FALSE, 2000000000);
+    vkResetFences(*device, 1, &transferFinishedFences[currentFrame]);
 
     vkBeginCommandBuffer(transferCommandBuffers[currentFrame], &beginInfo);
 
@@ -787,7 +787,7 @@ void vulkan::createDescriptorSetLayouts()
     layoutInfo.bindingCount = static_cast<uint32_t>(descriptorSetLayoutBinding.size());
     layoutInfo.pBindings = descriptorSetLayoutBinding.data();
 
-    if (vkCreateDescriptorSetLayout(device->get_handle(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
+    if (vkCreateDescriptorSetLayout(*device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create descriptor set layout!");
     }
@@ -823,7 +823,7 @@ void vulkan::createDescriptorPool()
     poolInfo.pPoolSizes = poolSize.data();
     poolInfo.maxSets = 20;
 
-    if (vkCreateDescriptorPool(device->get_handle(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
+    if (vkCreateDescriptorPool(*device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create descriptor pool!");
     }
@@ -839,7 +839,7 @@ void vulkan::createDescriptorSets()
     allocInfo.pSetLayouts = layouts.data();
 
     descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-    if (vkAllocateDescriptorSets(device->get_handle(), &allocInfo, descriptorSets.data()) != VK_SUCCESS)
+    if (vkAllocateDescriptorSets(*device, &allocInfo, descriptorSets.data()) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
@@ -876,7 +876,7 @@ void vulkan::createDescriptorSets()
         descriptorWrite[1].descriptorCount = 1;
         descriptorWrite[1].pBufferInfo = &bufferInfo[1];
 
-        vkUpdateDescriptorSets(device->get_handle(), 2, descriptorWrite.data(), 0, nullptr);
+        vkUpdateDescriptorSets(*device, 2, descriptorWrite.data(), 0, nullptr);
     }
 }
 
@@ -888,9 +888,9 @@ void vulkan::updateUniformBufferEx(UniformBufferObject ubo)
 void vulkan::updateUniformBuffer(uint32_t currentImage)
 {
     void *data;
-    vkMapMemory(device->get_handle(), uniformBuffersMemory[currentImage], 0, sizeof(local_ubo), 0, &data);
+    vkMapMemory(*device, uniformBuffersMemory[currentImage], 0, sizeof(local_ubo), 0, &data);
     memcpy(data, &local_ubo, sizeof(local_ubo));
-    vkUnmapMemory(device->get_handle(), uniformBuffersMemory[currentImage]);
+    vkUnmapMemory(*device, uniformBuffersMemory[currentImage]);
 }
 
 void vulkan::createIndexBuffer()
@@ -903,17 +903,17 @@ void vulkan::createIndexBuffer()
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
     void *data;
-    vkMapMemory(device->get_handle(), stagingBufferMemory, 0, bufferSize, 0, &data);
+    vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data);
     memcpy(data, indices.data(), static_cast<size_t>(bufferSize));
-    vkUnmapMemory(device->get_handle(), stagingBufferMemory);
+    vkUnmapMemory(*device, stagingBufferMemory);
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
     copyBuffer(stagingBuffer, indexBuffer, bufferSize, false);
 
-    vkDestroyBuffer(device->get_handle(), stagingBuffer, nullptr);
-    vkFreeMemory(device->get_handle(), stagingBufferMemory, nullptr);
+    vkDestroyBuffer(*device, stagingBuffer, nullptr);
+    vkFreeMemory(*device, stagingBufferMemory, nullptr);
 }
 
 void vulkan::createTransformMatricesBuffer()
@@ -940,9 +940,9 @@ void vulkan::updateTransformMatrixBuffer(uint32_t currentImage)
 {
     VkDeviceSize bufferSize = sizeof(transformMatrices[0]) * transformMatrices.size();
     void *data;
-    vkMapMemory(device->get_handle(), transformMatricesStagingBufferMemory[currentImage], 0, bufferSize, 0, &data);
+    vkMapMemory(*device, transformMatricesStagingBufferMemory[currentImage], 0, bufferSize, 0, &data);
     memcpy(data, transformMatrices.data(), static_cast<size_t>(bufferSize));
-    vkUnmapMemory(device->get_handle(), transformMatricesStagingBufferMemory[currentImage]);
+    vkUnmapMemory(*device, transformMatricesStagingBufferMemory[currentImage]);
     copyBuffer(transformMatricesStagingBuffer[currentImage], transformMatricesBuffer[currentImage], bufferSize, true);
 }
 
@@ -974,15 +974,15 @@ void vulkan::createVertexNormalsBuffer()
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
     void *data;
-    vkMapMemory(device->get_handle(), stagingBufferMemory, 0, bufferSize, 0, &data);
+    vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data);
     memcpy(data, vertexNormals.data(), static_cast<size_t>(bufferSize));
-    vkUnmapMemory(device->get_handle(), stagingBufferMemory);
+    vkUnmapMemory(*device, stagingBufferMemory);
 
     createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexNormalsBuffer, vertexNormalsBufferMemory);
 
     copyBuffer(stagingBuffer, vertexNormalsBuffer, bufferSize, false);
 
-    vkDestroyBuffer(device->get_handle(), stagingBuffer, nullptr);
-    vkFreeMemory(device->get_handle(), stagingBufferMemory, nullptr);
+    vkDestroyBuffer(*device, stagingBuffer, nullptr);
+    vkFreeMemory(*device, stagingBufferMemory, nullptr);
 }

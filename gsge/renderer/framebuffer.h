@@ -9,14 +9,18 @@
 class Framebuffer
 {
   public:
-    Framebuffer(Device *device, Swapchain *swapchain, RenderPass *renderPass);
-    ~Framebuffer();
-    VkFramebuffer &getBuffer(uint32_t index);
+    Framebuffer(std::shared_ptr<Device> &device, std::shared_ptr<Swapchain> &swapchain, std::shared_ptr<RenderPass> &renderPass);
+    ~Framebuffer();   
+
+    VkFramebuffer &operator[](uint32_t index)
+    {
+        return buffers[index];
+    }
 
   private:
-    Device *device;
-    Swapchain *swapchain;
-    RenderPass *renderPass;
+    std::shared_ptr<Device> device;
+    std::shared_ptr<Swapchain> swapchain;
+    std::shared_ptr<RenderPass> renderPass;
 
     std::vector<VkFramebuffer> buffers;
 

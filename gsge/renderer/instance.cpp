@@ -129,11 +129,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Instance::debugCallback(VkDebugUtilsMessageSeveri
     return VK_FALSE;
 }
 
-VkInstance Instance::get_handle() const
-{
-    return instance;
-}
-
 void Instance::setupDebugMessanger()
 {
     if (!enableValidationLayers)

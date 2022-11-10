@@ -33,7 +33,7 @@ class gsge
   private:
     stats frameStats;
 
-    std::unique_ptr<Window> window;
+    std::shared_ptr<Window> window;
     std::unique_ptr<Mouse> mouse;
     std::unique_ptr<vulkan> renderer;
     std::unique_ptr<scene> level;

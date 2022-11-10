@@ -30,7 +30,7 @@
 class vulkan
 {
   public:
-    vulkan(Window *_window) : window(_window){};
+    vulkan(std::shared_ptr<Window> &window) : window(window){};
     ~vulkan();
 
     void init();
@@ -47,17 +47,18 @@ class vulkan
     void updateTransformMatrixBuffer(uint32_t currentImage);
 
     bool viewAspectChanged();
+
     float getViewAspect();
 
-    Window *window;
+    std::shared_ptr<Window> window;
 
   private:
-    std::unique_ptr<Instance> instance;
-    std::unique_ptr<Surface> surface;
-    std::unique_ptr<Device> device;
-    std::unique_ptr<Swapchain> swapchain;
-    std::unique_ptr<RenderPass> renderPass;
-    std::unique_ptr<Framebuffer> framebuffer;
+    std::shared_ptr<Instance> instance;
+    std::shared_ptr<Surface> surface;
+    std::shared_ptr<Device> device;
+    std::shared_ptr<Swapchain> swapchain;
+    std::shared_ptr<RenderPass> renderPass;
+    std::shared_ptr<Framebuffer> framebuffer;
 
     uint32_t currentFrame = 0;
     const int MAX_FRAMES_IN_FLIGHT = 2;

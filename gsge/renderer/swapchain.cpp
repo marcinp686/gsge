@@ -1,6 +1,7 @@
 #include "swapchain.h"
 
-Swapchain::Swapchain(Device *device, Window *window, Surface *surface) : device(device), window(window), surface(surface)
+Swapchain::Swapchain(std::shared_ptr<Device> &device, std::shared_ptr<Window> &window, std::shared_ptr<Surface> &surface)
+    : device(device), window(window), surface(surface)
 {
     device->querySurfaceCapabilities();
     create();
@@ -11,9 +12,9 @@ Swapchain::Swapchain(Device *device, Window *window, Surface *surface) : device(
 
 void Swapchain::createImages()
 {
-    vkGetSwapchainImagesKHR(device->get_handle(), swapchain, &imageCount, nullptr);
+    vkGetSwapchainImagesKHR(*device, swapchain, &imageCount, nullptr);
     images.resize(imageCount);
-    vkGetSwapchainImagesKHR(device->get_handle(), swapchain, &imageCount, images.data());
+    vkGetSwapchainImagesKHR(*device, swapchain, &imageCount, images.data());
     spdlog::info("Created swapchain images");
 }
 
@@ -38,7 +39,7 @@ void Swapchain::create()
 
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = surface->get_handle();
+    createInfo.surface = *surface;
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -54,7 +55,7 @@ void Swapchain::create()
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    if (vkCreateSwapchainKHR(device->get_handle(), &createInfo, nullptr, &swapchain) != VK_SUCCESS)
+    if (vkCreateSwapchainKHR(*device, &createInfo, nullptr, &swapchain) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create swapchain!");
     }
@@ -67,16 +68,16 @@ void Swapchain::create()
 
 void Swapchain::cleanup()
 {
-    vkDestroyImageView(device->get_handle(), depthImageView, nullptr);
-    vkDestroyImage(device->get_handle(), depthImage, nullptr);
-    vkFreeMemory(device->get_handle(), depthImageMemory, nullptr);
+    vkDestroyImageView(*device, depthImageView, nullptr);
+    vkDestroyImage(*device, depthImage, nullptr);
+    vkFreeMemory(*device, depthImageMemory, nullptr);
 
     for (auto imageView : imageViews)
     {
-        vkDestroyImageView(device->get_handle(), imageView, nullptr);
+        vkDestroyImageView(*device, imageView, nullptr);
     }
 
-    vkDestroySwapchainKHR(device->get_handle(), swapchain, nullptr);
+    vkDestroySwapchainKHR(*device, swapchain, nullptr);
 }
 
 VkSurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat()
@@ -122,11 +123,6 @@ VkPresentModeKHR Swapchain::chooseSwapPresentMode()
     }
 
     return VK_PRESENT_MODE_IMMEDIATE_KHR; //    FIFO_KHR;
-}
-
-VkSwapchainKHR &Swapchain::get_handle()
-{
-    return swapchain;
 }
 
 uint32_t Swapchain::getImageCount() const
@@ -185,7 +181,7 @@ VkImageView Swapchain::createImageView(VkImage image, VkFormat format, VkImageAs
     viewInfo.subresourceRange.layerCount = 1;
 
     VkImageView imageView;
-    if (vkCreateImageView(device->get_handle(), &viewInfo, nullptr, &imageView) != VK_SUCCESS)
+    if (vkCreateImageView(*device, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create texture image view!");
     }
@@ -220,25 +216,25 @@ void Swapchain::createImage(uint32_t width, uint32_t height, VkFormat format, Vk
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateImage(device->get_handle(), &imageInfo, nullptr, &image) != VK_SUCCESS)
+    if (vkCreateImage(*device, &imageInfo, nullptr, &image) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create image!");
     }
 
     VkMemoryRequirements memRequirements;
-    vkGetImageMemoryRequirements(device->get_handle(), image, &memRequirements);
+    vkGetImageMemoryRequirements(*device, image, &memRequirements);
 
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-    if (vkAllocateMemory(device->get_handle(), &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
+    if (vkAllocateMemory(*device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate image memory!");
     }
 
-    vkBindImageMemory(device->get_handle(), image, imageMemory, 0);
+    vkBindImageMemory(*device, image, imageMemory, 0);
 }
 
 uint32_t Swapchain::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)

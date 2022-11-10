@@ -14,7 +14,10 @@ class Instance
     Instance();
     ~Instance();
 
-    VkInstance get_handle() const;
+    operator VkInstance()
+    {
+        return instance;
+    }
 
   private:
     VkInstance instance{VK_NULL_HANDLE};
@@ -28,7 +31,7 @@ class Instance
                                                         VkDebugUtilsMessageTypeFlagsEXT messageType,
                                                         const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
                                                         void *pUserData);
-    void setupDebugMessanger();
+    void setupDebugMessanger();  
 
 #ifdef NDEBUG
     const bool enableValidationLayers = false;
