@@ -198,6 +198,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
     <ClCompile Include="controller\mouse.cpp" />
     <ClCompile Include="core\stats.cpp" />
     <ClCompile Include="gsge.cpp" />
+    <ClCompile Include="renderer\debugger.cpp" />
     <ClCompile Include="renderer\device.cpp" />
     <ClCompile Include="renderer\framebuffer.cpp" />
     <ClCompile Include="renderer\instance.cpp" />
@@ -210,7 +211,6 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
     <ClCompile Include="timer.cpp" />
     <ClCompile Include="vulkan.cpp" />
     <ClCompile Include="GDemo.cpp" />
-    <ClCompile Include="vkProxies.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="component\camera.h" />
@@ -223,6 +223,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
     <ClInclude Include="controller\mouse.h" />
     <ClInclude Include="core\stats.h" />
     <ClInclude Include="gsge.h" />
+    <ClInclude Include="renderer\debugger.h" />
     <ClInclude Include="renderer\device.h" />
     <ClInclude Include="renderer\framebuffer.h" />
     <ClInclude Include="renderer\instance.h" />
@@ -235,7 +236,6 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
     <ClInclude Include="scene.h" />
     <ClInclude Include="timer.h" />
     <ClInclude Include="vulkan.h" />
-    <ClInclude Include="vkProxies.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\entt\natvis\entt\config.natvis" />

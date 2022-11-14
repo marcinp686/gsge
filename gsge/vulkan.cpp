@@ -14,6 +14,11 @@ void vulkan::update()
 void vulkan::init()
 {
     instance = std::make_shared<Instance>();
+
+#ifndef NDEBUG
+    debugger = std::make_unique<Debugger>(instance);
+#endif // !NDEBUG
+
     surface = std::make_shared<Surface>(instance, window);
     device = std::make_shared<Device>(instance, surface);
     swapchain = std::make_shared<Swapchain>(device, window, surface);
@@ -149,6 +154,7 @@ void vulkan::cleanup()
     swapchain.reset();
     device.reset();
     surface.reset();
+    debugger.reset();
     instance.reset();
 }
 

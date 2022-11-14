@@ -30,7 +30,7 @@ class Swapchain
     VkImageView &getImageView(uint32_t index);
     VkImageView &getDepthImageView();
 
-    operator VkSwapchainKHR()
+    operator VkSwapchainKHR() const
     {
         return swapchain;
     }

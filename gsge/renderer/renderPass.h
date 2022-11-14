@@ -14,7 +14,7 @@ class RenderPass
     RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchain> &swapchain);
     ~RenderPass();
     
-    operator VkRenderPass()
+    operator VkRenderPass() const
     {
         return renderPass;
     }

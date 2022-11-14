@@ -14,7 +14,7 @@ class Surface
     Surface(std::shared_ptr<Instance> &instance, std::shared_ptr<Window> &window);
     ~Surface();
     
-    operator VkSurfaceKHR()
+    operator VkSurfaceKHR() const
     {
         return surface;
     }

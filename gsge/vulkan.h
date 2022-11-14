@@ -1,20 +1,10 @@
 #pragma once
 
-#include <algorithm>
-#include <chrono>
 #include <fstream>
-#include <iostream>
-#include <map>
-#include <vector>
-#include <array>
 
 #include <vulkan/vulkan.h>
-#include "vkProxies.h"
 #include <spdlog/spdlog.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include <GLFW/glfw3.h>
 #include <easy/profiler.h>
 #include <easy/arbitrary_value.h>
 
@@ -26,6 +16,7 @@
 #include "renderer/swapchain.h"
 #include "renderer/renderPass.h"
 #include "renderer/framebuffer.h"
+#include "renderer/debugger.h"
 
 class vulkan
 {
@@ -47,18 +38,17 @@ class vulkan
     void updateTransformMatrixBuffer(uint32_t currentImage);
 
     bool viewAspectChanged();
-
     float getViewAspect();
 
-    std::shared_ptr<Window> window;
-
   private:
+    std::shared_ptr<Window> window;
     std::shared_ptr<Instance> instance;
     std::shared_ptr<Surface> surface;
     std::shared_ptr<Device> device;
     std::shared_ptr<Swapchain> swapchain;
     std::shared_ptr<RenderPass> renderPass;
     std::shared_ptr<Framebuffer> framebuffer;
+    std::unique_ptr<Debugger> debugger;
 
     uint32_t currentFrame = 0;
     const int MAX_FRAMES_IN_FLIGHT = 2;
