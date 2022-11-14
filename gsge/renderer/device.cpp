@@ -271,11 +271,7 @@ void Device::createQueues()
 {
     vkGetDeviceQueue(device, queueFamilyIndices.present[1], 0, &presentQueue);
     vkGetDeviceQueue(device, queueFamilyIndices.graphics[0], 0, &graphicsQueue);
-    vkGetDeviceQueue(device, queueFamilyIndices.transfer[2], 0, &transferQueue);
-    std::stringstream infoMsg;
-    infoMsg << "Device queues created: Presentation=" << presentQueue << "   Graphics=" << graphicsQueue
-            << "   Transfer=" << transferQueue;
-    spdlog::info(infoMsg.str());
+    vkGetDeviceQueue(device, queueFamilyIndices.transfer[2], 0, &transferQueue);    
 }
 
 void Device::selectPhysicalDevFeatures()

@@ -11,6 +11,7 @@
 #include "instance.h"
 #include "surface.h"
 
+// TODO: Add list of supported extensions and verify if enabled device extensions are present
 class Device
 {
   public:

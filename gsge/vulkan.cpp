@@ -21,6 +21,11 @@ void vulkan::init()
 
     surface = std::make_shared<Surface>(instance, window);
     device = std::make_shared<Device>(instance, surface);
+
+#ifndef NDEBUG
+    debugger->setDevice(device);
+#endif // !NDEBUG
+
     swapchain = std::make_shared<Swapchain>(device, window, surface);
     renderPass = std::make_shared<RenderPass>(device, swapchain);
     framebuffer = std::make_shared<Framebuffer>(device, swapchain, renderPass);
@@ -361,6 +366,11 @@ void vulkan::createGraphicsCommandBuffers()
     }
 
     spdlog::info("Created graphics command buffers");
+
+#ifndef NDEBUG
+    debugger->setObjectName(graphicsCommandBuffers[0], "Graphics command buffer 0");
+    debugger->setObjectName(graphicsCommandBuffers[1], "Graphics command buffer 1");
+#endif
 }
 
 void vulkan::createTransferCommandBuffers()
@@ -378,6 +388,10 @@ void vulkan::createTransferCommandBuffers()
     }
 
     spdlog::info("Created transfer command buffers");
+#ifndef NDEBUG
+    debugger->setObjectName(transferCommandBuffers[0], "Transfer command buffer 0");
+    debugger->setObjectName(transferCommandBuffers[1], "Transfer command buffer 1");
+#endif
 }
 
 void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
@@ -387,6 +401,11 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     // beginInfo.flags = 0;                  // Optional
     // beginInfo.pInheritanceInfo = nullptr; // Optional
+
+#ifndef NDEBUG
+    debugger->commandBufferLabelBegin(commandBuffer, "Graphics CB");
+#endif // !NDEBUG
+
     if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to begin recording command buffer!");
@@ -469,6 +488,9 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
     {
         throw std::runtime_error("failed to record command buffer!");
     }
+#ifndef NDEBUG
+    debugger->commandBufferLabelEnd(commandBuffer);
+#endif // !NDEBUG
 }
 
 void vulkan::drawFrame()
@@ -492,19 +514,21 @@ void vulkan::drawFrame()
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR /*|| window->framebufferResized()*/)
     {
+        Sleep(200);
         vkDeviceWaitIdle(*device);
         swapchain.reset(new Swapchain(device, window, surface));
         renderPass.reset(new RenderPass(device, swapchain));
         framebuffer.reset(new Framebuffer(device, swapchain, renderPass));
         swapchainAspectChanged = true;
         vkDeviceWaitIdle(*device);
-        /*vkAcquireNextImageKHR(*device, swapchain->get_handle(), UINT64_MAX, imageAquiredSemaphores[currentFrame],
-                              VK_NULL_HANDLE, &imageIndex);*/
+        //vkAcquireNextImageKHR(*device, *swapchain, UINT64_MAX, imageAquiredSemaphores[currentFrame],
+                             // VK_NULL_HANDLE, &imageIndex);
+        Sleep(200);
         return;
     }
     else if (result != VK_SUCCESS)
     {
-        throw std::runtime_error("failed to acquire swap chain image!");
+        throw std::runtime_error("failed to acquire swapchain image!");
     }
     EASY_END_BLOCK;
 
@@ -513,7 +537,7 @@ void vulkan::drawFrame()
     updateUniformBuffer(currentFrame);
     EASY_END_BLOCK;
 
-    EASY_BLOCK("Record command bufer");
+    EASY_BLOCK("Record command buffer");
     //  Reset a fence indicating that drawing has been finished
     vkResetFences(*device, 1, &drawingFinishedFences[currentFrame]);
     recordCommandBuffer(graphicsCommandBuffers[currentFrame], imageIndex);
@@ -588,6 +612,11 @@ void vulkan::createSyncObjects()
             throw std::runtime_error("failed to create synchronization objects for a frame!");
         }
     }
+
+#ifndef NDEBUG
+    debugger->setObjectName(drawingFinishedFences[0], "Drawing Finished Fence 0");
+    debugger->setObjectName(drawingFinishedFences[1], "Drawing Finished Fence 1");
+#endif // !NDEBUG   
 }
 
 void vulkan::createVertexBindingDescriptors()
@@ -726,6 +755,10 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_FALSE, 2000000000);
     vkResetFences(*device, 1, &transferFinishedFences[currentFrame]);
 
+#ifndef NDEBUG
+    debugger->commandBufferLabelBegin(transferCommandBuffers[currentFrame], "transfer CB");
+#endif
+
     vkBeginCommandBuffer(transferCommandBuffers[currentFrame], &beginInfo);
 
     VkBufferCopy copyRegion{};
@@ -758,6 +791,10 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
         vkCmdPipelineBarrier2(transferCommandBuffers[currentFrame], &depInfo);
     }
     vkEndCommandBuffer(transferCommandBuffers[currentFrame]);
+
+#ifndef NDEBUG
+    debugger->commandBufferLabelEnd(transferCommandBuffers[currentFrame]);
+#endif
 
     VkCommandBufferSubmitInfo cbSubmitInfo{};
     cbSubmitInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
