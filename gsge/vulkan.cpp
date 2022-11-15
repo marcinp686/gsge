@@ -910,7 +910,7 @@ void vulkan::createDescriptorSets()
         descriptorWrite[0].descriptorCount = 1;
         descriptorWrite[0].pBufferInfo = &bufferInfo[0];
 
-        // UBO buffer descriptor write
+        // SSBO buffer descriptor write
         descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrite[1].dstSet = descriptorSets[i];
         descriptorWrite[1].dstBinding = 1;
