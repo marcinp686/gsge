@@ -39,8 +39,8 @@ void vulkan::init()
     // 3. pass (2) as parameter to create pipeline layout and (1) to bind vertex buffers to pipeline
     createGraphicsPipeline();
 
-    createGraphicsCommandPool();
-    createTransferCommandPool();
+    graphicsCommandPool = std::make_unique<CommandPool>(device, device->getGraphicsQueueFamilyIdx(), "Graphics command pool");
+    transferCommandPool = std::make_unique<CommandPool>(device, device->getTransferQueueFamilyIdx(), "Transfer command pool");
 
     // 4. create descriptor pool
     createDescriptorPool();
@@ -153,8 +153,8 @@ void vulkan::cleanup()
         vkDestroyFence(*device, drawingFinishedFences[i], nullptr);
     }
 
-    vkDestroyCommandPool(*device, graphicsCommandPool, nullptr);
-    vkDestroyCommandPool(*device, transferCommandPool, nullptr);
+    graphicsCommandPool.reset();
+    transferCommandPool.reset();
 
     swapchain.reset();
     device.reset();
@@ -356,7 +356,7 @@ void vulkan::createGraphicsCommandBuffers()
     graphicsCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = graphicsCommandPool;
+    allocInfo.commandPool = *graphicsCommandPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = static_cast<uint32_t>(graphicsCommandBuffers.size());
 
@@ -378,7 +378,7 @@ void vulkan::createTransferCommandBuffers()
     transferCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = transferCommandPool;
+    allocInfo.commandPool = *transferCommandPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = static_cast<uint32_t>(transferCommandBuffers.size());
 
