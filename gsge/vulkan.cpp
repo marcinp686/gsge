@@ -321,36 +321,6 @@ void vulkan::createGraphicsPipeline()
     spdlog::info("Created graphics pipeline");
 }
 
-void vulkan::createGraphicsCommandPool()
-{
-    VkCommandPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    poolInfo.queueFamilyIndex = device->getGraphicsQueueFamilyIdx();
-
-    if (vkCreateCommandPool(*device, &poolInfo, nullptr, &graphicsCommandPool) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create command pool!");
-    }
-
-    spdlog::info("Created graphics command pool");
-}
-
-void vulkan::createTransferCommandPool()
-{
-    VkCommandPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    poolInfo.queueFamilyIndex = device->getTransferQueueFamilyIdx();
-
-    if (vkCreateCommandPool(*device, &poolInfo, nullptr, &transferCommandPool) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create transfer command pool!");
-    }
-
-    spdlog::info("Created transfer command pool");
-}
-
 void vulkan::createGraphicsCommandBuffers()
 {
     graphicsCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);

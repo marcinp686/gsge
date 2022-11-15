@@ -16,6 +16,7 @@
 #include "renderer/swapchain.h"
 #include "renderer/renderPass.h"
 #include "renderer/framebuffer.h"
+#include "renderer/commandPool.h"
 #include "renderer/debugger.h"
 
 class vulkan
@@ -49,6 +50,8 @@ class vulkan
     std::shared_ptr<RenderPass> renderPass;
     std::shared_ptr<Framebuffer> framebuffer;
     std::unique_ptr<Debugger> debugger;
+    std::unique_ptr<CommandPool> graphicsCommandPool;
+    std::unique_ptr<CommandPool> transferCommandPool;
 
     uint32_t currentFrame = 0;
     const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -56,8 +59,6 @@ class vulkan
 
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
-    VkCommandPool graphicsCommandPool;
-    VkCommandPool transferCommandPool;
 
     std::vector<VkVertexInputBindingDescription> vertexBindingDesc;
     std::vector<VkVertexInputAttributeDescription> vertexAttrDesc;
@@ -109,8 +110,6 @@ class vulkan
     void createVertexBindingDescriptors();
     void createGraphicsPipeline();
 
-    void createGraphicsCommandPool();
-    void createTransferCommandPool();
     void createGraphicsCommandBuffers();
     void createTransferCommandBuffers();
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
