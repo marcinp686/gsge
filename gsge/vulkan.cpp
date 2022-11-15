@@ -14,18 +14,8 @@ void vulkan::update()
 void vulkan::init()
 {
     instance = std::make_shared<Instance>();
-
-#ifndef NDEBUG
-    debugger = std::make_unique<Debugger>(instance);
-#endif // !NDEBUG
-
     surface = std::make_shared<Surface>(instance, window);
     device = std::make_shared<Device>(instance, surface);
-
-#ifndef NDEBUG
-    debugger->setDevice(device);
-#endif // !NDEBUG
-
     swapchain = std::make_shared<Swapchain>(device, window, surface);
     renderPass = std::make_shared<RenderPass>(device, swapchain);
     framebuffer = std::make_shared<Framebuffer>(device, swapchain, renderPass);
@@ -159,7 +149,6 @@ void vulkan::cleanup()
     swapchain.reset();
     device.reset();
     surface.reset();
-    debugger.reset();
     instance.reset();
 }
 
@@ -491,8 +480,8 @@ void vulkan::drawFrame()
         framebuffer.reset(new Framebuffer(device, swapchain, renderPass));
         swapchainAspectChanged = true;
         vkDeviceWaitIdle(*device);
-        //vkAcquireNextImageKHR(*device, *swapchain, UINT64_MAX, imageAquiredSemaphores[currentFrame],
-                             // VK_NULL_HANDLE, &imageIndex);
+        // vkAcquireNextImageKHR(*device, *swapchain, UINT64_MAX, imageAquiredSemaphores[currentFrame],
+        //  VK_NULL_HANDLE, &imageIndex);
         Sleep(200);
         return;
     }
@@ -586,7 +575,7 @@ void vulkan::createSyncObjects()
 #ifndef NDEBUG
     debugger->setObjectName(drawingFinishedFences[0], "Drawing Finished Fence 0");
     debugger->setObjectName(drawingFinishedFences[1], "Drawing Finished Fence 1");
-#endif // !NDEBUG   
+#endif // !NDEBUG
 }
 
 void vulkan::createVertexBindingDescriptors()

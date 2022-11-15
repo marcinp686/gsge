@@ -1,43 +1,49 @@
+#ifndef DEBUGGER_H
+#define DEBUGGER_H
+
 #pragma once
 
 #include <memory>
+#include <stdexcept>
 
 #include <vulkan/vulkan.h>
 
-#include "instance.h"
-#include "device.h"
+#include <spdlog/spdlog.h>
 
 class Debugger
 {
   public:
-    Debugger(std::shared_ptr<Instance> &instance);
-    ~Debugger();
+    static Debugger *getInstance();
+    void destroy();
+    void setInstance(VkInstance &instance);
+    void setDevice(VkDevice &device);
 
-    void setDevice(std::shared_ptr<Device> &device);
+    template<typename T> void setObjectName(T object, const char *name);
 
-    void setObjectName(VkFence &fence, const char *name);
-    void setObjectName(VkCommandBuffer &commandBuffer, const char *name);
-
-    void commandBufferLabelBegin(VkCommandBuffer &commandBuffer, const std::string &labelName);
+    void commandBufferLabelBegin(VkCommandBuffer &commandBuffer, const char *labelName);
     void commandBufferLabelEnd(VkCommandBuffer &commandBuffer);
-    void queueLabelBegin(VkQueue &queue, const std::string &labelName);
+    void queueLabelBegin(VkQueue &queue, const char *labelName);
     void queueLabelEnd(VkQueue &queue);
-
-  private:
-    std::shared_ptr<Instance> instance;
-    std::shared_ptr<Device> device;
-
-    VkDebugUtilsMessengerEXT debugMessenger;
-
-    std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
-
-    void setupDebugFuctionPointers();
-    void createDebugMessanger();
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                                                         VkDebugUtilsMessageTypeFlagsEXT messageType,
                                                         const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
                                                         void *pUserData);
+
+  private:
+    static Debugger *debugUtilsInstance;
+
+    Debugger();
+    Debugger(const Debugger &) = delete;
+    Debugger &operator=(const Debugger &) = delete;
+
+    VkInstance instance;
+    VkDevice device;
+
+    VkDebugUtilsMessengerEXT debugMessenger;
+
+    void setupDebugFuctionPointers();
+    void createDebugMessanger();
 
     PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT = VK_NULL_HANDLE;
     PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = VK_NULL_HANDLE;
@@ -47,3 +53,5 @@ class Debugger
     PFN_vkQueueBeginDebugUtilsLabelEXT vkQueueBeginDebugUtilsLabelEXT = VK_NULL_HANDLE;
     PFN_vkQueueEndDebugUtilsLabelEXT vkQueueEndDebugUtilsLabelEXT = VK_NULL_HANDLE;
 };
+
+#endif

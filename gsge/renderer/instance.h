@@ -7,6 +7,8 @@
 #include <spdlog/spdlog.h>
 #include <GLFW/glfw3.h>
 
+#include "debugger.h"
+
 class Instance
 {
   public:
@@ -21,6 +23,8 @@ class Instance
   private:
     VkInstance instance{VK_NULL_HANDLE};
 
+    Debugger *debugger = Debugger::getInstance();
+    
     void prepareLayerList();
     void prepareExtensionList();
     bool checkLayerSupport();

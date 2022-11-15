@@ -48,10 +48,11 @@ class vulkan
     std::shared_ptr<Device> device;
     std::shared_ptr<Swapchain> swapchain;
     std::shared_ptr<RenderPass> renderPass;
-    std::shared_ptr<Framebuffer> framebuffer;
-    std::unique_ptr<Debugger> debugger;
+    std::shared_ptr<Framebuffer> framebuffer;   
     std::unique_ptr<CommandPool> graphicsCommandPool;
     std::unique_ptr<CommandPool> transferCommandPool;
+
+    Debugger *debugger = Debugger::getInstance();
 
     uint32_t currentFrame = 0;
     const int MAX_FRAMES_IN_FLIGHT = 2;

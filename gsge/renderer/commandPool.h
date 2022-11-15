@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "device.h"
+#include "debugger.h"
 
 class CommandPool
 {
@@ -17,6 +18,6 @@ class CommandPool
 
   private:
     std::shared_ptr<Device> device;
-
     VkCommandPool pool = VK_NULL_HANDLE;
+    Debugger *debugger = Debugger::getInstance();
 };

@@ -1,6 +1,6 @@
 #include "device.h"
 
-Device::Device(std::shared_ptr<Instance>& instance, std::shared_ptr<Surface>& surface) : instance(instance), surface(surface)
+Device::Device(std::shared_ptr<Instance> &instance, std::shared_ptr<Surface> &surface) : instance(instance), surface(surface)
 {
     pickPhysicalDevice();
     selectPhysicalDevFeatures();
@@ -265,13 +265,17 @@ void Device::createLogicalDevice()
     {
         throw std::runtime_error("failed to create logical device!");
     }
+
+#ifndef NDEBUG
+    debugger->setDevice(device);
+#endif // !NDEBUG
 }
 
 void Device::createQueues()
 {
     vkGetDeviceQueue(device, queueFamilyIndices.present[1], 0, &presentQueue);
     vkGetDeviceQueue(device, queueFamilyIndices.graphics[0], 0, &graphicsQueue);
-    vkGetDeviceQueue(device, queueFamilyIndices.transfer[2], 0, &transferQueue);    
+    vkGetDeviceQueue(device, queueFamilyIndices.transfer[2], 0, &transferQueue);
 }
 
 void Device::selectPhysicalDevFeatures()

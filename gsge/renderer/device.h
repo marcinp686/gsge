@@ -10,6 +10,7 @@
 
 #include "instance.h"
 #include "surface.h"
+#include "debugger.h"
 
 // TODO: Add list of supported extensions and verify if enabled device extensions are present
 class Device
@@ -43,6 +44,8 @@ class Device
 
   private:
     VkDevice device;
+    
+    Debugger *debugger = Debugger::getInstance();
 
     std::shared_ptr<Instance> instance;
     std::shared_ptr<Surface> surface;

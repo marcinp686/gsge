@@ -12,6 +12,9 @@ CommandPool::CommandPool(std::shared_ptr<Device> &device, uint32_t queueIndex, c
         throw std::runtime_error("failed to create command pool!");
     }
 
+    if (!strlen(name))
+        debugger->setObjectName(pool, name);
+
     spdlog::trace("Created {}", name);
 }
 

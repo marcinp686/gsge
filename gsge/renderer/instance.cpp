@@ -26,31 +26,22 @@ Instance::Instance()
     createInfo.ppEnabledExtensionNames = instanceExtensions.data();
     createInfo.enabledLayerCount = static_cast<uint32_t>(instanceLayers.size());
     createInfo.ppEnabledLayerNames = instanceLayers.data();
-    createInfo.pNext = nullptr;
 
-    // VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-    //  if (enableValidationLayers)
-    //{
-    //      createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-    //      createInfo.ppEnabledLayerNames = validationLayers.data();
+#ifndef NDEBUG
 
-    //    debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    //    debugCreateInfo.messageSeverity =
-    //        /* VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |*/ VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-    //        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
-    //    debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-    //                                  VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-    //                                  VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    //    debugCreateInfo.pfnUserCallback = debugCallback;
-    //    debugCreateInfo.pUserData = nullptr; // Optional
+    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 
-    //    createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debugCreateInfo;
-    //}
-    // else
-    //{
-    // createInfo.enabledLayerCount = 0;
+    debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    debugCreateInfo.messageSeverity =
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+    debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                  VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    debugCreateInfo.pfnUserCallback = debugger->debugCallback;
 
-    //}
+    createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debugCreateInfo;
+
+#endif
 
     VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
 
@@ -58,10 +49,17 @@ Instance::Instance()
     {
         throw std::runtime_error("[ERROR] Vulkan instance creation failed.");
     }
+
+#ifndef NDEBUG
+    debugger->setInstance(instance);
+#endif
 }
 
 Instance::~Instance()
 {
+#ifndef NDEBUG
+    debugger->destroy();
+#endif
     vkDestroyInstance(instance, nullptr);
 }
 
