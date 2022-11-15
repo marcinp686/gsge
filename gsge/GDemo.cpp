@@ -6,7 +6,9 @@
 int main()
 {
     EASY_PROFILER_ENABLE;
+    spdlog::set_level(spdlog::level::trace);
     profiler::startListen();
+    
     gsge app;
 
     try
