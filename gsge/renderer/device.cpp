@@ -22,17 +22,17 @@ VkPhysicalDevice Device::getPhysicalDeviceHandle() const
     return physicalDevice;
 }
 
-uint32_t Device::getGraphicsQueueFamilyIdx()
+uint32_t Device::getGraphicsQueueFamilyIdx() const
 {
     return queueFamilyIndices.graphics[0];
 }
 
-uint32_t Device::getTransferQueueFamilyIdx()
+uint32_t Device::getTransferQueueFamilyIdx() const
 {
     return queueFamilyIndices.transfer[2];
 }
 
-uint32_t Device::getPresentQueueFamilyIdx()
+uint32_t Device::getPresentQueueFamilyIdx() const
 {
     return queueFamilyIndices.present[1];
 }
@@ -170,7 +170,7 @@ uint64_t Device::rateDeviceSuitability(VkPhysicalDevice dev)
         return 0;
     }
 
-    spdlog::info("Device " + deviceInfoStr.str() + " score: " + std::to_string(score));
+    SPDLOG_TRACE("Device " + deviceInfoStr.str() + " score: " + std::to_string(score));
 
     return score;
 }
@@ -266,9 +266,8 @@ void Device::createLogicalDevice()
         throw std::runtime_error("failed to create logical device!");
     }
 
-#ifndef NDEBUG
-    debugger->setDevice(device);
-#endif // !NDEBUG
+    GSGE_DEBUGGER_SET_DEVICE(device);
+    SPDLOG_TRACE("Logical device created");
 }
 
 void Device::createQueues()

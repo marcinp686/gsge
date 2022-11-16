@@ -45,5 +45,5 @@ void Framebuffer::createFramebuffers()
         }
     }
 
-    spdlog::info("Created framebuffers");
+    SPDLOG_TRACE("Framebuffers created");
 }

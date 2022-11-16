@@ -10,9 +10,11 @@ class Framebuffer
 {
   public:
     Framebuffer(std::shared_ptr<Device> &device, std::shared_ptr<Swapchain> &swapchain, std::shared_ptr<RenderPass> &renderPass);
+    Framebuffer(const Framebuffer &) = delete;
+    Framebuffer &operator=(const Framebuffer &) = delete;
     ~Framebuffer();   
 
-    VkFramebuffer &operator[](uint32_t index)
+    inline VkFramebuffer &operator[](uint32_t index)
     {
         return buffers[index];
     }
@@ -23,6 +25,8 @@ class Framebuffer
     std::shared_ptr<RenderPass> renderPass;
 
     std::vector<VkFramebuffer> buffers;
+
+    GSGE_DEBUGGER_INSTANCE_DECL;
 
     void createFramebuffers();
 

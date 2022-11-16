@@ -12,9 +12,11 @@ class Surface
 {
   public:
     Surface(std::shared_ptr<Instance> &instance, std::shared_ptr<Window> &window);
+    Surface(const Surface &) = delete;
+    Surface &operator=(const Surface &) = delete;
     ~Surface();
-    
-    operator VkSurfaceKHR() const
+
+    inline operator VkSurfaceKHR() const
     {
         return surface;
     }
@@ -24,4 +26,6 @@ class Surface
 
     std::shared_ptr<Window> window{nullptr};
     std::shared_ptr<Instance> instance{nullptr};
+
+    GSGE_DEBUGGER_INSTANCE_DECL;
 };

@@ -15,7 +15,7 @@ void Swapchain::createImages()
     vkGetSwapchainImagesKHR(*device, swapchain, &imageCount, nullptr);
     images.resize(imageCount);
     vkGetSwapchainImagesKHR(*device, swapchain, &imageCount, images.data());
-    spdlog::info("Created swapchain images");
+    SPDLOG_TRACE("Swapchain images created");
 }
 
 Swapchain::~Swapchain()
@@ -63,7 +63,7 @@ void Swapchain::create()
     extent = swapExtent;
     imageFormat = surfaceFormat.format;
 
-    spdlog::info("Created swapchain with " + std::to_string(imageCount) + " images");
+    SPDLOG_TRACE("Swapchain created with " + std::to_string(imageCount) + " images");
 }
 
 void Swapchain::cleanup()
@@ -164,7 +164,7 @@ void Swapchain::createImageViews()
         imageViews[i] = createImageView(images[i], imageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
-    spdlog::info("Created swapchain image views");
+    SPDLOG_TRACE("Swapchain image views created");
 }
 
 VkImageView Swapchain::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags)

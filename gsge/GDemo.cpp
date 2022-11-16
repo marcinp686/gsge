@@ -3,12 +3,15 @@
 #include "gsge.h"
 #include <easy/profiler.h>
 
+#include <spdlog/spdlog.h>
+
 int main()
 {
     EASY_PROFILER_ENABLE;
-    spdlog::set_level(spdlog::level::info);
     profiler::startListen();
     
+    spdlog::set_level(spdlog::level::trace);
+
     gsge app;
 
     try

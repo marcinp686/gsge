@@ -9,15 +9,19 @@ class CommandPool
 {
   public:
     CommandPool(std::shared_ptr<Device> &device, uint32_t queueIndex, const char *name = "");
+    CommandPool(const CommandPool &) = delete;
+    CommandPool &operator=(const CommandPool &) = delete;
     ~CommandPool();
 
-    operator VkCommandPool()
+    inline operator VkCommandPool()
     {
         return pool;
     }
 
   private:
     std::shared_ptr<Device> device;
+    
     VkCommandPool pool = VK_NULL_HANDLE;
-    Debugger *debugger = Debugger::getInstance();
+    
+    GSGE_DEBUGGER_INSTANCE_DECL;
 };

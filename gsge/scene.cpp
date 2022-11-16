@@ -99,13 +99,13 @@ void scene::loadModel(entt::entity entity, std::string fileName, uint32_t meshId
 
     if (aiScene != nullptr)
     {
-        spdlog::info("Loaded " + fileName + " model. Meshes: " + std::to_string(aiScene->mNumMeshes) +
-                     ", vertices: " + std::to_string(aiScene->mMeshes[meshId]->mNumVertices));
+        SPDLOG_INFO("Loaded " + fileName + " model. Meshes: " + std::to_string(aiScene->mNumMeshes) +
+                    ", vertices: " + std::to_string(aiScene->mMeshes[meshId]->mNumVertices));
     }
     else
     {
-        spdlog::error("Failed to load " + fileName);
-        spdlog::error(std::string(importer.GetErrorString()));
+        SPDLOG_ERROR("Failed to load " + fileName);
+        SPDLOG_ERROR(std::string(importer.GetErrorString()));
         throw std::runtime_error("IO error");
     }
 
@@ -200,8 +200,6 @@ void scene::prepareFrameData()
     uint32_t totVertices = 0;
     uint32_t totIndices = 0;
 
-    spdlog::info("Preparing vertex, normal and index buffers");
-
     for (auto entity : view)
     {
         auto &mesh = view.get<component::mesh>(entity);
@@ -224,8 +222,9 @@ void scene::prepareFrameData()
         hostVertexNormalBuffer.insert(hostVertexNormalBuffer.end(), mesh.normals.begin(), mesh.normals.end());
         hostIndexBuffer.insert(hostIndexBuffer.end(), mesh.indices.begin(), mesh.indices.end());
     }
-    spdlog::info("Total in vectors: totV={}, totN={}, totI={}", hostVertexBuffer.size(), hostVertexNormalBuffer.size(),
-                 hostIndexBuffer.size());
+    SPDLOG_TRACE("Frame data prepared");
+    SPDLOG_INFO("Total in vectors: totV={}, totN={}, totI={}", hostVertexBuffer.size(), hostVertexNormalBuffer.size(),
+                hostIndexBuffer.size());
 }
 
 void scene::updateUniformBuffer()

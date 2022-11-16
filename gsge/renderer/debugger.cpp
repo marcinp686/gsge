@@ -3,7 +3,7 @@
 Debugger *Debugger::debugUtilsInstance = nullptr;
 
 Debugger::Debugger()
-{
+{   
 }
 
 void Debugger::setupDebugFuctionPointers()
@@ -57,6 +57,7 @@ void Debugger::setDevice(VkDevice &device)
 template void Debugger::setObjectName(VkFence object, const char *name);
 template void Debugger::setObjectName(VkCommandPool object, const char *name);
 template void Debugger::setObjectName(VkCommandBuffer object, const char *name);
+template void Debugger::setObjectName(VkPipeline object, const char *name);
 
 template <typename T> void Debugger::setObjectName(T object, const char *name)
 {
@@ -69,6 +70,8 @@ template <typename T> void Debugger::setObjectName(T object, const char *name)
         objectNameInfo.objectType = VK_OBJECT_TYPE_COMMAND_BUFFER;
     if (std::is_same<VkCommandPool, T>::value)
         objectNameInfo.objectType = VK_OBJECT_TYPE_COMMAND_POOL;
+    if (std::is_same<VkPipeline, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_PIPELINE;
 
     objectNameInfo.objectHandle = reinterpret_cast<uint64_t>(object);
     objectNameInfo.pObjectName = name;
@@ -127,18 +130,18 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Debugger::debugCallback(VkDebugUtilsMessageSeveri
     switch (messageSeverity)
     {
     case VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-        spdlog::error(pCallbackData->pMessage);
+        SPDLOG_ERROR(pCallbackData->pMessageIdName);
         break;
     case VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-        spdlog::info(pCallbackData->pMessage);
+        SPDLOG_INFO(pCallbackData->pMessage);
         break;
     case VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-        spdlog::warn(pCallbackData->pMessage);
+        SPDLOG_WARN(pCallbackData->pMessage);
         break;
     case VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-        spdlog::debug(pCallbackData->pMessage);
+        SPDLOG_DEBUG(pCallbackData->pMessage);
         break;
     }
-
+    
     return VK_FALSE;
 }

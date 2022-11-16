@@ -10,6 +10,20 @@
 
 #include <spdlog/spdlog.h>
 
+#if !defined NDEBUG
+#define GSGE_DEBUGGER_INSTANCE_DECL Debugger *debugger = Debugger::getInstance()
+#define GSGE_DEBUGGER_SET_NAME(object, name) debugger->setObjectName(object, name)
+#define GSGE_DEBUGGER_SET_INSTANCE(instance) debugger->setInstance(instance)
+#define GSGE_DEBUGGER_SET_DEVICE(device) debugger->setDevice(device)
+#define GSGE_DEBUGGER_DESTROY debugger->destroy()
+#else
+#define GSGE_DEBUGGER_INSTANCE_DECL (void)0
+#define GSGE_DEBUGGER_SET_NAME (void)0
+#define GSGE_DEBUGGER_SET_INSTANCE (void)0
+#define GSGE_DEBUGGER_SET_DEVICE (void)0
+#define GSGE_DEBUGGER_DESTROY (void)0
+#endif
+
 class Debugger
 {
   public:
@@ -18,7 +32,7 @@ class Debugger
     void setInstance(VkInstance &instance);
     void setDevice(VkDevice &device);
 
-    template<typename T> void setObjectName(T object, const char *name);
+    template <typename T> void setObjectName(T object, const char *name);
 
     void commandBufferLabelBegin(VkCommandBuffer &commandBuffer, const char *labelName);
     void commandBufferLabelEnd(VkCommandBuffer &commandBuffer);

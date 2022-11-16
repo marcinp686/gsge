@@ -12,9 +12,11 @@ class RenderPass
 {
   public:
     RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchain> &swapchain);
+    RenderPass(const RenderPass &) = delete;
+    RenderPass &operator=(const RenderPass &) = delete;
     ~RenderPass();
     
-    operator VkRenderPass() const
+    inline operator VkRenderPass() const
     {
         return renderPass;
     }

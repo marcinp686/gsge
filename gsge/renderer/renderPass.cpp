@@ -61,7 +61,7 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         throw std::runtime_error("failed to create render pass!");
     }
 
-    spdlog::info("Created render pass");
+    SPDLOG_TRACE("Render pass created");
 }
 
 RenderPass::~RenderPass()

@@ -13,9 +13,11 @@ class Instance
 {
   public:
     Instance();
+    Instance(const Instance &) = delete;
+    Instance &operator=(const Instance &) = delete;
     ~Instance();
 
-    operator VkInstance() const
+    inline operator VkInstance() const
     {
         return instance;
     }
@@ -23,7 +25,7 @@ class Instance
   private:
     VkInstance instance{VK_NULL_HANDLE};
 
-    Debugger *debugger = Debugger::getInstance();
+    GSGE_DEBUGGER_INSTANCE_DECL;
     
     void prepareLayerList();
     void prepareExtensionList();

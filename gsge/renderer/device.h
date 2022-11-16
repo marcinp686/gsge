@@ -17,17 +17,19 @@ class Device
 {
   public:
     Device(std::shared_ptr<Instance> &instance, std::shared_ptr<Surface> &surface);
+    Device(const Device &) = delete;
+    Device &operator=(const Device &) = delete;
     ~Device();
-    
+
     VkPhysicalDevice getPhysicalDeviceHandle() const;
 
     void querySurfaceCapabilities();
     void enumerateSurfaceFormats();
     void enumerateSurfacePresentModes();
 
-    uint32_t getGraphicsQueueFamilyIdx();
-    uint32_t getTransferQueueFamilyIdx();
-    uint32_t getPresentQueueFamilyIdx();
+    uint32_t getGraphicsQueueFamilyIdx() const;
+    uint32_t getTransferQueueFamilyIdx() const;
+    uint32_t getPresentQueueFamilyIdx() const;
 
     VkQueue getGraphicsQueue() const;
     VkQueue getTransferQueue() const;
@@ -37,15 +39,15 @@ class Device
     std::vector<VkSurfaceFormatKHR> getSurfaceFormats() const;
     std::vector<VkPresentModeKHR> getSurfacePresentModes() const;
 
-    operator VkDevice()
+    inline operator VkDevice()
     {
         return device;
     }
 
   private:
     VkDevice device;
-    
-    Debugger *debugger = Debugger::getInstance();
+
+    GSGE_DEBUGGER_INSTANCE_DECL;
 
     std::shared_ptr<Instance> instance;
     std::shared_ptr<Surface> surface;

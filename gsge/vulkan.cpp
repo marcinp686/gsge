@@ -307,7 +307,8 @@ void vulkan::createGraphicsPipeline()
     vkDestroyShaderModule(*device, fragShaderModule, nullptr);
     vkDestroyShaderModule(*device, vertShaderModule, nullptr);
 
-    spdlog::info("Created graphics pipeline");
+    GSGE_DEBUGGER_SET_NAME(graphicsPipeline, "Graphics pipeline");
+    SPDLOG_TRACE("Created graphics pipeline");
 }
 
 void vulkan::createGraphicsCommandBuffers()
@@ -324,12 +325,10 @@ void vulkan::createGraphicsCommandBuffers()
         throw std::runtime_error("failed to allocate command buffers!");
     }
 
-    spdlog::info("Created graphics command buffers");
-
-#ifndef NDEBUG
-    debugger->setObjectName(graphicsCommandBuffers[0], "Graphics command buffer 0");
-    debugger->setObjectName(graphicsCommandBuffers[1], "Graphics command buffer 1");
-#endif
+    GSGE_DEBUGGER_SET_NAME(graphicsCommandBuffers[0], "Graphics command buffer 0");
+    GSGE_DEBUGGER_SET_NAME(graphicsCommandBuffers[1], "Graphics command buffer 1");
+    
+    SPDLOG_TRACE("Created graphics command buffers");
 }
 
 void vulkan::createTransferCommandBuffers()
@@ -346,11 +345,10 @@ void vulkan::createTransferCommandBuffers()
         throw std::runtime_error("failed to allocate command buffers!");
     }
 
-    spdlog::info("Created transfer command buffers");
-#ifndef NDEBUG
-    debugger->setObjectName(transferCommandBuffers[0], "Transfer command buffer 0");
-    debugger->setObjectName(transferCommandBuffers[1], "Transfer command buffer 1");
-#endif
+    GSGE_DEBUGGER_SET_NAME(transferCommandBuffers[0], "Transfer command buffer 0");
+    GSGE_DEBUGGER_SET_NAME(transferCommandBuffers[1], "Transfer command buffer 1");
+
+    SPDLOG_TRACE("Created transfer command buffers");
 }
 
 void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
@@ -572,10 +570,10 @@ void vulkan::createSyncObjects()
         }
     }
 
-#ifndef NDEBUG
-    debugger->setObjectName(drawingFinishedFences[0], "Drawing Finished Fence 0");
-    debugger->setObjectName(drawingFinishedFences[1], "Drawing Finished Fence 1");
-#endif // !NDEBUG
+    GSGE_DEBUGGER_SET_NAME(drawingFinishedFences[0], "Drawing Finished Fence 0");
+    GSGE_DEBUGGER_SET_NAME(drawingFinishedFences[1], "Drawing Finished Fence 1");
+
+    SPDLOG_TRACE("Created synchronization objects");
 }
 
 void vulkan::createVertexBindingDescriptors()
@@ -729,7 +727,6 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
 
     if (withSemaphores)
     {
-
         // Memory buffer barrier
         VkBufferMemoryBarrier2 memBarrier{};
         memBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;

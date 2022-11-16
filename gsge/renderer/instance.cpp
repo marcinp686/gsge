@@ -50,16 +50,13 @@ Instance::Instance()
         throw std::runtime_error("[ERROR] Vulkan instance creation failed.");
     }
 
-#ifndef NDEBUG
-    debugger->setInstance(instance);
-#endif
+    GSGE_DEBUGGER_SET_INSTANCE(instance);
+    SPDLOG_TRACE("Instance created");
 }
 
 Instance::~Instance()
 {
-#ifndef NDEBUG
-    debugger->destroy();
-#endif
+    GSGE_DEBUGGER_DESTROY;
     vkDestroyInstance(instance, nullptr);
 }
 
@@ -114,9 +111,10 @@ bool Instance::checkLayerSupport()
 
         if (!layerFound)
         {
+            SPDLOG_ERROR("{} instance layer not found", layerName);
             return false;
         }
     }
-
+    SPDLOG_TRACE("All selected instance layers supported");
     return true;
 }

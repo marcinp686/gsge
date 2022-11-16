@@ -16,9 +16,11 @@ class RenderPass;
 class Swapchain
 {
   public:
-    Swapchain(std::shared_ptr<Device> &device, std::shared_ptr<Window> &window, std::shared_ptr<Surface> &surface);    
+    Swapchain(std::shared_ptr<Device> &device, std::shared_ptr<Window> &window, std::shared_ptr<Surface> &surface);
+    Swapchain(const Swapchain &) = delete;
+    Swapchain &operator=(const Swapchain &) = delete;
     ~Swapchain();
-    
+
     void createImages();
     void create();
     void cleanup();
@@ -30,7 +32,7 @@ class Swapchain
     VkImageView &getImageView(uint32_t index);
     VkImageView &getDepthImageView();
 
-    operator VkSwapchainKHR() const
+    inline operator VkSwapchainKHR() const
     {
         return swapchain;
     }
