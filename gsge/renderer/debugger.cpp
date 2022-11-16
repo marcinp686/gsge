@@ -3,7 +3,7 @@
 Debugger *Debugger::debugUtilsInstance = nullptr;
 
 Debugger::Debugger()
-{   
+{
 }
 
 void Debugger::setupDebugFuctionPointers()
@@ -58,6 +58,8 @@ template void Debugger::setObjectName(VkFence object, const char *name);
 template void Debugger::setObjectName(VkCommandPool object, const char *name);
 template void Debugger::setObjectName(VkCommandBuffer object, const char *name);
 template void Debugger::setObjectName(VkPipeline object, const char *name);
+template void Debugger::setObjectName(VkQueue object, const char *name);
+template void Debugger::setObjectName(VkSemaphore object, const char *name);
 
 template <typename T> void Debugger::setObjectName(T object, const char *name)
 {
@@ -72,6 +74,10 @@ template <typename T> void Debugger::setObjectName(T object, const char *name)
         objectNameInfo.objectType = VK_OBJECT_TYPE_COMMAND_POOL;
     if (std::is_same<VkPipeline, T>::value)
         objectNameInfo.objectType = VK_OBJECT_TYPE_PIPELINE;
+    if (std::is_same<VkQueue, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_QUEUE;
+    if (std::is_same<VkSemaphore, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_SEMAPHORE;
 
     objectNameInfo.objectHandle = reinterpret_cast<uint64_t>(object);
     objectNameInfo.pObjectName = name;
@@ -130,7 +136,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Debugger::debugCallback(VkDebugUtilsMessageSeveri
     switch (messageSeverity)
     {
     case VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-        SPDLOG_ERROR(pCallbackData->pMessageIdName);
+        SPDLOG_ERROR(pCallbackData->pMessage);
         break;
     case VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
         SPDLOG_INFO(pCallbackData->pMessage);
@@ -142,6 +148,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Debugger::debugCallback(VkDebugUtilsMessageSeveri
         SPDLOG_DEBUG(pCallbackData->pMessage);
         break;
     }
-    
+
     return VK_FALSE;
 }

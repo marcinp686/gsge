@@ -17,11 +17,11 @@
 #define GSGE_DEBUGGER_SET_DEVICE(device) debugger->setDevice(device)
 #define GSGE_DEBUGGER_DESTROY debugger->destroy()
 #else
-#define GSGE_DEBUGGER_INSTANCE_DECL (void)0
-#define GSGE_DEBUGGER_SET_NAME (void)0
-#define GSGE_DEBUGGER_SET_INSTANCE (void)0
-#define GSGE_DEBUGGER_SET_DEVICE (void)0
-#define GSGE_DEBUGGER_DESTROY (void)0
+#define GSGE_DEBUGGER_INSTANCE_DECL
+#define GSGE_DEBUGGER_SET_NAME
+#define GSGE_DEBUGGER_SET_INSTANCE
+#define GSGE_DEBUGGER_SET_DEVICE
+#define GSGE_DEBUGGER_DESTROY
 #endif
 
 class Debugger

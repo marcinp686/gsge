@@ -70,7 +70,7 @@ class Device
         VkPhysicalDeviceVulkan13Features v13{};
     } physDevFeaturesAvailable, physDevFeaturesSelected;
 
-    std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME,
+    std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, /*VK_AMD_RASTERIZATION_ORDER_EXTENSION_NAME,*/
                                                   VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME};
 
     void pickPhysicalDevice();

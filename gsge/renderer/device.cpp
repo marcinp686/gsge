@@ -263,6 +263,7 @@ void Device::createLogicalDevice()
     VkResult result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
     if (result != VK_SUCCESS)
     {
+        SPDLOG_CRITICAL("Device creation failed with error: {}", result);
         throw std::runtime_error("failed to create logical device!");
     }
 
@@ -275,6 +276,10 @@ void Device::createQueues()
     vkGetDeviceQueue(device, queueFamilyIndices.present[1], 0, &presentQueue);
     vkGetDeviceQueue(device, queueFamilyIndices.graphics[0], 0, &graphicsQueue);
     vkGetDeviceQueue(device, queueFamilyIndices.transfer[2], 0, &transferQueue);
+
+    GSGE_DEBUGGER_SET_NAME(presentQueue, "Present queue");
+    GSGE_DEBUGGER_SET_NAME(graphicsQueue, "Graphics queue");
+    GSGE_DEBUGGER_SET_NAME(transferQueue, "Transfer queue");
 }
 
 void Device::selectPhysicalDevFeatures()

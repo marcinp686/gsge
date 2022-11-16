@@ -210,9 +210,9 @@ void vulkan::createGraphicsPipeline()
     viewportState.scissorCount = 1;
     viewportState.pScissors = &scissor;
 
-    VkPipelineRasterizationStateRasterizationOrderAMD orderAMD = {};
+    /*VkPipelineRasterizationStateRasterizationOrderAMD orderAMD = {};
     orderAMD.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_RASTERIZATION_ORDER_AMD;
-    orderAMD.rasterizationOrder = VK_RASTERIZATION_ORDER_RELAXED_AMD;
+    orderAMD.rasterizationOrder = VK_RASTERIZATION_ORDER_RELAXED_AMD;*/
 
     VkPipelineRasterizationStateCreateInfo rasterizer{};
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -226,7 +226,7 @@ void vulkan::createGraphicsPipeline()
     rasterizer.depthBiasConstantFactor = 0.0f; // Optional
     rasterizer.depthBiasClamp = 0.0f;          // Optional
     rasterizer.depthBiasSlopeFactor = 0.0f;    // Optional
-    rasterizer.pNext = &orderAMD;
+   // rasterizer.pNext = &orderAMD;
 
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -572,6 +572,12 @@ void vulkan::createSyncObjects()
 
     GSGE_DEBUGGER_SET_NAME(drawingFinishedFences[0], "Drawing Finished Fence 0");
     GSGE_DEBUGGER_SET_NAME(drawingFinishedFences[1], "Drawing Finished Fence 1");
+    GSGE_DEBUGGER_SET_NAME(transferFinishedFences[0], "Transfer Finished Fence 0");
+    GSGE_DEBUGGER_SET_NAME(transferFinishedFences[1], "Transfer Finished Fence 1");
+    GSGE_DEBUGGER_SET_NAME(imageAquiredSemaphores[0], "Image Acquired Semaphore 0");
+    GSGE_DEBUGGER_SET_NAME(imageAquiredSemaphores[1], "Image Acquired Semaphore 1");
+    GSGE_DEBUGGER_SET_NAME(renderFinishedSemaphores[0], "Render Finished Semaphore 0");
+    GSGE_DEBUGGER_SET_NAME(renderFinishedSemaphores[1], "Render Finished Semaphore 1");
 
     SPDLOG_TRACE("Created synchronization objects");
 }
