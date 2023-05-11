@@ -12,7 +12,7 @@
 
 #if !defined NDEBUG
 #define GSGE_DEBUGGER_INSTANCE_DECL Debugger *debugger = Debugger::getInstance()
-#define GSGE_DEBUGGER_SET_NAME(object, name) debugger->setObjectName(object, name)
+#define GSGE_DEBUGGER_SET_OBJECT_NAME(object, name) debugger->setObjectName(object, name)
 #define GSGE_DEBUGGER_SET_INSTANCE(instance) debugger->setInstance(instance)
 #define GSGE_DEBUGGER_SET_DEVICE(device) debugger->setDevice(device)
 #define GSGE_DEBUGGER_DESTROY debugger->destroy()
