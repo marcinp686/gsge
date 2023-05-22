@@ -72,16 +72,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\include;C:\Users\epic007\source\repos\entt\out\install\x64-Release\include;C:\Users\epic007\source\repos\glm\glm;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\include;C:\VulkanSDK\1.3.224.1\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\VulkanSDK\1.3.224.1\Lib;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\lib;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\lib;C:\Users\epic007\source\repos\assimp\out\install\x64-Release\lib;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\lib;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\include;C:\VulkanSDK\1.3.243.0\Include;C:\Users\epic007\source\repos\entt\out\install\x64-Release\include;C:\Users\epic007\source\repos\glm\glm;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\VulkanSDK\1.3.243.0\Lib;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\lib;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\lib;C:\Users\epic007\source\repos\assimp\out\install\x64-Release\lib;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\lib;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)\$(Platform)\Intermediate\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets>
     </CustomBuildBeforeTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\include;C:\Users\epic007\source\repos\entt\out\install\x64-Debug\include;C:\Users\epic007\source\repos\glm\glm;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\include;C:\VulkanSDK\1.3.224.1\Include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
-    <LibraryPath>C:\VulkanSDK\1.3.224.1\Lib;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\lib;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\lib;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\lib;C:\Users\epic007\source\repos\assimp\out\install\x64-Debug\lib;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Debug\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\include;C:\VulkanSDK\1.3.243.0\Include;C:\Users\epic007\source\repos\entt\out\install\x64-Debug\include;C:\Users\epic007\source\repos\glm\glm;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>C:\VulkanSDK\1.3.243.0\Lib;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\lib;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\lib;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\lib;C:\Users\epic007\source\repos\assimp\out\install\x64-Debug\lib;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Debug\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)\$(Platform)\Intermediate\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets>
@@ -261,7 +261,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\VulkanSDK\1.3.224.1\Bin\glslc.exe -o $(OutDir)\%(Identity).spv %(Identity)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\VulkanSDK\1.3.243.0\Bin\glslc.exe -o $(OutDir)\%(Identity).spv %(Identity)</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling shaders</Message>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
       <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
@@ -278,7 +278,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\VulkanSDK\1.3.224.1\Bin\glslc.exe -o $(OutDir)\%(Identity).spv %(Identity)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\VulkanSDK\1.3.243.0\Bin\glslc.exe -o $(OutDir)\%(Identity).spv %(Identity)</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling shaders</Message>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
       <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
@@ -295,7 +295,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\VulkanSDK\1.3.224.1\Bin\glslc.exe -o $(OutDir)\%(Identity).spv %(Identity)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\VulkanSDK\1.3.243.0\Bin\glslc.exe -o $(OutDir)\%(Identity).spv %(Identity)</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compiling shaders</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)\%(Identity).spv</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
@@ -314,7 +314,7 @@ xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y 
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)\%(Identity).spv</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
       <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\VulkanSDK\1.3.224.1\Bin\glslc.exe -o $(OutDir)\%(Identity).spv %(Identity)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\VulkanSDK\1.3.243.0\Bin\glslc.exe -o $(OutDir)\%(Identity).spv %(Identity)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\VulkanSDK\1.3.224.1\Bin\glslc.exe -o $(OutDir)\%(Identity).spv %(Identity)</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)\%(Identity).spv</Outputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compiling shaders</Message>

@@ -277,9 +277,9 @@ void Device::createQueues()
     vkGetDeviceQueue(device, queueFamilyIndices.graphics[0], 0, &graphicsQueue);
     vkGetDeviceQueue(device, queueFamilyIndices.transfer[2], 0, &transferQueue);
 
-    GSGE_DEBUGGER_SET_NAME(presentQueue, "Present queue");
-    GSGE_DEBUGGER_SET_NAME(graphicsQueue, "Graphics queue");
-    GSGE_DEBUGGER_SET_NAME(transferQueue, "Transfer queue");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(presentQueue, "Present queue");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsQueue, "Graphics queue");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(transferQueue, "Transfer queue");
 }
 
 void Device::selectPhysicalDevFeatures()

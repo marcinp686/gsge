@@ -307,7 +307,7 @@ void vulkan::createGraphicsPipeline()
     vkDestroyShaderModule(*device, fragShaderModule, nullptr);
     vkDestroyShaderModule(*device, vertShaderModule, nullptr);
 
-    GSGE_DEBUGGER_SET_NAME(graphicsPipeline, "Graphics pipeline");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsPipeline, "Graphics pipeline");
     SPDLOG_TRACE("Created graphics pipeline");
 }
 
@@ -325,8 +325,8 @@ void vulkan::createGraphicsCommandBuffers()
         throw std::runtime_error("failed to allocate command buffers!");
     }
 
-    GSGE_DEBUGGER_SET_NAME(graphicsCommandBuffers[0], "Graphics command buffer 0");
-    GSGE_DEBUGGER_SET_NAME(graphicsCommandBuffers[1], "Graphics command buffer 1");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsCommandBuffers[0], "Graphics command buffer 0");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsCommandBuffers[1], "Graphics command buffer 1");
     
     SPDLOG_TRACE("Created graphics command buffers");
 }
@@ -345,8 +345,8 @@ void vulkan::createTransferCommandBuffers()
         throw std::runtime_error("failed to allocate command buffers!");
     }
 
-    GSGE_DEBUGGER_SET_NAME(transferCommandBuffers[0], "Transfer command buffer 0");
-    GSGE_DEBUGGER_SET_NAME(transferCommandBuffers[1], "Transfer command buffer 1");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(transferCommandBuffers[0], "Transfer command buffer 0");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(transferCommandBuffers[1], "Transfer command buffer 1");
 
     SPDLOG_TRACE("Created transfer command buffers");
 }
@@ -570,14 +570,14 @@ void vulkan::createSyncObjects()
         }
     }
 
-    GSGE_DEBUGGER_SET_NAME(drawingFinishedFences[0], "Drawing Finished Fence 0");
-    GSGE_DEBUGGER_SET_NAME(drawingFinishedFences[1], "Drawing Finished Fence 1");
-    GSGE_DEBUGGER_SET_NAME(transferFinishedFences[0], "Transfer Finished Fence 0");
-    GSGE_DEBUGGER_SET_NAME(transferFinishedFences[1], "Transfer Finished Fence 1");
-    GSGE_DEBUGGER_SET_NAME(imageAquiredSemaphores[0], "Image Acquired Semaphore 0");
-    GSGE_DEBUGGER_SET_NAME(imageAquiredSemaphores[1], "Image Acquired Semaphore 1");
-    GSGE_DEBUGGER_SET_NAME(renderFinishedSemaphores[0], "Render Finished Semaphore 0");
-    GSGE_DEBUGGER_SET_NAME(renderFinishedSemaphores[1], "Render Finished Semaphore 1");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(drawingFinishedFences[0], "Drawing Finished Fence 0");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(drawingFinishedFences[1], "Drawing Finished Fence 1");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(transferFinishedFences[0], "Transfer Finished Fence 0");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(transferFinishedFences[1], "Transfer Finished Fence 1");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(imageAquiredSemaphores[0], "Image Acquired Semaphore 0");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(imageAquiredSemaphores[1], "Image Acquired Semaphore 1");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(renderFinishedSemaphores[0], "Render Finished Semaphore 0");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(renderFinishedSemaphores[1], "Render Finished Semaphore 1");
 
     SPDLOG_TRACE("Created synchronization objects");
 }
