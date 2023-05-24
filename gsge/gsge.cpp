@@ -14,8 +14,8 @@ void gsge::init()
     // window->settings.windowSize.height = 1080;
 
     // windowed mode - default
-    window->settings.windowSize.width = 1000;
-    window->settings.windowSize.height = 600;
+    settings.displaySize.width = 1000;
+    settings.displaySize.height = 600;
 
     window->createWindow();
     window->setTitle("Giraffe Game Engine");
@@ -91,7 +91,7 @@ void gsge::mainLoop()
         // Toggle full screen and windowed mode
         if (glfwGetKey(*window, GLFW_KEY_F) == GLFW_PRESS)
         {
-            if (window->settings.windowType == graphicsSettings::windowType::windowed)
+            if (settings.displayMode == ESettings::DisplayMode::Windowed)
                 window->setFullScreenMode();
             else
                 window->setWindowedMode();

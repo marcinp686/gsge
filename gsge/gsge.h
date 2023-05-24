@@ -21,6 +21,7 @@
 #include "renderer/settings.h"
 #include "core/stats.h"
 #include "controller/mouse.h"
+#include <enums.h>
 
 class gsge
 {
@@ -32,6 +33,7 @@ class gsge
 
   private:
     stats frameStats;
+    Settings &settings = Settings::getInstance();
 
     std::shared_ptr<Window> window;
     std::unique_ptr<Mouse> mouse;

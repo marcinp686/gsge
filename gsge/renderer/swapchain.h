@@ -10,6 +10,7 @@
 #include "window.h"
 #include "surface.h"
 #include "renderPass.h"
+#include "settings.h"
 
 class RenderPass;
 
@@ -54,6 +55,8 @@ class Swapchain
     std::shared_ptr<Window> window;
     std::shared_ptr<Surface> surface;
     std::shared_ptr<RenderPass> renderPass;
+
+    Settings &settings = Settings::getInstance();
 
     VkSurfaceFormatKHR chooseSwapSurfaceFormat();
     VkExtent2D chooseSwapExtent();

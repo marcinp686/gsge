@@ -11,16 +11,13 @@ class Window
     Window();
     ~Window();
 
-    uint32_t width = 800;
-    uint32_t height = 600;
-
     void createWindow();
     void setTitle(const char *title);
     bool framebufferResized(); // did framebuffer dimensions change
     void setFullScreenMode();
     void setWindowedMode();
 
-    graphicsSettings settings;
+    Settings &settings = Settings::getInstance();
 
     operator GLFWwindow *()
     {

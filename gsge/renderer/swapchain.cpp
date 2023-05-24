@@ -101,7 +101,7 @@ VkExtent2D Swapchain::chooseSwapExtent()
     }
     else
     {
-        VkExtent2D actualExtent = {window->width, window->height};
+        VkExtent2D actualExtent = {settings.displaySize.width, settings.displaySize.height};
 
         actualExtent.width = std::clamp(actualExtent.width, device->getSurfaceCapabilities().minImageExtent.width,
                                         device->getSurfaceCapabilities().maxImageExtent.width);

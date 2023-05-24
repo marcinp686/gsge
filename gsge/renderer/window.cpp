@@ -1,4 +1,5 @@
 #include "window.h"
+#include <enums.h>
 
 Window::Window()
 {
@@ -14,15 +15,15 @@ void Window::createWindow()
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    if (settings.windowType == graphicsSettings::windowType::windowed)
+    if (settings.displayMode == ESettings::DisplayMode::Windowed)
     {
-        window = glfwCreateWindow(settings.windowSize.width, settings.windowSize.height, "Vulkan", nullptr, nullptr);
+        window = glfwCreateWindow(settings.displaySize.width, settings.displaySize.height, "Vulkan", nullptr, nullptr);
         glfwSetWindowPos(window, 700, 100);
     }
     else
     {
         window =
-            glfwCreateWindow(settings.windowSize.width, settings.windowSize.height, "Vulkan", glfwGetPrimaryMonitor(), nullptr);
+            glfwCreateWindow(settings.displaySize.width, settings.displaySize.height, "Vulkan", glfwGetPrimaryMonitor(), nullptr);
     }
     // glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 }
@@ -43,11 +44,11 @@ bool Window::framebufferResized()
         glfwWaitEvents();
     }
 
-    if (w == width && h == height)
+    if (w == settings.displaySize.width && h == settings.displaySize.height)
         return false;
 
-    width = w;
-    height = h;
+    settings.displaySize.width = w;
+    settings.displaySize.height = h;
 
     return true;
 }
@@ -55,13 +56,13 @@ bool Window::framebufferResized()
 void Window::setFullScreenMode()
 {
     glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, 1920, 1080, GLFW_DONT_CARE);
-    settings.windowType = graphicsSettings::windowType::fullScreen;
+    settings.displayMode = ESettings::DisplayMode::FullScreen;
 }
 
 void Window::setWindowedMode()
 {
-    glfwSetWindowMonitor(window, NULL, 100, 100, settings.windowSize.width, settings.windowSize.height, GLFW_DONT_CARE);
-    settings.windowType = graphicsSettings::windowType::windowed;
+    glfwSetWindowMonitor(window, NULL, 100, 100, settings.displaySize.width, settings.displaySize.height, GLFW_DONT_CARE);
+    settings.displayMode = ESettings::DisplayMode::Windowed;
 }
 
 static void framebufferResizeCallback(GLFWwindow *window, int width, int height)
