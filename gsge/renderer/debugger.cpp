@@ -1,7 +1,5 @@
 #include "debugger.h"
 
-Debugger *Debugger::debugUtilsInstance = nullptr;
-
 Debugger::Debugger()
 {
 }
@@ -29,17 +27,15 @@ void Debugger::setupDebugFuctionPointers()
         (PFN_vkQueueEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(instance, "vkQueueEndDebugUtilsLabelEXT");
 }
 
-Debugger *Debugger::getInstance()
-{
-    if (debugUtilsInstance == nullptr)
-        debugUtilsInstance = new Debugger();
+Debugger &Debugger::getInstance()
+{   
+    static Debugger debugUtilsInstance;
     return debugUtilsInstance;
 }
 
 void Debugger::destroy()
 {
     vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
-    delete debugUtilsInstance;
 }
 
 void Debugger::setInstance(VkInstance &instance)

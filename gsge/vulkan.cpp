@@ -359,9 +359,7 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
     // beginInfo.flags = 0;                  // Optional
     // beginInfo.pInheritanceInfo = nullptr; // Optional
 
-#ifndef NDEBUG
-    debugger->commandBufferLabelBegin(commandBuffer, "Graphics CB");
-#endif // !NDEBUG
+    GSGE_DEBUGGER_CMD_BUFFER_LABEL_BEGIN(commandBuffer, "Graphics CB");
 
     if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
     {
@@ -445,9 +443,8 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
     {
         throw std::runtime_error("failed to record command buffer!");
     }
-#ifndef NDEBUG
-    debugger->commandBufferLabelEnd(commandBuffer);
-#endif // !NDEBUG
+
+    GSGE_DEBUGGER_CMD_BUFFER_LABEL_END(commandBuffer);
 }
 
 void vulkan::drawFrame()
@@ -718,9 +715,7 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_FALSE, 2000000000);
     vkResetFences(*device, 1, &transferFinishedFences[currentFrame]);
 
-#ifndef NDEBUG
-    debugger->commandBufferLabelBegin(transferCommandBuffers[currentFrame], "transfer CB");
-#endif
+    GSGE_DEBUGGER_CMD_BUFFER_LABEL_BEGIN(transferCommandBuffers[currentFrame], "transfer CB");
 
     vkBeginCommandBuffer(transferCommandBuffers[currentFrame], &beginInfo);
 
@@ -754,9 +749,7 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     }
     vkEndCommandBuffer(transferCommandBuffers[currentFrame]);
 
-#ifndef NDEBUG
-    debugger->commandBufferLabelEnd(transferCommandBuffers[currentFrame]);
-#endif
+    GSGE_DEBUGGER_CMD_BUFFER_LABEL_END(transferCommandBuffers[currentFrame]);
 
     VkCommandBufferSubmitInfo cbSubmitInfo{};
     cbSubmitInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;

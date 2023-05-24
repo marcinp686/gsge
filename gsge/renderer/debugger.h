@@ -1,6 +1,3 @@
-#ifndef DEBUGGER_H
-#define DEBUGGER_H
-
 #pragma once
 
 #include <memory>
@@ -11,23 +8,27 @@
 #include <spdlog/spdlog.h>
 
 #if !defined NDEBUG
-#define GSGE_DEBUGGER_INSTANCE_DECL Debugger *debugger = Debugger::getInstance()
-#define GSGE_DEBUGGER_SET_OBJECT_NAME(object, name) debugger->setObjectName(object, name)
-#define GSGE_DEBUGGER_SET_INSTANCE(instance) debugger->setInstance(instance)
-#define GSGE_DEBUGGER_SET_DEVICE(device) debugger->setDevice(device)
-#define GSGE_DEBUGGER_DESTROY debugger->destroy()
+#define GSGE_DEBUGGER_INSTANCE_DECL Debugger &debugger = Debugger::getInstance()
+#define GSGE_DEBUGGER_SET_OBJECT_NAME(object, name) debugger.setObjectName(object, name)
+#define GSGE_DEBUGGER_SET_INSTANCE(instance) debugger.setInstance(instance)
+#define GSGE_DEBUGGER_SET_DEVICE(device) debugger.setDevice(device)
+#define GSGE_DEBUGGER_DESTROY debugger.destroy()
+#define GSGE_DEBUGGER_CMD_BUFFER_LABEL_BEGIN(commandBuffer, labelName) debugger.commandBufferLabelBegin(commandBuffer, labelName)
+#define GSGE_DEBUGGER_CMD_BUFFER_LABEL_END(commandBuffer) debugger.commandBufferLabelEnd(commandBuffer)
 #else
 #define GSGE_DEBUGGER_INSTANCE_DECL
 #define GSGE_DEBUGGER_SET_NAME
 #define GSGE_DEBUGGER_SET_INSTANCE
 #define GSGE_DEBUGGER_SET_DEVICE
 #define GSGE_DEBUGGER_DESTROY
+#define GSGE_DEBUGGER_CMD_BUFFER_LABEL_BEGIN
+#define GSGE_DEBUGGER_CMD_BUFFER_LABEL_END
 #endif
 
 class Debugger
 {
   public:
-    static Debugger *getInstance();
+    static Debugger &getInstance();
     void destroy();
     void setInstance(VkInstance &instance);
     void setDevice(VkDevice &device);
@@ -44,13 +45,14 @@ class Debugger
                                                         const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
                                                         void *pUserData);
 
-  private:
-    static Debugger *debugUtilsInstance;
+  private:   
 
     Debugger();
+    Debugger(Debugger &&) = delete;
+    Debugger &operator=(Debugger &&) = delete;
     Debugger(const Debugger &) = delete;
     Debugger &operator=(const Debugger &) = delete;
-
+    
     VkInstance instance;
     VkDevice device;
 
@@ -67,5 +69,3 @@ class Debugger
     PFN_vkQueueBeginDebugUtilsLabelEXT vkQueueBeginDebugUtilsLabelEXT = VK_NULL_HANDLE;
     PFN_vkQueueEndDebugUtilsLabelEXT vkQueueEndDebugUtilsLabelEXT = VK_NULL_HANDLE;
 };
-
-#endif
