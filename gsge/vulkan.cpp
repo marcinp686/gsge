@@ -456,12 +456,14 @@ void vulkan::drawFrame()
 
     // wait until queue has finished processing previous graphicsCommandBuffers[currentFrame]
     EASY_BLOCK("Wait for Fence");
-
-    VkResult res1 = vkWaitForFences(*device, 1, &drawingFinishedFences[currentFrame], VK_FALSE, 0);
-    EASY_VALUE("F1", (uint32_t)res1);
+    VkResult res1 = vkWaitForFences(*device, 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
+    if (res1 == VK_TIMEOUT)
+    {
+        SPDLOG_ERROR("Fence timeout");
+    }
     EASY_END_BLOCK;
-
-    // Acquire next available image
+    
+    // Acquire next available image    
     EASY_BLOCK("Aquire next img");
     VkResult result =
         vkAcquireNextImageKHR(*device, *swapchain, UINT64_MAX, imageAquiredSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
