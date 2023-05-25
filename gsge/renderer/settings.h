@@ -2,9 +2,12 @@
 
 #include <vector>
 #include <string_view>
+
 #include <enums.h>
 
-// A singleton class to engine settings
+#include <spdlog/spdlog.h>
+
+// Engine settings class
 class Settings
 {
   public:
@@ -17,16 +20,25 @@ class Settings
         size_t height{600};
     } displaySize;
 
-  public:
     static Settings &getInstance();
+    void parseCmdParams(std::vector<std::string_view> params);
+
+    int monitorIndex{0};
+    int monitorCount{0};    
+
+    // Application related settings
+    std::string appName{"GSGE"};
 
   private:
-    //static Settings instance;
-    const std::vector<std::string_view> cmdParams;
-
+    // Private constructor to prevent instancing
     Settings();
+
+    // Private copy constructor to prevent copying
     Settings(const Settings &) = delete;
+    // Private assignment operator to prevent assignment
     Settings &operator=(const Settings &) = delete;
+    // Private move constructor to prevent moving
     Settings(Settings &&) = delete;
+    // Private move assignment operator to prevent moving
     Settings &operator=(Settings &&) = delete;
 };

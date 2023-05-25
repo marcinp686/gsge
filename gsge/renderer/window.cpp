@@ -15,15 +15,44 @@ void Window::createWindow()
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    if (settings.displayMode == ESettings::DisplayMode::Windowed)
+
+    // Get list of available monitors - primary monitor is always first
+    GLFWmonitor **monitors = glfwGetMonitors(&settings.monitorCount);
+
+    // Get current video mode of the monitor to show the window on
+    const GLFWvidmode *mode = glfwGetVideoMode(monitors[settings.monitorIndex]);
+
+    if (settings.monitorCount == 0)
     {
-        window = glfwCreateWindow(settings.displaySize.width, settings.displaySize.height, "Vulkan", nullptr, nullptr);
-        glfwSetWindowPos(window, 700, 100);
+        spdlog::error("No monitors found");
+        exit(EXIT_FAILURE);
     }
     else
     {
+        spdlog::info("Found {} monitors. Using monitor id={} - {}", settings.monitorCount, settings.monitorIndex,
+                     glfwGetMonitorName(monitors[settings.monitorIndex]));
+    }
+
+    if (settings.displayMode == ESettings::DisplayMode::Windowed)
+    {
+        // TODO: Change window title to be stored in settings class
         window =
-            glfwCreateWindow(settings.displaySize.width, settings.displaySize.height, "Vulkan", glfwGetPrimaryMonitor(), nullptr);
+            glfwCreateWindow(settings.displaySize.width, settings.displaySize.height, settings.appName.c_str(), nullptr, nullptr);
+        int monitorX, monitorY; // monitor position in screen coordinates
+        glfwGetMonitorPos(monitors[settings.monitorIndex], &monitorX, &monitorY);
+        // Center window on monitor
+        glfwSetWindowPos(window, monitorX + (mode->width - settings.displaySize.width) / 2,
+                         monitorY + (mode->height - settings.displaySize.height) / 2);
+    }
+    else
+    {
+
+        // TODO: Change window title to be stored in settings class
+        // TODO: test to see if mode is fullscreen and store it in settings class
+        settings.displaySize.width = mode->width;
+        settings.displaySize.height = mode->height;
+        window = glfwCreateWindow(settings.displaySize.width, settings.displaySize.height, settings.appName.c_str(),
+                                  monitors[settings.monitorIndex], nullptr);
     }
     // glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 }

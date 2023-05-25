@@ -8,15 +8,6 @@ void gsge::init()
 {
     window = std::make_shared<Window>();
 
-    // Fullscreen mode
-    // window->settings.windowType = graphicsSettings::windowType::fullScreen;
-    // window->settings.windowSize.width = 1920;
-    // window->settings.windowSize.height = 1080;
-
-    // windowed mode - default
-    settings.displaySize.width = 1000;
-    settings.displaySize.height = 600;
-
     window->createWindow();
     window->setTitle("Giraffe Game Engine");
 
