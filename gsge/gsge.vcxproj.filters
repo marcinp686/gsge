@@ -16,9 +16,6 @@
     <Filter Include="Natvis">
       <UniqueIdentifier>{53e66159-f66b-4a0b-9aca-073cb0b0b27e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shaders">
-      <UniqueIdentifier>{cdf323fb-b65d-41da-8f98-1191924ec58b}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GDemo.cpp">
@@ -163,20 +160,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shaders\per_vertex_light_shader.frag">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\per_vertex_light_shader.vert">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\per_fragment_light_shader.frag">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shaders\per_fragment_light_shader.vert">
-      <Filter>Shaders</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
     <Natvis Include="..\..\entt\natvis\entt\config.natvis">
       <Filter>Natvis</Filter>
     </Natvis>
@@ -221,5 +204,11 @@
     <MASM Include="tmatrix.asm">
       <Filter>Pliki źródłowe</Filter>
     </MASM>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\per_fragment_light_shader.frag" />
+    <None Include="shaders\per_fragment_light_shader.vert" />
+    <None Include="shaders\per_vertex_light_shader.frag" />
+    <None Include="shaders\per_vertex_light_shader.vert" />
   </ItemGroup>
 </Project>

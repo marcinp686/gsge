@@ -1,0 +1,14 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<ItemGroup>
+		<ShaderFiles Include="shaders\*.vert">
+			<OutDir>$(OutDir)</OutDir>
+		</ShaderFiles>
+
+		<ShaderFiles Include="shaders\*.frag">
+			<OutDir>$(OutDir)</OutDir>
+		</ShaderFiles>
+	</ItemGroup>
+	<Target Name="CompileShaders" BeforeTargets="Build">
+		<Exec Command="$(VK_SDK_PATH)\bin\glslc.exe -o %(OutDir)\%(ShaderFiles.Identity).spv %(ShaderFiles.FullPath)" />
+	</Target>
+</Project>
