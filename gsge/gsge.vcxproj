@@ -266,9 +266,7 @@
     </MASM>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\per_fragment_light_shader.frag">
-      <FileType>Document</FileType>
-    </None>
+    <None Include="shaders\per_fragment_light_shader.frag" />      
     <None Include="shaders\per_fragment_light_shader.vert" />
     <None Include="shaders\per_vertex_light_shader.frag" />
     <None Include="shaders\per_vertex_light_shader.vert" />

@@ -16,6 +16,9 @@
     <Filter Include="Natvis">
       <UniqueIdentifier>{53e66159-f66b-4a0b-9aca-073cb0b0b27e}</UniqueIdentifier>
     </Filter>
+	<Filter Include="Shaders">
+		<Extensions>frag;vert</Extensions>
+	</Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GDemo.cpp">
@@ -206,9 +209,17 @@
     </MASM>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\per_fragment_light_shader.frag" />
-    <None Include="shaders\per_fragment_light_shader.vert" />
-    <None Include="shaders\per_vertex_light_shader.frag" />
-    <None Include="shaders\per_vertex_light_shader.vert" />
+    <None Include="shaders\per_fragment_light_shader.frag">
+		<Filter>Shaders</Filter>
+	</None>
+    <None Include="shaders\per_fragment_light_shader.vert">
+		<Filter>Shaders</Filter>
+	</None>
+    <None Include="shaders\per_vertex_light_shader.frag">
+		<Filter>Shaders</Filter>
+	</None>
+    <None Include="shaders\per_vertex_light_shader.vert">
+		<Filter>Shaders</Filter>
+	</None>
   </ItemGroup>
 </Project>
