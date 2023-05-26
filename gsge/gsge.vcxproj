@@ -74,16 +74,16 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>C:\Users\epic007\source\repos\glm;C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\include;C:\Users\epic007\source\repos\gsge\gsge;$(VK_SDK_PATH)\Include;C:\Users\epic007\source\repos\entt\out\install\x64-Release\include;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(VK_SDK_PATH)\Lib;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\lib;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\lib;C:\Users\epic007\source\repos\assimp\out\install\x64-Release\lib;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\lib;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\lib;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)\$(Platform)\Build\$(Configuration)</OutDir>
-    <IntDir>$(SolutionDir)\$(Platform)\Intermediate\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(Platform)\Build\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(Platform)\Intermediate\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets>
     </CustomBuildBeforeTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>C:\Users\epic007\source\repos\glm;C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\include;C:\Users\epic007\source\repos\gsge\gsge;$(VK_SDK_PATH)\Include;C:\Users\epic007\source\repos\entt\out\install\x64-Debug\include;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>$(VK_SDK_PATH)\Lib;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\lib;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\lib;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\lib;C:\Users\epic007\source\repos\assimp\out\install\x64-Debug\lib;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Debug\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)\$(Platform)\Build\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)\$(Platform)\Intermediate\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)$(Platform)\Build\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(Platform)\Intermediate\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets>
     </CustomBuildBeforeTargets>
   </PropertyGroup>
@@ -120,7 +120,7 @@
     <ClCompile>
       <WarningLevel>Level2</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>BUILD_WITH_EASY_PROFILER;_DEBUG;_CONSOLE;VK_USE_PLATFORM_WIN32_KHR;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLM_FORCE_LEFT_HANDED;SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE;SPDLOG_NO_SOURCE_LOC;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>VK_USE_PLATFORM_WIN32_KHR;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLM_FORCE_LEFT_HANDED;SPDLOG_NO_SOURCE_LOC;NOMINMAX;_DEBUG;_CONSOLE;SPDLOG_NO_SOURCE_LOC;SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -158,7 +158,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>BUILD_WITH_EASY_PROFILER;NDEBUG;_CONSOLE;VK_USE_PLATFORM_WIN32_KHR;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLM_FORCE_LEFT_HANDED;NOMINMAX;SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_ERROR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>VK_USE_PLATFORM_WIN32_KHR;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLM_FORCE_LEFT_HANDED;SPDLOG_NO_SOURCE_LOC;NOMINMAX;NDEBUG;_CONSOLE;SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_ERROR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -266,9 +266,7 @@
     </MASM>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\per_fragment_light_shader.frag">
-      <FileType>Document</FileType>
-    </None>
+    <None Include="shaders\per_fragment_light_shader.frag" />
     <None Include="shaders\per_fragment_light_shader.vert" />
     <None Include="shaders\per_vertex_light_shader.frag" />
     <None Include="shaders\per_vertex_light_shader.vert" />
