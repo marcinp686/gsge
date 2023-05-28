@@ -1,16 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Profile|x64">
+      <Configuration>Profile</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
@@ -26,19 +22,6 @@
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -52,22 +35,26 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -79,6 +66,13 @@
     <CustomBuildBeforeTargets>
     </CustomBuildBeforeTargets>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
+    <IncludePath>C:\Users\epic007\source\repos\glm;C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\include;C:\Users\epic007\source\repos\gsge\gsge;$(VK_SDK_PATH)\Include;C:\Users\epic007\source\repos\entt\out\install\x64-Release\include;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VK_SDK_PATH)\Lib;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\lib;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\lib;C:\Users\epic007\source\repos\assimp\out\install\x64-Release\lib;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\lib;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\lib;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(Platform)\Build\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(Platform)\Intermediate\$(Configuration)\</IntDir>
+    <CustomBuildBeforeTargets />
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>C:\Users\epic007\source\repos\glm;C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\include;C:\Users\epic007\source\repos\gsge\gsge;$(VK_SDK_PATH)\Include;C:\Users\epic007\source\repos\entt\out\install\x64-Debug\include;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>$(VK_SDK_PATH)\Lib;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\lib;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\lib;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\lib;C:\Users\epic007\source\repos\assimp\out\install\x64-Debug\lib;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Debug\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath)</LibraryPath>
@@ -87,40 +81,11 @@
     <CustomBuildBeforeTargets>
     </CustomBuildBeforeTargets>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-    </ClCompile>
-    <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-    </ClCompile>
-    <Link>
-      <SubSystem>Console</SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <Profile>true</Profile>
-    </Link>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level2</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>VK_USE_PLATFORM_WIN32_KHR;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLM_FORCE_LEFT_HANDED;SPDLOG_NO_SOURCE_LOC;NOMINMAX;_DEBUG;_CONSOLE;SPDLOG_NO_SOURCE_LOC;SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;NOMINMAX;VK_USE_PLATFORM_WIN32_KHR;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLM_FORCE_LEFT_HANDED;GLFW_INCLUDE_VULKAN;SPDLOG_NO_SOURCE_LOC;SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -158,7 +123,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>VK_USE_PLATFORM_WIN32_KHR;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLM_FORCE_LEFT_HANDED;SPDLOG_NO_SOURCE_LOC;NOMINMAX;NDEBUG;_CONSOLE;SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_ERROR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;NOMINMAX;VK_USE_PLATFORM_WIN32_KHR;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLM_FORCE_LEFT_HANDED;GLFW_INCLUDE_VULKAN;SPDLOG_NO_SOURCE_LOC;SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -183,6 +148,45 @@
 				xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Debug\models /Y /Q
 				xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y /Q
 			</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying models</Message>
+    </PostBuildEvent>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+      <Message>
+      </Message>
+    </CustomBuildStep>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
+    <ClCompile>
+      <WarningLevel>Level2</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;NOMINMAX;VK_USE_PLATFORM_WIN32_KHR;GLM_FORCE_DEPTH_ZERO_TO_ONE;GLM_FORCE_LEFT_HANDED;GLFW_INCLUDE_VULKAN;SPDLOG_NO_SOURCE_LOC;SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_ERROR;BUILD_WITH_EASY_PROFILER</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <DisableSpecificWarnings>26495;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;spdlog.lib;easy_profiler.lib;zlibstatic.lib;assimp-vc143-mt.lib;VulkanMemoryAllocatorrd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <Profile>true</Profile>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy $(SolutionDir)gsge\models\*.fbx $(OutDir)models /y /q /i</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying models</Message>
@@ -266,6 +270,7 @@
     </MASM>
   </ItemGroup>
   <ItemGroup>
+    <None Include="ShaderBuild.targets" />
     <None Include="shaders\per_fragment_light_shader.frag" />
     <None Include="shaders\per_fragment_light_shader.vert" />
     <None Include="shaders\per_vertex_light_shader.frag" />

@@ -11,10 +11,17 @@
 
 int main(int argc, char *argv[])
 {
+
+#ifdef BUILD_WITH_EASY_PROFILER
     EASY_PROFILER_ENABLE;
     profiler::startListen();
+#endif // BUILD_WITH_EASY_PROFILER  
 
+#ifdef _DEBUG
     spdlog::set_level(spdlog::level::trace);
+#elif NDEBUG
+	spdlog::set_level(spdlog::level::info);
+#endif    
 
     Settings &settings = Settings::getInstance();
     settings.parseCmdParams(std::vector<std::string_view>{argv + 1, argv + argc});
@@ -28,7 +35,7 @@ int main(int argc, char *argv[])
     catch (const std::exception &e)
     {
         std::cerr << e.what() << std::endl;
-        app.cleanup();
+        app.cleanup();       
         return EXIT_FAILURE;
     }
 
