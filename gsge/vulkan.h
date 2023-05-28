@@ -115,7 +115,9 @@ class vulkan
     void createTransferCommandBuffers();
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
+    
     void createSyncObjects();
+    void destroySyncObjects();
 
     void createVertexBuffer();
     void createIndexBuffer();

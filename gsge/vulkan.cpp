@@ -135,13 +135,7 @@ void vulkan::cleanup()
     framebuffer.reset();
     renderPass.reset();
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
-    {
-        vkDestroySemaphore(*device, imageAquiredSemaphores[i], nullptr);
-        vkDestroySemaphore(*device, renderFinishedSemaphores[i], nullptr);
-        vkDestroyFence(*device, transferFinishedFences[i], nullptr);
-        vkDestroyFence(*device, drawingFinishedFences[i], nullptr);
-    }
+    destroySyncObjects();
 
     graphicsCommandPool.reset();
     transferCommandPool.reset();
@@ -470,16 +464,13 @@ void vulkan::drawFrame()
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR /*|| window->framebufferResized()*/)
     {
-        Sleep(200);
         vkDeviceWaitIdle(*device);
         swapchain.reset(new Swapchain(device, window, surface));
         renderPass.reset(new RenderPass(device, swapchain));
         framebuffer.reset(new Framebuffer(device, swapchain, renderPass));
         swapchainAspectChanged = true;
-        vkDeviceWaitIdle(*device);
-        // vkAcquireNextImageKHR(*device, *swapchain, UINT64_MAX, imageAquiredSemaphores[currentFrame],
-        //  VK_NULL_HANDLE, &imageIndex);
-        Sleep(200);
+        destroySyncObjects();
+        createSyncObjects();        
         return;
     }
     else if (result != VK_SUCCESS)
@@ -545,6 +536,7 @@ void vulkan::drawFrame()
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
+
 void vulkan::createSyncObjects()
 {
     imageAquiredSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -579,6 +571,17 @@ void vulkan::createSyncObjects()
     GSGE_DEBUGGER_SET_OBJECT_NAME(renderFinishedSemaphores[1], "Render Finished Semaphore 1");
 
     SPDLOG_TRACE("Created synchronization objects");
+}
+
+void vulkan::destroySyncObjects()
+{
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    {
+        vkDestroySemaphore(*device, imageAquiredSemaphores[i], nullptr);
+        vkDestroySemaphore(*device, renderFinishedSemaphores[i], nullptr);
+        vkDestroyFence(*device, transferFinishedFences[i], nullptr);
+        vkDestroyFence(*device, drawingFinishedFences[i], nullptr);
+    }
 }
 
 void vulkan::createVertexBindingDescriptors()
