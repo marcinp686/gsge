@@ -8,7 +8,7 @@ void stats::update()
     if (averageFrameTimeCounter == averageFrameCountNumber)
     {
         currentFps = 1.0f / (totalFrameTimeCounter / averageFrameCountNumber);
-        spdlog::info("FPS {:.1f}\tMIN {:.1f}\tMAX {:.1f}", currentFps, minFps, maxFps);
+        SPDLOG_INFO("FPS {:.1f}\tMIN {:.1f}\tMAX {:.1f}", currentFps, minFps, maxFps);
         if (currentFps > maxFps)
             maxFps = currentFps;
         if (currentFps < minFps)

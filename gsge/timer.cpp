@@ -22,6 +22,6 @@ void timer::printTimer()
 {
     auto currentTimer = std::chrono::steady_clock::now();
     float delta = std::chrono::duration<float, std::chrono::milliseconds::period>(currentTimer - lastTimer).count();
-    spdlog::info("{} function time: {}ms", name, delta);
+    SPDLOG_INFO("{} function time: {}ms", name, delta);
     return;
 }

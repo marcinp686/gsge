@@ -16,7 +16,7 @@ void Settings::parseCmdParams(std::vector<std::string_view> params)
     {
         if (param.length() < 5)
         {
-            spdlog::warn("Invalid parameter: {}", param);
+            SPDLOG_WARN("Invalid parameter: {}", param);
             continue;
         }
 
@@ -26,22 +26,22 @@ void Settings::parseCmdParams(std::vector<std::string_view> params)
             try
             {
                 monitorIndex = std::stoi(param.data());
-                spdlog::info("Command line parameter detected - Monitor: {}", monitorIndex);
+                SPDLOG_INFO("Command line parameter detected - Monitor: {}", monitorIndex);
             }
             catch (const std::invalid_argument &e)
             {
-                spdlog::warn("Invalid value for --monitor parameter: {}", param);
+                SPDLOG_WARN("Invalid value for --monitor parameter: {}", param);
             }
         }
         else if (param.find("--fullscreen") != param.npos)
         {
             displayMode = ESettings::DisplayMode::FullScreen;
-            spdlog::info("Command line parameter detected - Fullscreen mode");
+            SPDLOG_INFO("Command line parameter detected - Fullscreen mode");
         }
         else if (param.find("--windowed") != param.npos)
         {
             displayMode = ESettings::DisplayMode::Windowed;
-            spdlog::info("Command line parameter detected - Windowed mode");
+            SPDLOG_INFO("Command line parameter detected - Windowed mode");
         }
         else if (param.find("--width=") != param.npos)
         {
@@ -49,11 +49,11 @@ void Settings::parseCmdParams(std::vector<std::string_view> params)
             try
             {
                 displaySize.width = std::stoi(param.data());
-                spdlog::info("Command line parameter detected - Disply width: {}", displaySize.width);
+                SPDLOG_INFO("Command line parameter detected - Disply width: {}", displaySize.width);
             }
             catch (const std::invalid_argument &e)
             {
-                spdlog::warn("Invalid value for --width parameter: {}", param);
+                SPDLOG_WARN("Invalid value for --width parameter: {}", param);
             }
         }
         else if (param.find("--height=") != param.npos)
@@ -62,16 +62,16 @@ void Settings::parseCmdParams(std::vector<std::string_view> params)
             try
             {
                 displaySize.height = std::stoi(param.data());
-                spdlog::info("Command line parameter detected - Display height: {}", displaySize.height);
+                SPDLOG_INFO("Command line parameter detected - Display height: {}", displaySize.height);
             }
             catch (const std::invalid_argument &e)
             {
-                spdlog::warn("Invalid value for --height parameter: {}", param);
+                SPDLOG_WARN("Invalid value for --height parameter: {}", param);
             }
         }
         else
         {
-            spdlog::warn("Invalid parameter: {}", param);
+            SPDLOG_WARN("Invalid parameter: {}", param);
             continue;
         }
     }
