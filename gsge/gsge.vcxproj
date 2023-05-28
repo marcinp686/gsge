@@ -102,10 +102,7 @@
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>
-				xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Debug\models /Y /Q
-				xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y /Q
-			</Command>
+      <Command>xcopy $(SolutionDir)gsge\models\*.fbx $(OutDir)models /y /q /i /e</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying models</Message>
@@ -144,10 +141,7 @@
       <Profile>true</Profile>
     </Link>
     <PostBuildEvent>
-      <Command>
-				xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Debug\models /Y /Q
-				xcopy $(SolutionDir)gsge\models\*.fbx $(SolutionDir)x64\Build\Release\models /Y /Q
-			</Command>
+      <Command>xcopy $(SolutionDir)gsge\models\*.fbx $(OutDir)models /y /q /i /e</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying models</Message>
@@ -186,7 +180,7 @@
       <Profile>true</Profile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(SolutionDir)gsge\models\*.fbx $(OutDir)models /y /q /i</Command>
+      <Command>xcopy $(SolutionDir)gsge\models\*.fbx $(OutDir)models /y /q /i /e</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying models</Message>
