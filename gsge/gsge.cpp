@@ -24,6 +24,32 @@ void gsge::init()
     renderer->init();
 
     level->mainCamera.setAspect(renderer->getViewAspect());
+    
+    glfwSetWindowUserPointer(*window, this);
+    glfwSetKeyCallback(*window, [](GLFWwindow *window, int key, int scancode, int action, int mods) {
+        gsge *instance = reinterpret_cast<gsge *>(glfwGetWindowUserPointer(window));
+        instance->keyCallback(window, key, scancode, action, mods);
+    });
+}
+
+void gsge::keyCallback(GLFWwindow *glfwWindow, int key, int scancode, int action, int mods)
+{
+    switch (key)
+    {
+    case GLFW_KEY_ESCAPE:
+        if (action == GLFW_PRESS)
+            glfwSetWindowShouldClose(glfwWindow, GLFW_TRUE);
+        break;
+    case GLFW_KEY_F:
+        if (action == GLFW_PRESS)
+        {
+			if (settings.displayMode == ESettings::DisplayMode::Windowed)
+				window->setFullScreenMode();
+			else
+				window->setWindowedMode();
+		}
+		break;    
+    }
 }
 
 void gsge::cleanup()
@@ -71,21 +97,6 @@ void gsge::mainLoop()
         if (glfwGetKey(*window, GLFW_KEY_S) == GLFW_PRESS)
         {
             level->mainCamera.moveBackward(frameStats.dt);
-        };
-
-        // ESC exits application
-        if (glfwGetKey(*window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        {
-            break;
-        };
-
-        // Toggle full screen and windowed mode
-        if (glfwGetKey(*window, GLFW_KEY_F) == GLFW_PRESS)
-        {
-            if (settings.displayMode == ESettings::DisplayMode::Windowed)
-                window->setFullScreenMode();
-            else
-                window->setWindowedMode();
         };
 
         level->update(frameStats.dt);

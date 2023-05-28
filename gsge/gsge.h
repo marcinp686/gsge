@@ -41,4 +41,6 @@ class gsge
     std::unique_ptr<scene> level;
 
     void uploadBuffersToGPU();
+
+    void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 };
