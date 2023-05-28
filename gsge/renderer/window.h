@@ -16,6 +16,7 @@ class Window
     bool framebufferResized(); // did framebuffer dimensions change
     void setFullScreenMode();
     void setWindowedMode();
+    void getMonitors();
 
     Settings &settings = Settings::getInstance();
 
@@ -26,4 +27,5 @@ class Window
 
   private:
     GLFWwindow *window = nullptr;
+    GLFWmonitor **monitors = nullptr;
 };
