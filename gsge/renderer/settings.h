@@ -16,8 +16,8 @@ class Settings
 
     struct DisplaySize
     {
-        size_t width{800};
-        size_t height{600};
+        uint32_t width{800};
+        uint32_t height{600};
     } displaySize;
 
     static Settings &getInstance();

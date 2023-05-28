@@ -29,7 +29,6 @@ int main(int argc, char *argv[])
     {
         std::cerr << e.what() << std::endl;
         app.cleanup();
-        Sleep(5000);
         return EXIT_FAILURE;
     }
 

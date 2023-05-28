@@ -144,7 +144,7 @@ void scene::update(float deltaTime)
     updateUniformBuffer();
 }
 
-extern "C" void updateTransformMatrix(const float *ptr, const float *pSinCos);
+// extern "C" void updateTransformMatrix(const float *ptr, const float *pSinCos);
 
 void scene::updateTransformMatrices(float dt)
 {
