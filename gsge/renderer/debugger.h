@@ -17,7 +17,7 @@
 #define GSGE_DEBUGGER_CMD_BUFFER_LABEL_END(commandBuffer) debugger.commandBufferLabelEnd(commandBuffer)
 #else
 #define GSGE_DEBUGGER_INSTANCE_DECL
-#define GSGE_DEBUGGER_SET_OBJECT_NAME _noop
+#define GSGE_DEBUGGER_SET_OBJECT_NAME __noop
 #define GSGE_DEBUGGER_SET_INSTANCE __noop
 #define GSGE_DEBUGGER_SET_DEVICE __noop
 #define GSGE_DEBUGGER_DESTROY __noop
