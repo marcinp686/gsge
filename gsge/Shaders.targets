@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<ItemGroup>
+		<!-- Include definitions from Shaders.xml, which defines the GLSLShader item. -->
+		<PropertyPageSchema Include="$(MSBuildThisFileDirectory)Shaders.xml" />
+		<!-- Hook up GLSLShader items to be built by the GLSLC target. -->
+		<AvailableItemName Include="GLSLShader">
+			<Targets>GLSLC</Targets>
+		</AvailableItemName>
+
+	</ItemGroup>
+
+	<Target Name="GLSLC" Condition="'@(GLSLShader)' != ''" BeforeTargets="Build;Rebuild" Inputs="@(GLSLShader)" Outputs="@(GLSLShader->'$(OutDir)%(Identity).spv')">
+		<Message Importance="High" Text="Compiling shaders" />
+
+		<ItemGroup>
+			<GLSLShader>
+				<OutDir>$(OutDir)</OutDir>
+			</GLSLShader>
+		</ItemGroup>
+
+		<!-- Setup metadata for custom build tool -->
+		<ItemGroup>
+			<GLSLShader>
+				<Message>Compiling %(Filename)%(Extension)</Message>
+				<Command>$(VK_SDK_PATH)\bin\glslc.exe -o %(OutDir)%(GLSLShader.Identity).spv %(GLSLShader.FullPath)</Command>
+				<Inputs>%(GLSLShader.FullPath)</Inputs>
+				<Outputs>%(OutDir)%(Identity).spv</Outputs>
+			</GLSLShader>
+		</ItemGroup>
+
+		<!-- Compile by forwarding to the Custom Build Tool infrastructure,
+         so it will take care of .tlogs and error/warning parsing -->
+		<CustomBuild
+		  Sources="@(GLSLShader)"
+		  MinimalRebuildFromTracking="true"
+		  TrackerLogDirectory="$(TLogLocation)"
+		  ErrorListRegex="(?'FILENAME'.+):(?'LINE'\d+):(?'COLUMN'\d+): (?'CATEGORY'error|warning): (?'TEXT'.*)" />
+	</Target>
+</Project>

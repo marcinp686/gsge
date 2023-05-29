@@ -65,6 +65,7 @@
     <IntDir>$(SolutionDir)$(Platform)\Intermediate\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets>
     </CustomBuildBeforeTargets>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <IncludePath>C:\Users\epic007\source\repos\glm;C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\include;C:\Users\epic007\source\repos\gsge\gsge;$(VK_SDK_PATH)\Include;C:\Users\epic007\source\repos\entt\out\install\x64-Release\include;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\include;$(IncludePath)</IncludePath>
@@ -72,6 +73,7 @@
     <OutDir>$(SolutionDir)$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)$(Platform)\Intermediate\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets />
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>C:\Users\epic007\source\repos\glm;C:\Users\epic007\source\repos\assimp\out\install\x64-Release\include;C:\Users\epic007\source\repos\spdlog\out\install\x64-Release\include;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\include;C:\Users\epic007\source\repos\gsge\gsge;$(VK_SDK_PATH)\Include;C:\Users\epic007\source\repos\entt\out\install\x64-Debug\include;C:\Users\epic007\source\repos\glfw\out\install\x64-Release\include;C:\Users\epic007\source\repos\VulkanMemoryAllocator\out\install\x64-Release\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
@@ -80,6 +82,7 @@
     <IntDir>$(SolutionDir)$(Platform)\Intermediate\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets>
     </CustomBuildBeforeTargets>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -264,15 +267,14 @@
     </MASM>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ShaderBuild.targets" />
-    <None Include="shaders\per_fragment_light_shader.frag" />
-    <None Include="shaders\per_fragment_light_shader.vert" />
-    <None Include="shaders\per_vertex_light_shader.frag" />
-    <None Include="shaders\per_vertex_light_shader.vert" />
+    <GLSLShader Include="shaders\per_fragment_light_shader.frag" />
+    <GLSLShader Include="shaders\per_fragment_light_shader.vert" />
+    <GLSLShader Include="shaders\per_vertex_light_shader.frag" />
+    <GLSLShader Include="shaders\per_vertex_light_shader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
-    <Import Project="ShaderBuild.targets" />
+    <Import Project="Shaders.targets" />
   </ImportGroup>
 </Project>

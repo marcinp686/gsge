@@ -10,7 +10,7 @@
 		</ShaderFiles>
 	</ItemGroup>
 
-	<Target Name="CompileShaders" BeforeTargets="Build">
+	<Target Name="CompileShaders" BeforeTargets="Build;Rebuild" Inputs="@(ShaderFiles)" Outputs="@(ShaderFiles->'$(OutDir)%(Identity).spv')">
 		<Exec Command="$(VK_SDK_PATH)\bin\glslc.exe -o %(OutDir)%(ShaderFiles.Identity).spv %(ShaderFiles.FullPath)" />
 	</Target>
 
