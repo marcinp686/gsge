@@ -24,7 +24,7 @@ void gsge::init()
     renderer->init();
 
     level->mainCamera.setAspect(renderer->getViewAspect());
-    
+
     glfwSetWindowUserPointer(*window, this);
     glfwSetKeyCallback(*window, [](GLFWwindow *window, int key, int scancode, int action, int mods) {
         gsge *instance = reinterpret_cast<gsge *>(glfwGetWindowUserPointer(window));
@@ -43,12 +43,27 @@ void gsge::keyCallback(GLFWwindow *glfwWindow, int key, int scancode, int action
     case GLFW_KEY_F:
         if (action == GLFW_PRESS)
         {
-			if (settings.displayMode == ESettings::DisplayMode::Windowed)
-				window->setFullScreenMode();
-			else
-				window->setWindowedMode();
-		}
-		break;    
+            if (settings.displayMode == ESettings::DisplayMode::Windowed)
+                window->setFullScreenMode();
+            else
+                window->setWindowedMode();
+        }
+        break;
+    case GLFW_KEY_P:
+        if (action == GLFW_PRESS)
+        {
+            if (engineState == EEngine::State::Running)
+            {
+                engineState = EEngine::State::Paused;
+                SPDLOG_INFO("Engine paused");
+            }
+            else
+            {
+                engineState = EEngine::State::Running;
+                SPDLOG_INFO("Engine running");
+            }
+        }
+        break;
     }
 }
 
@@ -73,8 +88,16 @@ void gsge::mainLoop()
     {
         EASY_BLOCK("mainLoop", profiler::colors::Blue200);
         glfwPollEvents();
-        frameStats.update();
+        
         mouse->update();
+
+        if (engineState == EEngine::State::Paused)
+        {
+            Sleep(100);
+            continue;
+        }
+
+        frameStats.update();
 
         if (mouse->dx != 0 || mouse->dy != 0)
         {

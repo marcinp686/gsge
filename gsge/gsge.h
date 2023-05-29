@@ -40,6 +40,8 @@ class gsge
     std::unique_ptr<vulkan> renderer;
     std::unique_ptr<scene> level;
 
+    EEngine::State engineState{EEngine::State::Running};
+
     void uploadBuffersToGPU();
 
     void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);

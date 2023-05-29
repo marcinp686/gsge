@@ -2,11 +2,19 @@
 
 namespace ESettings
 {
-
 enum class DisplayMode
 {
     FullScreen,
     Windowed
 };
+} // namespace ESettings
 
-} // namespace Settings
+namespace EEngine
+{
+enum class State
+{
+    Running,
+    Paused,
+    Stopped
+};
+}; // namespace Engine
