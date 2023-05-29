@@ -18,9 +18,9 @@ layout(binding = 0) uniform UniformBufferObject {
 } ubo;
 
 const vec3 pointLightColor = {1, 1, 1};
-const float pointLightPower = 30;
-const float ambientLightPower = 0.025;
-const vec3 materialDiffuseColor = {1.0f, 1.0f, 0.3f};
+const float pointLightPower = 40;
+const float ambientLightPower = 0.015;
+const vec3 materialDiffuseColor = {0.01f, 0.3f, 1.0f};
 
 // Light attenuation terms
 const float Kc = 1.0;   // constant term
@@ -35,7 +35,7 @@ void main() {
     float cosTheta = max(dot(norm, directionToLight),0);         
     float attenuation = 1.0 / (Kc + Kl * distanceToLight + Kd * distanceToLight* distanceToLight );    
     vec3 diffuse = materialDiffuseColor * pointLightColor * pointLightPower * cosTheta * attenuation;      
-    vec3 ambient = materialDiffuseColor * ambientLightPower * attenuation;
+    vec3 ambient = materialDiffuseColor * ambientLightPower;
 
     outColor = diffuse + ambient;    
 }
