@@ -81,6 +81,19 @@ void Device::enumerateSurfacePresentModes()
     }
 }
 
+/**
+ * \brief Checks if current device surface extent is {0,0}.
+ * If surface extent is {0,0} then window or app is minimized and we cannot create subsequent dependent objects
+ * like images, views etc.
+ */
+bool Device::isCurrentSurfaceExtentZero() const
+{    
+    if (surfaceCapabilities.currentExtent.width == 0 || surfaceCapabilities.currentExtent.height == 0)
+        return true;
+    else
+        return false;
+}
+
 void Device::pickPhysicalDevice()
 {
     // query the number of devices in system

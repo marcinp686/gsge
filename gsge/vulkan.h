@@ -56,7 +56,8 @@ class vulkan
 
     uint32_t currentFrame = 0;
     const int MAX_FRAMES_IN_FLIGHT = 2;
-    bool swapchainAspectChanged = true;
+    bool swapchainAspectChanged{true};    
+    bool isResizing{false};
 
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
@@ -108,6 +109,8 @@ class vulkan
 
     void cleanup();
 
+    void destroyCommandPools();
+
     void createVertexBindingDescriptors();
     void createGraphicsPipeline();
 
@@ -115,6 +118,10 @@ class vulkan
     void createTransferCommandBuffers();
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
+    
+    void handleSurfaceResize();
+
+    void freeCommandBuffers();
     
     void createSyncObjects();
     void destroySyncObjects();

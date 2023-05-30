@@ -1,9 +1,18 @@
+/*********************************************************************
+ * \file   swapchain.cpp
+ * \brief  Swapchain class implementation
+ * 
+ * \author Marcin Plichta
+ * \date   May 2023
+ *********************************************************************/
+
 #include "swapchain.h"
 
 Swapchain::Swapchain(std::shared_ptr<Device> &device, std::shared_ptr<Window> &window, std::shared_ptr<Surface> &surface)
     : device(device), window(window), surface(surface)
 {
     device->querySurfaceCapabilities();
+    
     create();
     createImages();
     createImageViews();
@@ -15,12 +24,15 @@ void Swapchain::createImages()
     vkGetSwapchainImagesKHR(*device, swapchain, &imageCount, nullptr);
     images.resize(imageCount);
     vkGetSwapchainImagesKHR(*device, swapchain, &imageCount, images.data());
-    SPDLOG_TRACE("Swapchain images created");
+
+    SPDLOG_TRACE("[Swapchain images] created");
 }
 
 Swapchain::~Swapchain()
 {
     cleanup();
+
+    SPDLOG_TRACE("[Swapchain] destroyed");
 }
 
 void Swapchain::create()
@@ -53,7 +65,7 @@ void Swapchain::create()
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
-    createInfo.oldSwapchain = VK_NULL_HANDLE; //TODO: consider changing to use old swapchain.
+    createInfo.oldSwapchain = VK_NULL_HANDLE; // TODO: consider changing to use old swapchain.
 
     if (vkCreateSwapchainKHR(*device, &createInfo, nullptr, &swapchain) != VK_SUCCESS)
     {
@@ -63,7 +75,7 @@ void Swapchain::create()
     extent = swapExtent;
     imageFormat = surfaceFormat.format;
 
-    SPDLOG_TRACE("Swapchain created with " + std::to_string(imageCount) + " images");
+    SPDLOG_TRACE("[Swapchain] created");
 }
 
 void Swapchain::cleanup()
@@ -95,18 +107,23 @@ VkSurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat()
 
 VkExtent2D Swapchain::chooseSwapExtent()
 {
-    if (device->getSurfaceCapabilities().currentExtent.width != std::numeric_limits<uint32_t>::max())
+    // Get surface extent - With Win32, minImageExtent, maxImageExtent, and currentExtent must always equal the window size
+    VkExtent2D currentExtent = device->getSurfaceCapabilities().currentExtent;
+
+    // If SurfaceCapabilities.currentExtent is {0xFFFFFFFF,0xFFFFFFFF} then
+    // the surface size will be determined by the extent of a swapchain targeting the surface.
+    if ((currentExtent.width != 0xFFFFFFFF) && (currentExtent.height != 0xFFFFFFFF))
     {
-        return device->getSurfaceCapabilities().currentExtent;
+        return currentExtent;
     }
     else
     {
         VkExtent2D actualExtent = {settings.displaySize.width, settings.displaySize.height};
+        VkExtent2D minImageExtent = device->getSurfaceCapabilities().minImageExtent;
+        VkExtent2D maxImageExtent = device->getSurfaceCapabilities().maxImageExtent;
 
-        actualExtent.width = std::clamp(actualExtent.width, device->getSurfaceCapabilities().minImageExtent.width,
-                                        device->getSurfaceCapabilities().maxImageExtent.width);
-        actualExtent.height = std::clamp(actualExtent.height, device->getSurfaceCapabilities().minImageExtent.height,
-                                         device->getSurfaceCapabilities().maxImageExtent.height);
+        actualExtent.width = std::clamp(actualExtent.width, minImageExtent.width, maxImageExtent.width);
+        actualExtent.height = std::clamp(actualExtent.height, minImageExtent.height, maxImageExtent.height);
 
         return actualExtent;
     }
@@ -164,7 +181,7 @@ void Swapchain::createImageViews()
         imageViews[i] = createImageView(images[i], imageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
-    SPDLOG_TRACE("Swapchain image views created");
+    SPDLOG_TRACE("[Swapchain image views] created");
 }
 
 VkImageView Swapchain::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags)
@@ -196,6 +213,8 @@ void Swapchain::createDepthResources()
     createImage(extent.width, extent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
     depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+    SPDLOG_TRACE("[Swapchain depth resources] created");
 }
 
 void Swapchain::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,

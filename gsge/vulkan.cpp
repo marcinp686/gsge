@@ -137,13 +137,23 @@ void vulkan::cleanup()
 
     destroySyncObjects();
 
-    graphicsCommandPool.reset();
-    transferCommandPool.reset();
+    destroyCommandPools();
 
     swapchain.reset();
     device.reset();
     surface.reset();
     instance.reset();
+}
+
+/**
+ * @brief Destroy command pools for graphics and transfer queues.
+ * Frees command buffers allocated by the pools
+ * *
+ * */
+void vulkan::destroyCommandPools()
+{
+    graphicsCommandPool.reset();
+    transferCommandPool.reset();
 }
 
 void vulkan::createGraphicsPipeline()
@@ -448,6 +458,16 @@ void vulkan::drawFrame()
 
     uint32_t imageIndex;
 
+    if (isResizing)
+    {
+        device->querySurfaceCapabilities();
+        if (device->isCurrentSurfaceExtentZero())
+            return;
+
+        handleSurfaceResize();
+        isResizing = false;
+    }
+
     // wait until queue has finished processing previous graphicsCommandBuffers[currentFrame]
     EASY_BLOCK("Wait for Fence");
     VkResult res1 = vkWaitForFences(*device, 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
@@ -462,15 +482,9 @@ void vulkan::drawFrame()
     VkResult result =
         vkAcquireNextImageKHR(*device, *swapchain, UINT64_MAX, imageAquiredSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR /*|| window->framebufferResized()*/)
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
     {
-        vkDeviceWaitIdle(*device);
-        swapchain.reset(new Swapchain(device, window, surface));
-        renderPass.reset(new RenderPass(device, swapchain));
-        framebuffer.reset(new Framebuffer(device, swapchain, renderPass));
-        swapchainAspectChanged = true;
-        destroySyncObjects();
-        createSyncObjects();        
+        isResizing = true;
         return;
     }
     else if (result != VK_SUCCESS)
@@ -536,6 +550,38 @@ void vulkan::drawFrame()
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
+/**
+ * \brief Recreate swapchain and all dependent objects when surface size changes.
+ *
+ */
+void vulkan::handleSurfaceResize()
+{
+    vkDeviceWaitIdle(*device);
+    freeCommandBuffers();
+    swapchain.reset(new Swapchain(device, window, surface));
+    renderPass.reset(new RenderPass(device, swapchain));
+    framebuffer.reset(new Framebuffer(device, swapchain, renderPass));
+    destroySyncObjects();
+    createTransferCommandBuffers();
+    createGraphicsCommandBuffers();
+    createSyncObjects();
+    swapchainAspectChanged = true;
+    vkDeviceWaitIdle(*device);
+}
+
+/**
+ * @brief Free allocated command buffers.
+ *
+ */
+void vulkan::freeCommandBuffers()
+{
+    vkFreeCommandBuffers(*device, *graphicsCommandPool, static_cast<uint32_t>(graphicsCommandBuffers.size()),
+                         graphicsCommandBuffers.data());
+    vkFreeCommandBuffers(*device, *transferCommandPool, static_cast<uint32_t>(transferCommandBuffers.size()),
+                         transferCommandBuffers.data());
+
+    SPDLOG_TRACE("Command buffers freed");
+}
 
 void vulkan::createSyncObjects()
 {

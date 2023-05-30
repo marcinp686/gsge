@@ -26,6 +26,7 @@ class Device
     void querySurfaceCapabilities();
     void enumerateSurfaceFormats();
     void enumerateSurfacePresentModes();
+    bool isCurrentSurfaceExtentZero() const;
 
     uint32_t getGraphicsQueueFamilyIdx() const;
     uint32_t getTransferQueueFamilyIdx() const;

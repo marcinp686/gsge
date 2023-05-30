@@ -7,11 +7,13 @@ Surface::Surface(std::shared_ptr<Instance> &instance, std::shared_ptr<Window> &w
     {
         throw std::runtime_error("Failed to create window surface!");
     }
-    SPDLOG_TRACE("Surface created");
+    
+    SPDLOG_TRACE("[Surface] created");
 }
 
 Surface::~Surface()
 {
     vkDestroySurfaceKHR(*instance, surface, nullptr);
-    SPDLOG_TRACE("Surface destroyed");
+    
+    SPDLOG_TRACE("[Surface] destroyed");
 }
