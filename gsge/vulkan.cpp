@@ -312,7 +312,7 @@ void vulkan::createGraphicsPipeline()
     vkDestroyShaderModule(*device, vertShaderModule, nullptr);
 
     GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsPipeline, "Graphics pipeline");
-    SPDLOG_TRACE("Created graphics pipeline");
+    SPDLOG_TRACE("[Graphics pipeline] Created");
 }
 
 void vulkan::createGraphicsCommandBuffers()
@@ -332,7 +332,7 @@ void vulkan::createGraphicsCommandBuffers()
     GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsCommandBuffers[0], "Graphics command buffer 0");
     GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsCommandBuffers[1], "Graphics command buffer 1");
 
-    SPDLOG_TRACE("Created graphics command buffers");
+    SPDLOG_TRACE("[Graphics command buffers] Created");
 }
 
 void vulkan::createTransferCommandBuffers()
@@ -352,7 +352,7 @@ void vulkan::createTransferCommandBuffers()
     GSGE_DEBUGGER_SET_OBJECT_NAME(transferCommandBuffers[0], "Transfer command buffer 0");
     GSGE_DEBUGGER_SET_OBJECT_NAME(transferCommandBuffers[1], "Transfer command buffer 1");
 
-    SPDLOG_TRACE("Created transfer command buffers");
+    SPDLOG_TRACE("[Transfer command buffers] Created");
 }
 
 void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
@@ -580,7 +580,7 @@ void vulkan::freeCommandBuffers()
     vkFreeCommandBuffers(*device, *transferCommandPool, static_cast<uint32_t>(transferCommandBuffers.size()),
                          transferCommandBuffers.data());
 
-    SPDLOG_TRACE("Command buffers freed");
+    SPDLOG_TRACE("[Command buffers] Freed");
 }
 
 /**
@@ -620,7 +620,7 @@ void vulkan::createSyncObjects()
     GSGE_DEBUGGER_SET_OBJECT_NAME(renderFinishedSemaphores[0], "Render Finished Semaphore 0");
     GSGE_DEBUGGER_SET_OBJECT_NAME(renderFinishedSemaphores[1], "Render Finished Semaphore 1");
 
-    SPDLOG_TRACE("Created synchronization objects");
+    SPDLOG_TRACE("[Synchronization objects] Created");
 }
 
 /**
@@ -637,7 +637,7 @@ void vulkan::destroySyncObjects()
         vkDestroyFence(*device, drawingFinishedFences[i], nullptr);
     }
 
-    SPDLOG_TRACE("Destroyed synchronization objects");
+    SPDLOG_TRACE("[Synchronization objects] Destroyed");
 }
 
 void vulkan::createVertexBindingDescriptors()

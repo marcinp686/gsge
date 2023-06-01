@@ -99,13 +99,12 @@ void scene::loadModel(entt::entity entity, std::string fileName, uint32_t meshId
 
     if (aiScene != nullptr)
     {
-        SPDLOG_INFO("Loaded " + fileName + " model. Meshes: " + std::to_string(aiScene->mNumMeshes) +
+        SPDLOG_INFO("[Scene] Loaded " + fileName + " model. Meshes: " + std::to_string(aiScene->mNumMeshes) +
                     ", vertices: " + std::to_string(aiScene->mMeshes[meshId]->mNumVertices));
     }
     else
     {
-        SPDLOG_ERROR("Failed to load " + fileName);
-        SPDLOG_ERROR(std::string(importer.GetErrorString()));
+        SPDLOG_ERROR("[Scene] Failed to load model {}. Error: {}", fileName, importer.GetErrorString());        
         throw std::runtime_error("IO error");
     }
 
@@ -222,8 +221,8 @@ void scene::prepareFrameData()
         hostVertexNormalBuffer.insert(hostVertexNormalBuffer.end(), mesh.normals.begin(), mesh.normals.end());
         hostIndexBuffer.insert(hostIndexBuffer.end(), mesh.indices.begin(), mesh.indices.end());
     }
-    SPDLOG_TRACE("Frame data prepared");
-    SPDLOG_INFO("Total in vectors: totV={}, totN={}, totI={}", hostVertexBuffer.size(), hostVertexNormalBuffer.size(),
+    SPDLOG_TRACE("[Scene] Frame data prepared");
+    SPDLOG_INFO("[Scene] Total in vectors: totV={}, totN={}, totI={}", hostVertexBuffer.size(), hostVertexNormalBuffer.size(),
                 hostIndexBuffer.size());
 }
 

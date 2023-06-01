@@ -4,30 +4,13 @@ Framebuffer::Framebuffer(std::shared_ptr<Device> &device, std::shared_ptr<Swapch
                          std::shared_ptr<RenderPass> &renderPass)
     : device(device), swapchain(swapchain), renderPass(renderPass)
 {
-    createFramebuffers();
-}
-
-Framebuffer::~Framebuffer()
-{
-    cleanup();
-}
-
-void Framebuffer::cleanup()
-{
-    for (auto &buffer : buffers)
-    {
-        vkDestroyFramebuffer(*device, buffer, nullptr);
-    }
-}
-
-void Framebuffer::createFramebuffers()
-{
     uint32_t imageCount = swapchain->getImageCount();
 
     buffers.resize(imageCount);
 
     for (uint32_t i = 0; i < imageCount; i++)
     {
+        // TODO: Is depth image necesary for each frame in swapchain?
         std::array<VkImageView, 2> attachments = {swapchain->getImageView(i), swapchain->getDepthImageView()};
 
         VkFramebufferCreateInfo framebufferInfo{};
@@ -41,9 +24,19 @@ void Framebuffer::createFramebuffers()
 
         if (vkCreateFramebuffer(*device, &framebufferInfo, nullptr, &buffers[i]) != VK_SUCCESS)
         {
-            throw std::runtime_error("failed to create framebuffer!");
+            throw std::runtime_error("[Frambuffer] Failed to create framebuffer!");
         }
     }
 
-    SPDLOG_TRACE("Framebuffers created");
+    SPDLOG_TRACE("[Frambuffer] Framebuffers created");
+}
+
+Framebuffer::~Framebuffer()
+{
+    for (auto &buffer : buffers)
+    {
+        vkDestroyFramebuffer(*device, buffer, nullptr);
+    }
+
+    SPDLOG_TRACE("[Frambuffer] Framebuffers destroyed");
 }
