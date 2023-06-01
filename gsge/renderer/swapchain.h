@@ -60,7 +60,7 @@ class Swapchain
 
     VkSurfaceFormatKHR chooseSwapSurfaceFormat();
     VkExtent2D chooseSwapExtent();
-    VkPresentModeKHR chooseSwapPresentMode();
+    VkPresentModeKHR chooseSwapPresentMode();    
 
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
     void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,

@@ -6,7 +6,7 @@ Instance::Instance()
 
     if (!checkLayerSupport())
     {
-        throw std::runtime_error("[ERROR] Instance layers not suppoprted.");
+        throw std::runtime_error("[Instance] Instance layers not suppoprted.");
     }
 
     prepareExtensionList();
@@ -15,7 +15,7 @@ Instance::Instance()
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = "GSGE Demo";
     appInfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 3, 0);
-    appInfo.pEngineName = "Giraffe Studio Game Engine Engine";
+    appInfo.pEngineName = "Giraffe Studio Game Engine";
     appInfo.engineVersion = VK_MAKE_API_VERSION(0, 1, 3, 0);
     appInfo.apiVersion = VK_API_VERSION_1_3;
 
@@ -47,17 +47,18 @@ Instance::Instance()
 
     if (result != VK_SUCCESS)
     {
-        throw std::runtime_error("[ERROR] Vulkan instance creation failed.");
+        throw std::runtime_error("[Instance] Vulkan instance creation failed.");
     }
 
     GSGE_DEBUGGER_SET_INSTANCE(instance);
-    SPDLOG_TRACE("Instance created");
+    SPDLOG_TRACE("[Instance] created");
 }
 
 Instance::~Instance()
 {
     GSGE_DEBUGGER_DESTROY;
     vkDestroyInstance(instance, nullptr);
+    SPDLOG_TRACE("[Instance] destroyed");
 }
 
 void Instance::prepareLayerList()
@@ -109,10 +110,10 @@ bool Instance::checkLayerSupport()
 
         if (!layerFound)
         {
-            SPDLOG_ERROR("{} instance layer not found", layerName);
+            SPDLOG_ERROR("[Instance] \"{}\" instance layer not found", layerName);
             return false;
         }
     }
-    SPDLOG_TRACE("All selected instance layers supported");
+    SPDLOG_TRACE("[Instance] All selected instance layers are supported");
     return true;
 }

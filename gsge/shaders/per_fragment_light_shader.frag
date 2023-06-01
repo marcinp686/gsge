@@ -18,7 +18,7 @@ layout(binding = 0) uniform UniformBufferObject {
 } ubo;
 
 const vec3 pointLightColor = {1, 1, 1};
-const float pointLightPower = 40;
+const float pointLightPower = 140;
 const float ambientLightPower = 0.015;
 const vec3 materialDiffuseColor = {0.01f, 0.3f, 1.0f};
 

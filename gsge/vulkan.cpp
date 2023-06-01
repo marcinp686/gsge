@@ -230,7 +230,7 @@ void vulkan::createGraphicsPipeline()
     rasterizer.depthBiasConstantFactor = 0.0f; // Optional
     rasterizer.depthBiasClamp = 0.0f;          // Optional
     rasterizer.depthBiasSlopeFactor = 0.0f;    // Optional
-   // rasterizer.pNext = &orderAMD;
+    // rasterizer.pNext = &orderAMD;
 
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -331,7 +331,7 @@ void vulkan::createGraphicsCommandBuffers()
 
     GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsCommandBuffers[0], "Graphics command buffer 0");
     GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsCommandBuffers[1], "Graphics command buffer 1");
-    
+
     SPDLOG_TRACE("Created graphics command buffers");
 }
 
@@ -476,8 +476,8 @@ void vulkan::drawFrame()
         SPDLOG_ERROR("Fence timeout");
     }
     EASY_END_BLOCK;
-    
-    // Acquire next available image    
+
+    // Acquire next available image
     EASY_BLOCK("Aquire next img");
     VkResult result =
         vkAcquireNextImageKHR(*device, *swapchain, UINT64_MAX, imageAquiredSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
@@ -583,6 +583,10 @@ void vulkan::freeCommandBuffers()
     SPDLOG_TRACE("Command buffers freed");
 }
 
+/**
+ *  @brief Create semaphores and fences for each frame in flight.
+ *
+ */
 void vulkan::createSyncObjects()
 {
     imageAquiredSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -619,6 +623,10 @@ void vulkan::createSyncObjects()
     SPDLOG_TRACE("Created synchronization objects");
 }
 
+/**
+ * @brief Destroy syncronization objects.
+ *
+ */
 void vulkan::destroySyncObjects()
 {
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
@@ -628,6 +636,8 @@ void vulkan::destroySyncObjects()
         vkDestroyFence(*device, transferFinishedFences[i], nullptr);
         vkDestroyFence(*device, drawingFinishedFences[i], nullptr);
     }
+
+    SPDLOG_TRACE("Destroyed synchronization objects");
 }
 
 void vulkan::createVertexBindingDescriptors()
@@ -840,6 +850,8 @@ void vulkan::createDescriptorSetLayouts()
     {
         throw std::runtime_error("failed to create descriptor set layout!");
     }
+
+    SPDLOG_TRACE("[Descriptor set layouts] Created");
 }
 
 void vulkan::createUniformBuffers()
@@ -855,6 +867,8 @@ void vulkan::createUniformBuffers()
                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i],
                      uniformBuffersMemory[i]);
     }
+
+    SPDLOG_TRACE("[Uniform buffers] Created");
 }
 
 void vulkan::createDescriptorPool()
@@ -876,6 +890,8 @@ void vulkan::createDescriptorPool()
     {
         throw std::runtime_error("failed to create descriptor pool!");
     }
+
+    SPDLOG_TRACE("[Descriptor pool] created");
 }
 
 void vulkan::createDescriptorSets()
@@ -927,6 +943,8 @@ void vulkan::createDescriptorSets()
 
         vkUpdateDescriptorSets(*device, 2, descriptorWrite.data(), 0, nullptr);
     }
+
+    SPDLOG_TRACE("[Descriptor sets] created");
 }
 
 void vulkan::updateUniformBufferEx(UniformBufferObject ubo)

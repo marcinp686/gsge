@@ -19,12 +19,12 @@ void Window::createWindow()
     
     if (settings.monitorCount == 0)
     {
-        SPDLOG_ERROR("No monitors found");
+        SPDLOG_ERROR("[Window No monitors found");
         exit(EXIT_FAILURE);
     }
     else
     {
-        SPDLOG_INFO("Found {} monitors. Using monitor id={} - {}", settings.monitorCount, settings.monitorIndex,
+        SPDLOG_INFO("[Window] Found {} monitors. Using monitor id={} - {}", settings.monitorCount, settings.monitorIndex,
                      glfwGetMonitorName(monitors[settings.monitorIndex]));
     }
 

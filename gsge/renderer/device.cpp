@@ -15,6 +15,8 @@ Device::Device(std::shared_ptr<Instance> &instance, std::shared_ptr<Surface> &su
 Device::~Device()
 {
     vkDestroyDevice(device, nullptr);
+
+    SPDLOG_TRACE("[Device] destroyed");
 }
 
 VkPhysicalDevice Device::getPhysicalDeviceHandle() const
@@ -102,7 +104,7 @@ void Device::pickPhysicalDevice()
 
     if (deviceCount == 0)
     {
-        throw std::runtime_error("failed to find GPUs with Vulkan support!");
+        throw std::runtime_error("[Device] failed to find GPUs with Vulkan support!");
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -124,7 +126,7 @@ void Device::pickPhysicalDevice()
     }
     else
     {
-        throw std::runtime_error("failed to find a suitable GPU!");
+        throw std::runtime_error("[Device] failed to find a suitable GPU!");
     }
 }
 
@@ -183,7 +185,7 @@ uint64_t Device::rateDeviceSuitability(VkPhysicalDevice dev)
         return 0;
     }
 
-    SPDLOG_TRACE("Device " + deviceInfoStr.str() + " score: " + std::to_string(score));
+    SPDLOG_TRACE("[Device] selected: " + deviceInfoStr.str() + " score: " + std::to_string(score));
 
     return score;
 }
@@ -276,12 +278,12 @@ void Device::createLogicalDevice()
     VkResult result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
     if (result != VK_SUCCESS)
     {
-        SPDLOG_CRITICAL("Device creation failed with error: {}", result);
-        throw std::runtime_error("failed to create logical device!");
+        SPDLOG_CRITICAL("[Device] creation failed with error: {}", result);
+        throw std::runtime_error("");
     }
 
     GSGE_DEBUGGER_SET_DEVICE(device);
-    SPDLOG_TRACE("Logical device created");
+    SPDLOG_TRACE("[Device] created");
 }
 
 void Device::createQueues()
@@ -293,6 +295,8 @@ void Device::createQueues()
     GSGE_DEBUGGER_SET_OBJECT_NAME(presentQueue, "Present queue");
     GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsQueue, "Graphics queue");
     GSGE_DEBUGGER_SET_OBJECT_NAME(transferQueue, "Transfer queue");
+
+    SPDLOG_TRACE("[Device][Queues] created");
 }
 
 void Device::selectPhysicalDevFeatures()
