@@ -61,10 +61,12 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         throw std::runtime_error("failed to create render pass!");
     }
 
-    SPDLOG_TRACE("Render pass created");
+    SPDLOG_TRACE("[Render pass] Created");
 }
 
 RenderPass::~RenderPass()
 {
     vkDestroyRenderPass(*device, renderPass, nullptr);
+
+    SPDLOG_TRACE("[Render pass] Destroyed");
 }

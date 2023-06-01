@@ -27,8 +27,4 @@ class Framebuffer
     std::vector<VkFramebuffer> buffers;
 
     GSGE_DEBUGGER_INSTANCE_DECL;
-
-    void createFramebuffers();
-
-    void cleanup();
 };
