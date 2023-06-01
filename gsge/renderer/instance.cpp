@@ -73,8 +73,6 @@ void Instance::prepareExtensionList()
     instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif // !NDEBUG
 
-    instanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-
     // get required extensions for glfw, basically VK_KHR_SURFACE and win32_something
     uint32_t glfwExtensionCount = 0;
     const char **glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
