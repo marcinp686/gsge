@@ -16,7 +16,7 @@ Device::~Device()
 {
     vkDestroyDevice(device, nullptr);
 
-    SPDLOG_TRACE("[Device] destroyed");
+    SPDLOG_TRACE("[Device] Destroyed");
 }
 
 VkPhysicalDevice Device::getPhysicalDeviceHandle() const
@@ -126,7 +126,7 @@ void Device::pickPhysicalDevice()
     }
     else
     {
-        throw std::runtime_error("[Device] failed to find a suitable GPU!");
+        throw std::runtime_error("[Device] Failed to find a suitable GPU!");
     }
 }
 
@@ -185,7 +185,7 @@ uint64_t Device::rateDeviceSuitability(VkPhysicalDevice dev)
         return 0;
     }
 
-    SPDLOG_TRACE("[Device] selected: " + deviceInfoStr.str() + " score: " + std::to_string(score));
+    SPDLOG_TRACE("[Device] Selected: " + deviceInfoStr.str() + " score: " + std::to_string(score));
 
     return score;
 }
@@ -278,12 +278,12 @@ void Device::createLogicalDevice()
     VkResult result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
     if (result != VK_SUCCESS)
     {
-        SPDLOG_CRITICAL("[Device] creation failed with error: {}", result);
+        SPDLOG_CRITICAL("[Device] Creation failed with error: {}", result);
         throw std::runtime_error("");
     }
 
     GSGE_DEBUGGER_SET_DEVICE(device);
-    SPDLOG_TRACE("[Device] created");
+    SPDLOG_TRACE("[Device] Created");
 }
 
 void Device::createQueues()
@@ -296,7 +296,7 @@ void Device::createQueues()
     GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsQueue, "Graphics queue");
     GSGE_DEBUGGER_SET_OBJECT_NAME(transferQueue, "Transfer queue");
 
-    SPDLOG_TRACE("[Device][Queues] created");
+    SPDLOG_TRACE("[Device queues] Created");
 }
 
 void Device::selectPhysicalDevFeatures()

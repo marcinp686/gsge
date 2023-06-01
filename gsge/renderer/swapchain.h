@@ -56,7 +56,7 @@ class Swapchain
     std::shared_ptr<Surface> surface;
     std::shared_ptr<RenderPass> renderPass;
 
-    Settings &settings = Settings::getInstance();
+    GSGE_SETTINGS_INSTANCE_DECL;
 
     VkSurfaceFormatKHR chooseSwapSurfaceFormat();
     VkExtent2D chooseSwapExtent();

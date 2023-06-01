@@ -29,18 +29,21 @@ Instance::Instance()
 
 #ifndef NDEBUG
 
-    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+    if (settings.Debugger.debugInstanceCreation)
+    {
+        VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 
-    debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    debugCreateInfo.messageSeverity =
-        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
-    debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                                  VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    debugCreateInfo.pfnUserCallback = debugger.debugCallback;
+        debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        debugCreateInfo.messageSeverity =
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+        debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                      VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                      VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        debugCreateInfo.pfnUserCallback = debugger.debugCallback;
 
-    createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debugCreateInfo;
-
+        createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *)&debugCreateInfo;
+    }
 #endif
 
     VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
@@ -51,14 +54,14 @@ Instance::Instance()
     }
 
     GSGE_DEBUGGER_SET_INSTANCE(instance);
-    SPDLOG_TRACE("[Instance] created");
+    SPDLOG_TRACE("[Instance] Created");
 }
 
 Instance::~Instance()
 {
     GSGE_DEBUGGER_DESTROY;
     vkDestroyInstance(instance, nullptr);
-    SPDLOG_TRACE("[Instance] destroyed");
+    SPDLOG_TRACE("[Instance] Destroyed");
 }
 
 void Instance::prepareLayerList()

@@ -28,7 +28,7 @@ Framebuffer::Framebuffer(std::shared_ptr<Device> &device, std::shared_ptr<Swapch
         }
     }
 
-    SPDLOG_TRACE("[Frambuffer] Framebuffers created");
+    SPDLOG_TRACE("[Frambuffer(s)] Created");
 }
 
 Framebuffer::~Framebuffer()
@@ -38,5 +38,5 @@ Framebuffer::~Framebuffer()
         vkDestroyFramebuffer(*device, buffer, nullptr);
     }
 
-    SPDLOG_TRACE("[Frambuffer] Framebuffers destroyed");
+    SPDLOG_TRACE("[Frambuffer(s)] Destroyed");
 }

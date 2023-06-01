@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	spdlog::set_level(spdlog::level::info);
 #endif    
 
-    Settings &settings = Settings::getInstance();
+    GSGE_SETTINGS_INSTANCE_DECL;
     settings.parseCmdParams(std::vector<std::string_view>{argv + 1, argv + argc});
     gsge app;
 

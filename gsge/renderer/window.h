@@ -18,7 +18,7 @@ class Window
     void setWindowedMode();
     void getMonitors();
 
-    Settings &settings = Settings::getInstance();
+    GSGE_SETTINGS_INSTANCE_DECL;
 
     operator GLFWwindow *()
     {

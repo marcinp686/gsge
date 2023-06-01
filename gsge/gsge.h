@@ -33,7 +33,7 @@ class gsge
 
   private:
     stats frameStats;
-    Settings &settings = Settings::getInstance();
+    GSGE_SETTINGS_INSTANCE_DECL;
 
     std::shared_ptr<Window> window;
     std::unique_ptr<Mouse> mouse;

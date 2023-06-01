@@ -7,6 +7,8 @@
 
 #include <spdlog/spdlog.h>
 
+#define GSGE_SETTINGS_INSTANCE_DECL Settings &settings = Settings::getInstance()
+
 // Engine settings class
 class Settings
 {
@@ -28,6 +30,14 @@ class Settings
 
     // Application related settings
     std::string appName{"GSGE"};
+
+    // Vulkan debugger related settings
+    struct Debugger
+    {
+        bool enableValidationLayers{true};
+        bool debugInstanceCreation{false};
+    } Debugger;
+    
 
   private:
     // Private constructor to prevent instancing

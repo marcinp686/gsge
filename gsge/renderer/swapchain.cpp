@@ -25,14 +25,14 @@ void Swapchain::createImages()
     images.resize(imageCount);
     vkGetSwapchainImagesKHR(*device, swapchain, &imageCount, images.data());
 
-    SPDLOG_TRACE("[Swapchain images] created");
+    SPDLOG_TRACE("[Swapchain / Images] Created");
 }
 
 Swapchain::~Swapchain()
 {
     cleanup();
 
-    SPDLOG_TRACE("[Swapchain] destroyed");
+    SPDLOG_TRACE("[Swapchain] Destroyed");
 }
 
 void Swapchain::create()
@@ -75,7 +75,7 @@ void Swapchain::create()
     extent = swapExtent;
     imageFormat = surfaceFormat.format;
 
-    SPDLOG_TRACE("[Swapchain] created");
+    SPDLOG_TRACE("[Swapchain] Created");
 }
 
 void Swapchain::cleanup()
@@ -181,7 +181,7 @@ void Swapchain::createImageViews()
         imageViews[i] = createImageView(images[i], imageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 
-    SPDLOG_TRACE("[Swapchain image views] created");
+    SPDLOG_TRACE("[Swapchain / Image views] Created");
 }
 
 VkImageView Swapchain::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags)
@@ -214,7 +214,7 @@ void Swapchain::createDepthResources()
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
     depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 
-    SPDLOG_TRACE("[Swapchain depth resources] created");
+    SPDLOG_TRACE("[Swapchain / Depth resources ] Created");
 }
 
 void Swapchain::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,

@@ -25,6 +25,8 @@ void Debugger::setupDebugFuctionPointers()
 
     vkQueueEndDebugUtilsLabelEXT =
         (PFN_vkQueueEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(instance, "vkQueueEndDebugUtilsLabelEXT");
+
+    SPDLOG_TRACE("[Debugger] Debug function pointers set up");
 }
 
 Debugger &Debugger::getInstance()
@@ -36,6 +38,8 @@ Debugger &Debugger::getInstance()
 void Debugger::destroy()
 {
     vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+
+    SPDLOG_TRACE("[Debugger] Destroyed");
 }
 
 void Debugger::setInstance(VkInstance &instance)
@@ -48,6 +52,8 @@ void Debugger::setInstance(VkInstance &instance)
 void Debugger::setDevice(VkDevice &device)
 {
     this->device = device;
+
+    SPDLOG_TRACE("[Debugger] Device set");
 }
 
 template void Debugger::setObjectName(VkFence object, const char *name);
@@ -123,6 +129,8 @@ void Debugger::createDebugMessanger()
     {
         throw std::runtime_error("failed to set up debug messenger!");
     }
+
+    SPDLOG_TRACE("[Debugger] Debug messenger created");
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL Debugger::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
