@@ -20,6 +20,7 @@ layout(binding = 0) uniform UniformBufferObject {
     mat4 proj;
     mat4 normal;
     vec3 lightPosition;
+    vec3 viewPosition;
 } ubo;
 
 void main() { 

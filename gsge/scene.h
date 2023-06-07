@@ -47,7 +47,7 @@ class scene
 
   private:
     entt::registry registry;
-    entt::entity suzanne, suzanne_smooth, icoSphere, testCube, companionCube, squareFloor, simpleCube, plane;
+    entt::entity suzanne, suzanne_smooth, icoSphere, testCube, companionCube, squareFloor, simpleCube, plane, lightGizmo;
 
     int c_arraySize = 20;
     std::array<entt::entity, 20 * 20 * 20> cubes;

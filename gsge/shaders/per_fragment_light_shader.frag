@@ -15,6 +15,7 @@ layout(binding = 0) uniform UniformBufferObject {
     mat4 proj;
     mat4 normal;
     vec3 lightPosition;
+    vec3 viewPosition;
 } ubo;
 
 const vec3 pointLightColor = {1, 1, 1};
@@ -37,5 +38,11 @@ void main() {
     vec3 diffuse = materialDiffuseColor * pointLightColor * pointLightPower * cosTheta * attenuation;      
     vec3 ambient = materialDiffuseColor * ambientLightPower;
 
-    outColor = diffuse + ambient;    
+    // specular
+    vec3 viewDir = normalize(ubo.viewPosition-fragPosition_WorldSpace);
+    vec3 halfwayDir = normalize(viewDir + directionToLight);
+    float spec = pow(max(dot(norm, halfwayDir), 0.0), 64.0);
+    vec3 specular = vec3(1,1,1) * spec * pointLightColor;
+
+    outColor = diffuse + ambient + specular;    
 }
