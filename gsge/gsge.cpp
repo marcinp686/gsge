@@ -121,6 +121,15 @@ void gsge::mainLoop()
         {
             level->mainCamera.moveBackward(frameStats.dt);
         };
+        // Q E controls
+        if (glfwGetKey(*window, GLFW_KEY_Q) == GLFW_PRESS)
+        {
+            level->mainCamera.moveDown(frameStats.dt);
+        };
+        if (glfwGetKey(*window, GLFW_KEY_E) == GLFW_PRESS)
+        {
+            level->mainCamera.moveUp(frameStats.dt);
+        };
 
         level->update(frameStats.dt);
 

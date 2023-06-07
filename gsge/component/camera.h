@@ -26,6 +26,8 @@ class camera
     void strafeRight(float dt);
     void moveForward(float dt);
     void moveBackward(float dt);
+    void moveUp(float dt);
+    void moveDown(float dt);
 
   private:
     // Data to calculate view matrix

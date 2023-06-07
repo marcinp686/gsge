@@ -114,6 +114,18 @@ void camera::moveBackward(float dt)
     updateViewMatrix();
 }
 
+void camera::moveUp(float dt)
+{
+    position += up * speed * dt;
+	updateViewMatrix();
+}
+
+void camera::moveDown(float dt)
+{
+	position -= up * speed * dt;
+	updateViewMatrix();
+}
+
 void camera::updateViewMatrix()
 {
     viewMatrix = glm::lookAt(position, position + front, up);
