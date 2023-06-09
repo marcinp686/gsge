@@ -1,7 +1,7 @@
 /*********************************************************************
  * \file   swapchain.cpp
  * \brief  Swapchain class implementation
- * 
+ *
  * \author Marcin Plichta
  * \date   May 2023
  *********************************************************************/
@@ -12,10 +12,11 @@ Swapchain::Swapchain(std::shared_ptr<Device> &device, std::shared_ptr<Window> &w
     : device(device), window(window), surface(surface)
 {
     device->querySurfaceCapabilities();
-    
+
     create();
     createImages();
     createImageViews();
+    createColorResources();
     createDepthResources();
 }
 
@@ -65,8 +66,8 @@ void Swapchain::create()
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
-    createInfo.oldSwapchain = VK_NULL_HANDLE; // TODO: consider changing to use old swapchain.
-
+    createInfo.oldSwapchain = VK_NULL_HANDLE; // TODO: consider changing to use old swapchain.    
+    
     if (vkCreateSwapchainKHR(*device, &createInfo, nullptr, &swapchain) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create swapchain!");
@@ -80,6 +81,10 @@ void Swapchain::create()
 
 void Swapchain::cleanup()
 {
+    vkDestroyImageView(*device, colorImageView, nullptr);
+    vkDestroyImage(*device, colorImage, nullptr);
+    vkFreeMemory(*device, colorImageMemory, nullptr);
+
     vkDestroyImageView(*device, depthImageView, nullptr);
     vkDestroyImage(*device, depthImage, nullptr);
     vkFreeMemory(*device, depthImageMemory, nullptr);
@@ -167,6 +172,11 @@ VkImageView &Swapchain::getDepthImageView()
     return depthImageView;
 }
 
+VkImageView &Swapchain::getColorImageView()
+{
+    return colorImageView;
+}
+
 VkExtent2D &Swapchain::getExtent()
 {
     return extent;
@@ -196,7 +206,7 @@ VkImageView Swapchain::createImageView(VkImage image, VkFormat format, VkImageAs
     viewInfo.subresourceRange.levelCount = 1;
     viewInfo.subresourceRange.baseArrayLayer = 0;
     viewInfo.subresourceRange.layerCount = 1;
-
+  
     VkImageView imageView;
     if (vkCreateImageView(*device, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
     {
@@ -210,15 +220,26 @@ void Swapchain::createDepthResources()
 {
     VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
 
-    createImage(extent.width, extent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
+    createImage(extent.width, extent.height, settings.Renderer.msaaSampleCount, depthFormat, VK_IMAGE_TILING_OPTIMAL,
+                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
     depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 
     SPDLOG_TRACE("[Swapchain / Depth resources ] Created");
 }
 
-void Swapchain::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
-                            VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory)
+void Swapchain::createColorResources()
+{
+    createImage(extent.width, extent.height, settings.Renderer.msaaSampleCount, imageFormat, VK_IMAGE_TILING_OPTIMAL,
+                VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, colorImage, colorImageMemory);
+    colorImageView = createImageView(colorImage, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+
+    SPDLOG_TRACE("[Swapchain / Color resources ] Created");
+}
+
+void Swapchain::createImage(uint32_t width, uint32_t height, VkSampleCountFlagBits sampleCount, VkFormat format,
+                            VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image,
+                            VkDeviceMemory &imageMemory)
 {
     VkImageCreateInfo imageInfo{};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -232,7 +253,7 @@ void Swapchain::createImage(uint32_t width, uint32_t height, VkFormat format, Vk
     imageInfo.tiling = tiling;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     imageInfo.usage = usage;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.samples = sampleCount;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     if (vkCreateImage(*device, &imageInfo, nullptr, &image) != VK_SUCCESS)

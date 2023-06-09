@@ -26,4 +26,6 @@ class RenderPass
 
     std::shared_ptr<Device> device;
     std::shared_ptr<Swapchain> swapchain;
+
+    GSGE_SETTINGS_INSTANCE_DECL;
 };

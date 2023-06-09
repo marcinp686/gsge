@@ -18,6 +18,7 @@
 #include "renderer/framebuffer.h"
 #include "renderer/commandPool.h"
 #include "renderer/debugger.h"
+#include "renderer/settings.h"
 
 class vulkan
 {
@@ -53,6 +54,7 @@ class vulkan
     std::unique_ptr<CommandPool> transferCommandPool;
 
     GSGE_DEBUGGER_INSTANCE_DECL;
+    GSGE_SETTINGS_INSTANCE_DECL;
 
     uint32_t currentFrame = 0;
     const int MAX_FRAMES_IN_FLIGHT = 2;

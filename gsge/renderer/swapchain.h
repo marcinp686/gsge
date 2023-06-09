@@ -32,6 +32,7 @@ class Swapchain
     VkImage &getImage(uint32_t index);
     VkImageView &getImageView(uint32_t index);
     VkImageView &getDepthImageView();
+    VkImageView &getColorImageView();
 
     inline operator VkSwapchainKHR() const
     {
@@ -47,9 +48,15 @@ class Swapchain
     std::vector<VkImage> images;
     std::vector<VkImageView> imageViews;
 
+    // For depth buffer
     VkImage depthImage;
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
+
+    // For MSAA
+    VkImage colorImage;
+    VkDeviceMemory colorImageMemory;
+    VkImageView colorImageView;
 
     std::shared_ptr<Device> device;
     std::shared_ptr<Window> window;
@@ -63,11 +70,13 @@ class Swapchain
     VkPresentModeKHR chooseSwapPresentMode();    
 
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
-    void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
+    void createImage(uint32_t width, uint32_t height, VkSampleCountFlagBits sampleCount, VkFormat format,
+                     VkImageTiling tiling, VkImageUsageFlags usage,
                      VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory);
     void createImageViews();
 
     void createDepthResources();
+    void createColorResources();
 
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 };

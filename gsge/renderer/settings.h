@@ -6,6 +6,7 @@
 #include <enums.h>
 
 #include <spdlog/spdlog.h>
+#include <vulkan/vulkan.h>
 
 #define GSGE_SETTINGS_INSTANCE_DECL Settings &settings = Settings::getInstance()
 
@@ -38,6 +39,12 @@ class Settings
         bool debugInstanceCreation{false};
     } Debugger;
     
+    struct Renderer
+    {
+		bool enableMSAA{false};
+		VkSampleCountFlagBits msaaSampleCount{VK_SAMPLE_COUNT_8_BIT};
+	} Renderer;
+
 
   private:
     // Private constructor to prevent instancing
