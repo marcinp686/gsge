@@ -2,7 +2,38 @@
 
 vulkan::~vulkan()
 {
-    cleanup();
+    vkDeviceWaitIdle(*device);
+
+    // destroy uniform buffers
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        vkDestroyBuffer(*device, uniformBuffers[i], nullptr);
+        vkFreeMemory(*device, uniformBuffersMemory[i], nullptr);
+
+        vkDestroyBuffer(*device, transformMatricesBuffer[i], nullptr);
+        vkFreeMemory(*device, transformMatricesBufferMemory[i], nullptr);
+
+        vkDestroyBuffer(*device, transformMatricesStagingBuffer[i], nullptr);
+        vkFreeMemory(*device, transformMatricesStagingBufferMemory[i], nullptr);
+    }
+
+    vkDestroyDescriptorPool(*device, descriptorPool, nullptr);
+    vkDestroyDescriptorSetLayout(*device, descriptorSetLayout, nullptr);
+
+    vkDestroyBuffer(*device, vertexBuffer, nullptr);
+    vkFreeMemory(*device, vertexBufferMemory, nullptr);
+
+    vkDestroyBuffer(*device, indexBuffer, nullptr);
+    vkFreeMemory(*device, indexBufferMemory, nullptr);
+
+    vkDestroyBuffer(*device, vertexNormalsBuffer, nullptr);
+    vkFreeMemory(*device, vertexNormalsBufferMemory, nullptr);
+
+    vkDestroyPipeline(*device, graphicsPipeline, nullptr);
+    vkDestroyPipelineLayout(*device, pipelineLayout, nullptr);
+
+    destroySyncObjects();
+    destroyCommandPools();
 }
 
 void vulkan::update()
@@ -98,51 +129,6 @@ VkShaderModule vulkan::createShaderModule(const std::vector<char> &code)
     }
 
     return shaderModule;
-}
-
-void vulkan::cleanup()
-{
-    vkDeviceWaitIdle(*device);
-
-    // destroy uniform buffers
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        vkDestroyBuffer(*device, uniformBuffers[i], nullptr);
-        vkFreeMemory(*device, uniformBuffersMemory[i], nullptr);
-
-        vkDestroyBuffer(*device, transformMatricesBuffer[i], nullptr);
-        vkFreeMemory(*device, transformMatricesBufferMemory[i], nullptr);
-
-        vkDestroyBuffer(*device, transformMatricesStagingBuffer[i], nullptr);
-        vkFreeMemory(*device, transformMatricesStagingBufferMemory[i], nullptr);
-    }
-
-    vkDestroyDescriptorPool(*device, descriptorPool, nullptr);
-    vkDestroyDescriptorSetLayout(*device, descriptorSetLayout, nullptr);
-
-    vkDestroyBuffer(*device, vertexBuffer, nullptr);
-    vkFreeMemory(*device, vertexBufferMemory, nullptr);
-
-    vkDestroyBuffer(*device, indexBuffer, nullptr);
-    vkFreeMemory(*device, indexBufferMemory, nullptr);
-
-    vkDestroyBuffer(*device, vertexNormalsBuffer, nullptr);
-    vkFreeMemory(*device, vertexNormalsBufferMemory, nullptr);
-
-    vkDestroyPipeline(*device, graphicsPipeline, nullptr);
-    vkDestroyPipelineLayout(*device, pipelineLayout, nullptr);
-
-    framebuffer.reset();
-    renderPass.reset();
-
-    destroySyncObjects();
-
-    destroyCommandPools();
-
-    swapchain.reset();
-    device.reset();
-    surface.reset();
-    instance.reset();
 }
 
 /**

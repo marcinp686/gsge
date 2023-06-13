@@ -109,8 +109,6 @@ class vulkan
     void loadShaders();
     VkShaderModule createShaderModule(const std::vector<char> &code);
 
-    void cleanup();
-
     void destroyCommandPools();
 
     void createVertexBindingDescriptors();
