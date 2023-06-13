@@ -57,6 +57,7 @@ class Swapchain
     VkImage colorImage;
     VkDeviceMemory colorImageMemory;
     VkImageView colorImageView;
+    bool msaaEnabledAtCreation;
 
     std::shared_ptr<Device> device;
     std::shared_ptr<Window> window;

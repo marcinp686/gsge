@@ -9,10 +9,16 @@ Framebuffer::Framebuffer(std::shared_ptr<Device> &device, std::shared_ptr<Swapch
     buffers.resize(imageCount);
 
     for (uint32_t i = 0; i < imageCount; i++)
-    {
-        // TODO: Is depth image necesary for each frame in swapchain?
-        std::array<VkImageView, 3> attachments = {swapchain->getColorImageView(), swapchain->getDepthImageView(),
-                                                  swapchain->getImageView(i)};
+    {        
+        std::vector<VkImageView> attachments;
+        if (settings.Renderer.enableMSAA)
+        {
+            attachments = {swapchain->getColorImageView(), swapchain->getDepthImageView(), swapchain->getImageView(i)};
+        }
+        else
+        {
+            attachments = {swapchain->getImageView(i), swapchain->getDepthImageView()};
+        }       
 
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;

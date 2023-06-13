@@ -41,6 +41,7 @@ class vulkan
 
     bool viewAspectChanged();
     float getViewAspect();
+    void handleMSAAChange();
 
   private:
     std::shared_ptr<Window> window;
@@ -108,7 +109,7 @@ class vulkan
     std::vector<char> fragShaderCode;
     void loadShaders();
     VkShaderModule createShaderModule(const std::vector<char> &code);
-
+    
     void destroyCommandPools();
 
     void createVertexBindingDescriptors();

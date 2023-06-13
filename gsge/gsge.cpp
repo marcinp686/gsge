@@ -64,6 +64,13 @@ void gsge::keyCallback(GLFWwindow *glfwWindow, int key, int scancode, int action
             }
         }
         break;
+    case GLFW_KEY_M:
+        if (action == GLFW_PRESS)
+        {
+            settings.Renderer.enableMSAA = !settings.Renderer.enableMSAA;
+            renderer->handleMSAAChange();
+        }
+        break;
     }
 }
 
@@ -88,7 +95,7 @@ void gsge::mainLoop()
     {
         EASY_BLOCK("mainLoop", profiler::colors::Blue200);
         glfwPollEvents();
-        
+
         mouse->update();
 
         if (engineState == EEngine::State::Paused)

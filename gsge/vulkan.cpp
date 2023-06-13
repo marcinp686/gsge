@@ -221,7 +221,7 @@ void vulkan::createGraphicsPipeline()
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisampling.sampleShadingEnable = VK_FALSE;
-    multisampling.rasterizationSamples = settings.Renderer.msaaSampleCount;
+    multisampling.rasterizationSamples = settings.Renderer.enableMSAA ? settings.Renderer.msaaSampleCount : VK_SAMPLE_COUNT_1_BIT;
     multisampling.minSampleShading = 1.0f;          // Optional
     multisampling.pSampleMask = nullptr;            // Optional
     multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
@@ -544,14 +544,47 @@ void vulkan::handleSurfaceResize()
 {
     vkDeviceWaitIdle(*device);
     freeCommandBuffers();
+    destroySyncObjects();
+
+    {
+        swapchain.reset();
+        renderPass.reset();
+        framebuffer.reset();
+    }
+
     swapchain.reset(new Swapchain(device, window, surface));
     renderPass.reset(new RenderPass(device, swapchain));
     framebuffer.reset(new Framebuffer(device, swapchain, renderPass));
-    destroySyncObjects();
+
     createTransferCommandBuffers();
     createGraphicsCommandBuffers();
     createSyncObjects();
     swapchainAspectChanged = true;
+    vkDeviceWaitIdle(*device);
+}
+
+void vulkan::handleMSAAChange()
+{
+    vkDeviceWaitIdle(*device);
+    freeCommandBuffers();
+    vkDestroyPipeline(*device, graphicsPipeline, nullptr);
+    vkDestroyPipelineLayout(*device, pipelineLayout, nullptr);
+    destroySyncObjects();
+
+    {
+        swapchain.reset();
+        renderPass.reset();
+        framebuffer.reset();
+    }
+
+    swapchain.reset(new Swapchain(device, window, surface));
+    renderPass.reset(new RenderPass(device, swapchain));
+    framebuffer.reset(new Framebuffer(device, swapchain, renderPass));
+
+    createGraphicsPipeline();
+    createTransferCommandBuffers();
+    createGraphicsCommandBuffers();
+    createSyncObjects();
     vkDeviceWaitIdle(*device);
 }
 
@@ -999,6 +1032,12 @@ void vulkan::updateTransformMatrixBuffer(uint32_t currentImage)
     copyBuffer(transformMatricesStagingBuffer[currentImage], transformMatricesBuffer[currentImage], bufferSize, true);
 }
 
+/**
+ * \brief Check if view aspect of current surface has changed.
+ *
+ * \return bool if view aspect changed
+ * \return false if view aspect has not changed
+ */
 bool vulkan::viewAspectChanged()
 {
     if (swapchainAspectChanged)

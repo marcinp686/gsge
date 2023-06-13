@@ -16,8 +16,13 @@ Swapchain::Swapchain(std::shared_ptr<Device> &device, std::shared_ptr<Window> &w
     create();
     createImages();
     createImageViews();
-    createColorResources();
+    if (settings.Renderer.enableMSAA)
+    {
+		createColorResources();
+	}    
     createDepthResources();
+
+    msaaEnabledAtCreation = settings.Renderer.enableMSAA;
 }
 
 void Swapchain::createImages()
@@ -66,8 +71,8 @@ void Swapchain::create()
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
-    createInfo.oldSwapchain = VK_NULL_HANDLE; // TODO: consider changing to use old swapchain.    
-    
+    createInfo.oldSwapchain = VK_NULL_HANDLE; // TODO: consider changing to use old swapchain.
+
     if (vkCreateSwapchainKHR(*device, &createInfo, nullptr, &swapchain) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create swapchain!");
@@ -81,10 +86,13 @@ void Swapchain::create()
 
 void Swapchain::cleanup()
 {
-    vkDestroyImageView(*device, colorImageView, nullptr);
-    vkDestroyImage(*device, colorImage, nullptr);
-    vkFreeMemory(*device, colorImageMemory, nullptr);
-
+    if (msaaEnabledAtCreation)
+    {
+        vkDestroyImageView(*device, colorImageView, nullptr);
+        vkDestroyImage(*device, colorImage, nullptr);
+        vkFreeMemory(*device, colorImageMemory, nullptr);
+    }
+    
     vkDestroyImageView(*device, depthImageView, nullptr);
     vkDestroyImage(*device, depthImage, nullptr);
     vkFreeMemory(*device, depthImageMemory, nullptr);
@@ -206,7 +214,7 @@ VkImageView Swapchain::createImageView(VkImage image, VkFormat format, VkImageAs
     viewInfo.subresourceRange.levelCount = 1;
     viewInfo.subresourceRange.baseArrayLayer = 0;
     viewInfo.subresourceRange.layerCount = 1;
-  
+
     VkImageView imageView;
     if (vkCreateImageView(*device, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
     {
@@ -220,8 +228,10 @@ void Swapchain::createDepthResources()
 {
     VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
 
-    createImage(extent.width, extent.height, settings.Renderer.msaaSampleCount, depthFormat, VK_IMAGE_TILING_OPTIMAL,
-                VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
+    createImage(extent.width, extent.height,
+                settings.Renderer.enableMSAA ? settings.Renderer.msaaSampleCount : VK_SAMPLE_COUNT_1_BIT, depthFormat,
+                VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                depthImage, depthImageMemory);
     depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 
     SPDLOG_TRACE("[Swapchain / Depth resources ] Created");
