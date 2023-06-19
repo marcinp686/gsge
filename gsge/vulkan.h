@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <DirectXMath.h>
 
 #include <vulkan/vulkan.h>
 #include <spdlog/spdlog.h>
@@ -34,7 +35,7 @@ class vulkan
     void prepareNormalsData(glm::vec3 *dataPtr, size_t len);
     void prepareIndexOffsets(std::vector<uint32_t> data);
     void prepareVertexOffsets(std::vector<uint32_t> data);
-    void pushTransformMatricesToGpu(std::vector<glm::mat4> data);
+    void pushTransformMatricesToGpu(std::vector<DirectX::XMMATRIX>& data);
     void updateUniformBufferEx(UniformBufferObject ubo);
     void updateUniformBuffer(uint32_t currentImage);
     void updateTransformMatrixBuffer(uint32_t currentImage);
@@ -102,7 +103,7 @@ class vulkan
     std::vector<glm::vec3> vertexNormals;
     std::vector<uint32_t> indexOffsets;
     std::vector<uint32_t> vertexOffsets;
-    std::vector<glm::mat4> transformMatrices;
+    std::vector<DirectX::XMMATRIX>* transformMatrices;
 
     // shaders
     std::vector<char> vertShaderCode;

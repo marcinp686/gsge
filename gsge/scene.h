@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include <DirectXMath.h>
+
 #include <entt/entity/registry.hpp>
 
 #include <assimp/Importer.hpp>
@@ -39,7 +41,7 @@ class scene
     std::vector<glm::u16> &getIndexLump();
     std::vector<uint32_t> &getVertexOffsets();
     std::vector<uint32_t> &getIndexOffsets();
-    std::vector<glm::mat4> &getTransformMatricesLump();
+    std::vector<DirectX::XMMATRIX> &getTransformMatricesLump();
 
     UniformBufferObject ubo;
 
@@ -49,8 +51,8 @@ class scene
     entt::registry registry;
     entt::entity suzanne, suzanne_smooth, icoSphere, testCube, companionCube, squareFloor, simpleCube, plane, lightGizmo;
 
-    int c_arraySize = 20;
-    std::array<entt::entity, 20 * 20 * 20> cubes;
+    static constexpr int c_arraySize = 20;
+    std::array<entt::entity, c_arraySize * c_arraySize * c_arraySize> cubes;
 
     std::vector<uint32_t> objects;
 
@@ -59,5 +61,5 @@ class scene
     std::vector<glm::vec3> hostVertexBuffer;
     std::vector<glm::vec3> hostVertexNormalBuffer;
     std::vector<glm::u16> hostIndexBuffer;
-    std::vector<glm::mat4> hostTransformMatrixBuffer; // TODO: change model to normal matrix in future
+    std::vector<DirectX::XMMATRIX> hostTransformMatrixBuffer; // TODO: change model to normal matrix in future
 };

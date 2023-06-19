@@ -42,7 +42,7 @@ void main() {
     vec3 viewDir = normalize(ubo.viewPosition-fragPosition_WorldSpace);
     vec3 halfwayDir = normalize(viewDir + directionToLight);
     float spec = pow(max(dot(norm, halfwayDir), 0.0), 64.0);
-    vec3 specular = vec3(1,1,1) * spec * pointLightColor;
+    vec3 specular = pointLightColor * spec * pointLightColor;
 
     outColor = diffuse + ambient + specular;    
 }

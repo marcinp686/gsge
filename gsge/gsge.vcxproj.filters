@@ -209,18 +209,20 @@
     </MASM>
   </ItemGroup>
   <ItemGroup>
-    <ShaderFiles Include="shaders\per_fragment_light_shader.frag">
+    <GLSLShader Include="shaders\per_fragment_light_shader.frag">
       <Filter>ShaderFiles</Filter>
-    </ShaderFiles>
-    <ShaderFiles Include="shaders\per_fragment_light_shader.vert">
+    </GLSLShader>
+    <GLSLShader Include="shaders\per_fragment_light_shader.vert">
       <Filter>ShaderFiles</Filter>
-    </ShaderFiles>
-    <ShaderFiles Include="shaders\per_vertex_light_shader.frag">
+    </GLSLShader>
+    <GLSLShader Include="shaders\per_vertex_light_shader.frag">
       <Filter>ShaderFiles</Filter>
-    </ShaderFiles>
-    <ShaderFiles Include="shaders\per_vertex_light_shader.vert">
-      <Filter>Shaders</Filter>
-    </ShaderFiles>
-    <None Include="ShaderBuild.targets" />
+    </GLSLShader>
+    <GLSLShader Include="shaders\per_vertex_light_shader.vert">
+      <Filter>ShaderFiles</Filter>
+    </GLSLShader>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

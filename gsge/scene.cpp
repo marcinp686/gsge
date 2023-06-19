@@ -1,8 +1,9 @@
 #include "scene.h"
-#include <intrin.h>
 
 void scene::initScene()
 {
+    using namespace DirectX;   
+
     // Camera object
     mainCamera.setPosition(glm::vec3(25.f, -5.0f, -60.0f));
 
@@ -14,7 +15,6 @@ void scene::initScene()
     companionCube = registry.create();
     squareFloor = registry.create();
     simpleCube = registry.create();
-
     lightGizmo = registry.create();
 
     size_t i = 0;
@@ -23,14 +23,13 @@ void scene::initScene()
             for (size_t z = 0; z < c_arraySize; z++)
             {
                 cubes[i] = registry.create();
-                // registry.emplace<component::material>(cubes[i], glm::vec4(1.f, 0.f, 0.f, 1.f));
-               /* registry.emplace<component::motion>(cubes[i], glm::vec3(0),
-                                                    glm::radians(glm::vec3(30.0f + i / 8000.f, 15.0f + i / 8000.f, 0.0f)));*/
-                registry.emplace<component::motion>(cubes[i], glm::vec3(0), glm::vec3(0.0));
+                registry.emplace<component::motion>(
+                    cubes[i], XMFLOAT4A(0.f, 0.f, 0.f, 0.f),
+                    XMFLOAT4A(XMConvertToRadians(-30.0f - i / 8000.f), XMConvertToRadians(-15.0f - i / 8000.f), 0.f, 0.f));
                 auto &transform = registry.emplace<component::transform>(cubes[i++]);
-                transform.position = glm::vec3(x * 2.f, y * 2.f, z * 2.f);
-                transform.rotation = glm::vec3(0.0f);
-                transform.scale = glm::vec3(0.9f);
+                XMStoreFloat4A(&transform.position, {x * 2.f, y * 2.f, z * 2.f, 0.0f});
+                XMStoreFloat4A(&transform.rotation, XMVectorZero());
+                XMStoreFloat4A(&transform.scale, {0.8f, 0.8f, 0.8f, 0.0f});
             }
 
     registry.emplace<component::name>(suzanne, "suzanne");
@@ -50,24 +49,35 @@ void scene::initScene()
     registry.emplace<component::mesh>(squareFloor);
     registry.emplace<component::mesh>(simpleCube);
     registry.emplace<component::mesh>(lightGizmo);
-  
-    registry.emplace<component::motion>(suzanne, glm::vec3(0), glm::radians(glm::vec3(0.0f, -60.0f, 0.0f)));
-    registry.emplace<component::motion>(suzanne_smooth, glm::vec3(0), glm::radians(glm::vec3(0.0f, 60.0f, 0.0f)));
-    registry.emplace<component::motion>(icoSphere, glm::vec3(0), glm::radians(glm::vec3(0.0f, 30.0f, 0.0f)));
-    registry.emplace<component::motion>(testCube, glm::vec3(0), glm::radians(glm::vec3(0.0f, 10.0f, -15.0f)));
-    registry.emplace<component::motion>(companionCube, glm::vec3(0), glm::radians(glm::vec3(0.0f, -20.0f, 0.0f)));
-    registry.emplace<component::motion>(squareFloor, glm::vec3(0), glm::radians(glm::vec3(0.0f, -20.0f, 10.0f)));
-    registry.emplace<component::motion>(simpleCube, glm::vec3(0.0f, 0.0f, 0.0f), glm::radians(glm::vec3(30.f, 20.f, 10.f)));
-    registry.emplace<component::motion>(lightGizmo, glm::vec3(0), glm::vec3(0));
 
-    registry.emplace<component::transform>(suzanne, glm::vec3(0, -5, 4));
-    registry.emplace<component::transform>(suzanne_smooth, glm::vec3(5, -5, 4)).scale = {2, 2, 2};
-    registry.emplace<component::transform>(icoSphere, glm::vec3(10, -5, 4));
-    registry.emplace<component::transform>(testCube, glm::vec3(15, -5, 4));
-    registry.emplace<component::transform>(companionCube, glm::vec3(20, -5, 4)).scale = {3, 3, 3};
-    registry.emplace<component::transform>(squareFloor, glm::vec3(27.5, -5, 4));
-    registry.emplace<component::transform>(simpleCube, glm::vec3(35, -5, 4));
-    registry.emplace<component::transform>(lightGizmo, ubo.lightPos).scale = {0.5f, 0.5f, 0.5f};
+    registry.emplace<component::motion>(suzanne, XMFLOAT4A(0.6f, 0.f, 0.f, 0.f),
+                                        XMFLOAT4A(0.0f, XMConvertToRadians(60.0f), 0.0f, 0.0f));
+    registry.emplace<component::motion>(suzanne_smooth, XMFLOAT4A(0.f, 0.f, 0.f, 0.f),
+                                        XMFLOAT4A(0.0f, XMConvertToRadians(-60.0f), 0.0f, 0.0f));
+    registry.emplace<component::motion>(icoSphere, XMFLOAT4A(0.f, 0.f, 0.f, 0.f),
+                                        XMFLOAT4A(0.0f, XMConvertToRadians(30.0f), 0.0f, 0.0f));
+    registry.emplace<component::motion>(testCube, XMFLOAT4A(0.f, 0.f, 0.f, 0.f),
+                                        XMFLOAT4A(0.0f, XMConvertToRadians(10.0f), XMConvertToRadians(-15.0f), 0.0f));
+    registry.emplace<component::motion>(companionCube, XMFLOAT4A(0.f, 0.f, 0.f, 0.f),
+                                        XMFLOAT4A(0.0f, XMConvertToRadians(-20.0f), 0.0f, 0.0f));
+    registry.emplace<component::motion>(squareFloor, XMFLOAT4A(0.f, 0.f, 0.f, 0.f),
+                                        XMFLOAT4A(0.0f, XMConvertToRadians(-20.0f), XMConvertToRadians(10.0f), 0.0f));
+    registry.emplace<component::motion>(
+        simpleCube, XMFLOAT4A(0.f, 0.f, 0.f, 0.f),
+        XMFLOAT4A(XMConvertToRadians(30.f), XMConvertToRadians(20.f), XMConvertToRadians(10.f), 0.0f));
+    registry.emplace<component::motion>(lightGizmo, XMFLOAT4A(0.f, 0.f, 0.f, 0.f), XMFLOAT4A(0.f, 0.f, 0.f, 0.f));
+
+    registry.emplace<component::transform>(suzanne, XMFLOAT4A(0, -5, 4, 0));
+    registry.emplace<component::transform>(suzanne_smooth, XMFLOAT4A(5, -5, 4, 0.f), XMFLOAT4A(0, 0, 0, 0),
+                                           XMFLOAT4A(2.f, 2.f, 2.f, 0.f));
+    registry.emplace<component::transform>(icoSphere, XMFLOAT4A(10, -5, 4, 0.f));
+    registry.emplace<component::transform>(testCube, XMFLOAT4A(15, -5, 4, 0.f));
+    registry.emplace<component::transform>(companionCube, XMFLOAT4A(20, -5, 4, 0.f), XMFLOAT4A(0, 0, 0, 0),
+                                           XMFLOAT4A(3.f, 3.f, 3.f, 0.f));
+    registry.emplace<component::transform>(squareFloor, XMFLOAT4A(27.5, -5, 4, 0.f));
+    registry.emplace<component::transform>(simpleCube, XMFLOAT4A(35, -5, 4, 0.f));
+    registry.emplace<component::transform>(lightGizmo, XMFLOAT4A(ubo.lightPos.x, ubo.lightPos.y, ubo.lightPos.z, 0.f),
+                                           XMFLOAT4A(0, 0, 0, 0), XMFLOAT4A(0.5f, 0.5f, 0.5f, 0.f));
 
     loadModel(suzanne, "models/suzanne.fbx");
     loadModel(suzanne_smooth, "models/suzanne_smooth.fbx");
@@ -77,7 +87,6 @@ void scene::initScene()
     loadModel(squareFloor, "models/squareFloor.fbx");
     loadModel(simpleCube, "models/simpleCube.fbx");
     loadModel(lightGizmo, "models/icoSphere.fbx");
-    
 
     for (int i = 0; i < cubes.size(); i++)
     {
@@ -113,7 +122,7 @@ void scene::loadModel(entt::entity entity, std::string fileName, uint32_t meshId
     }
     else
     {
-        SPDLOG_ERROR("[Scene] Failed to load model {}. Error: {}", fileName, importer.GetErrorString());        
+        SPDLOG_ERROR("[Scene] Failed to load model {}. Error: {}", fileName, importer.GetErrorString());
         throw std::runtime_error("IO error");
     }
 
@@ -144,6 +153,10 @@ void scene::loadModel(entt::entity entity, std::string fileName, uint32_t meshId
     meshComp.nVertices = nVertices;
     meshComp.nIndices = nFaces * 3;
     meshComp.nFaces = nFaces;
+
+    auto view = registry.view<component::transform, component::motion>();
+
+    hostTransformMatrixBuffer.resize(view.size_hint() + 10);
 }
 
 void scene::update(float deltaTime)
@@ -152,52 +165,46 @@ void scene::update(float deltaTime)
     updateUniformBuffer();
 }
 
-// extern "C" void updateTransformMatrix(const float *ptr, const float *pSinCos);
-
 void scene::updateTransformMatrices(float dt)
 {
+    using namespace DirectX;
     EASY_FUNCTION();
+ 
     auto view = registry.view<component::transform, component::motion>();
 
-    hostTransformMatrixBuffer.resize(view.size_hint()+10);
+    // load dt to all components of vector
+    XMVECTOR dtVec = XMVectorReplicate(dt);
 
-    for (auto entity : view)
+   for ( auto& entity : view)
     {
         auto &transform = view.get<component::transform>(entity);
         auto &motion = view.get<component::motion>(entity);
 
-        if (motion.velocity != glm::vec3(0))
-            transform.position += motion.velocity * dt;
+        XMVECTOR motVelocity = XMLoadFloat4(&motion.velocity);
+        XMVECTOR translation = XMLoadFloat4(&transform.position);
+        XMVECTOR translationResult = XMVectorMultiplyAdd(motVelocity, dtVec, translation);
+        XMStoreFloat4A(&transform.position, translationResult);
 
-        transform.rotation += motion.rotation * dt;
+        XMVECTOR motRotation = XMLoadFloat4(&motion.rotation);
+        XMVECTOR rotation = XMLoadFloat4(&transform.rotation);
+        XMVECTOR rotationResult = XMVectorMultiplyAdd(motRotation, dtVec, rotation);
+        XMStoreFloat4A(&transform.rotation, rotationResult);
 
-        // updateTransformMatrix((const float *)&transform, &sincosTable[0]);
+        XMVECTOR scale = XMLoadFloat4(&transform.scale);
 
-        float sin_g = sin(transform.rotation.x);
-        float cos_g = cos(transform.rotation.x);
-        float sin_b = sin(transform.rotation.y);
-        float cos_b = cos(transform.rotation.y);
-        float sin_a = sin(transform.rotation.z);
-        float cos_a = cos(transform.rotation.z);
+        // Not necessary to use translation matrix, just set last row to translation vector
+        // XMMATRIX translationMatrix = XMMatrixTranslationFromVector(translationResult);
+        XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYawFromVector(rotationResult);        
+        
+        XMMATRIX scaleMatrix = XMMatrixScalingFromVector(scale);
+        
+        // XMMATRIX result = XMMatrixMultiply(XMMatrixMultiply(rotationMatrix, scaleMatrix), translationMatrix);
+        // It is faster to just set last row to translation vector
+        XMMATRIX result = XMMatrixMultiply(rotationMatrix, scaleMatrix);
+        result.r[3] = translationResult;
+        result.r[3].m128_f32[3] = 1.0f;
 
-        float r11 = cos_a * cos_b;
-        float r12 = cos_a * sin_b * sin_g - sin_a * cos_g;
-        float r13 = cos_a * sin_b * cos_g + sin_a * sin_g;
-
-        float r21 = sin_a * cos_b;
-        float r22 = sin_a * sin_b * sin_g + cos_a * cos_g;
-        float r23 = sin_a * sin_b * cos_g - cos_a * sin_g;
-
-        float r31 = -sin_b;
-        float r32 = cos_b * sin_g;
-        float r33 = cos_b * cos_g;
-
-        glm::mat4 transformMatrix{{r11 * transform.scale.x, r12 * transform.scale.y, r13 * transform.scale.z, 0.f},
-                                  {r21 * transform.scale.x, r22 * transform.scale.y, r23 * transform.scale.z, 0.f},
-                                  {r31 * transform.scale.x, r32 * transform.scale.y, r33 * transform.scale.z, 0.f},
-                                  {transform.position.x, transform.position.y, transform.position.z, 1.f}};
-
-        hostTransformMatrixBuffer[static_cast<uint32_t>(entity)] = transformMatrix;
+        XMStoreFloat4x4A(reinterpret_cast<XMFLOAT4X4A *>(&hostTransformMatrixBuffer[static_cast<uint32_t>(entity)]), result);
     }
 }
 
@@ -238,14 +245,13 @@ void scene::prepareFrameData()
 void scene::updateUniformBuffer()
 {
     EASY_FUNCTION();
-    auto &tr = registry.get<component::transform>(simpleCube);
-
-    ubo.model = tr.transformMatrix;
+    
+    // ubo.model = tr.transformMatrix;
     ubo.view = mainCamera.getViewMatrix();
     ubo.proj = mainCamera.getProjMatrix();
     ubo.normal = ubo.model;
     // ubo.normal = glm::inverse(glm::transpose(tr.transformMatrix));
-    //ubo.lightPos += glm::vec3(0.f, -0.005f, 0.02f);
+    // ubo.lightPos += glm::vec3(0.f, -0.005f, 0.02f);
     ubo.viewPos = mainCamera.getPosition();
 }
 
@@ -274,7 +280,7 @@ std::vector<glm::uint32_t> &scene::getIndexOffsets()
     return indexBufferOffsets;
 }
 
-std::vector<glm::mat4> &scene::getTransformMatricesLump()
+std::vector<DirectX::XMMATRIX> &scene::getTransformMatricesLump()
 {
     return hostTransformMatrixBuffer;
 }

@@ -751,9 +751,9 @@ void vulkan::prepareVertexOffsets(std::vector<uint32_t> data)
     vertexOffsets.assign(data.begin(), data.end());
 }
 
-void vulkan::pushTransformMatricesToGpu(std::vector<glm::mat4> data)
+void vulkan::pushTransformMatricesToGpu(std::vector<DirectX::XMMATRIX>& data)
 {
-    transformMatrices.assign(data.begin(), data.end());
+    transformMatrices = &data;
 }
 
 void vulkan::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
@@ -939,7 +939,7 @@ void vulkan::createDescriptorSets()
         // SSBO Buffer with object data (model transform for now)
         bufferInfo[1].buffer = transformMatricesBuffer[i];
         bufferInfo[1].offset = 0;
-        bufferInfo[1].range = transformMatrices.size() * sizeof(transformMatrices[0]);
+        bufferInfo[1].range = (*transformMatrices).size() * sizeof((*transformMatrices)[0]);
 
         std::array<VkWriteDescriptorSet, 2> descriptorWrite{};
         // UBO buffer descriptor write
@@ -1004,7 +1004,7 @@ void vulkan::createIndexBuffer()
 
 void vulkan::createTransformMatricesBuffer()
 {
-    VkDeviceSize bufferSize = sizeof(transformMatrices[0]) * transformMatrices.size();
+    VkDeviceSize bufferSize = sizeof((*transformMatrices)[0]) * (*transformMatrices).size();
 
     transformMatricesBuffer.resize(MAX_FRAMES_IN_FLIGHT);
     transformMatricesBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
@@ -1024,10 +1024,10 @@ void vulkan::createTransformMatricesBuffer()
 
 void vulkan::updateTransformMatrixBuffer(uint32_t currentImage)
 {
-    VkDeviceSize bufferSize = sizeof(transformMatrices[0]) * transformMatrices.size();
+    VkDeviceSize bufferSize = sizeof((*transformMatrices)[0]) * (*transformMatrices).size();
     void *data;
     vkMapMemory(*device, transformMatricesStagingBufferMemory[currentImage], 0, bufferSize, 0, &data);
-    memcpy(data, transformMatrices.data(), static_cast<size_t>(bufferSize));
+    memcpy(data, (*transformMatrices).data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(*device, transformMatricesStagingBufferMemory[currentImage]);
     copyBuffer(transformMatricesStagingBuffer[currentImage], transformMatricesBuffer[currentImage], bufferSize, true);
 }

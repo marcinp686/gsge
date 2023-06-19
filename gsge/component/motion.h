@@ -1,6 +1,7 @@
 #pragma once
 
-#include <glm/glm.hpp>
+#include <DirectXMath.h>
+
 namespace component
 {
 
@@ -9,7 +10,7 @@ namespace component
 
 struct motion
 {
-    glm::vec3 velocity = {0.0f, 0.0f, 0.0f};
-    glm::vec3 rotation = {0.0f, 0.0f, 0.0f};
+    DirectX::XMFLOAT4A velocity = {0.0f, 0.0f, 0.0f, 0.0f}; // w is ignored
+    DirectX::XMFLOAT4A rotation = {0.0f, 0.0f, 0.0f, 0.0f}; // w is ignored
 };
 } // namespace component
