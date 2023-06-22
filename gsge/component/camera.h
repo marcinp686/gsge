@@ -1,5 +1,8 @@
 #pragma once
 
+#pragma warning(suppress : 4275 6285 26498 26451 26800)
+#include <spdlog/spdlog.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>

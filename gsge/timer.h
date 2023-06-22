@@ -2,6 +2,8 @@
 
 #include <chrono>
 #include <string>
+
+#pragma warning(suppress : 4275 6285 26498 26451 26800)
 #include <spdlog/spdlog.h>
 
 class timer

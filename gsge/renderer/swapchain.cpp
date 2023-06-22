@@ -18,8 +18,8 @@ Swapchain::Swapchain(std::shared_ptr<Device> &device, std::shared_ptr<Window> &w
     createImageViews();
     if (settings.Renderer.enableMSAA)
     {
-		createColorResources();
-	}    
+        createColorResources();
+    }
     createDepthResources();
 
     msaaEnabledAtCreation = settings.Renderer.enableMSAA;
@@ -53,7 +53,11 @@ void Swapchain::create()
         imageCount = device->getSurfaceCapabilities().maxImageCount;
     }
 
-    std::vector<uint32_t> qFamilyIndices = {device->getGraphicsQueueFamilyIdx(), device->getPresentQueueFamilyIdx()};
+    std::vector<uint32_t> qFamilyIndices = {device->getPresentQueueFamilyIdx()};
+
+    // If graphics and present queues are different, then swapchain must let images be shared between queues
+    if (device->getGraphicsQueueFamilyIdx() != device->getPresentQueueFamilyIdx())
+        qFamilyIndices.push_back(device->getGraphicsQueueFamilyIdx());
 
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -64,7 +68,7 @@ void Swapchain::create()
     createInfo.imageExtent = swapExtent;
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT; // TODO: consider changing to VK_SHARING_MODE_EXCLUSIVE
+    createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE; // TODO: consider changing to VK_SHARING_MODE_EXCLUSIVE
     createInfo.queueFamilyIndexCount = static_cast<uint32_t>(qFamilyIndices.size());
     createInfo.pQueueFamilyIndices = qFamilyIndices.data();
     createInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
@@ -92,7 +96,7 @@ void Swapchain::cleanup()
         vkDestroyImage(*device, colorImage, nullptr);
         vkFreeMemory(*device, colorImageMemory, nullptr);
     }
-    
+
     vkDestroyImageView(*device, depthImageView, nullptr);
     vkDestroyImage(*device, depthImage, nullptr);
     vkFreeMemory(*device, depthImageMemory, nullptr);

@@ -421,7 +421,7 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
     // Draw commands
     for (uint32_t i = 0; i < indexOffsets.size(); i++)
     {
-        uint32_t endingIdx = (i == indexOffsets.size() - 1 ? indices.size() : indexOffsets[i + 1]);
+        uint32_t endingIdx = (i == indexOffsets.size() - 1 ? indices.size() : indexOffsets[(size_t)i + 1]);
         vkCmdDrawIndexed(commandBuffer, endingIdx - indexOffsets[i], 1, indexOffsets[i], vertexOffsets[i], i);
     }
 

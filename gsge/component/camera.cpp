@@ -1,5 +1,4 @@
 #include "camera.h"
-#include <spdlog/spdlog.h>
 
 camera::camera()
 {

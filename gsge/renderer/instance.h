@@ -4,6 +4,7 @@
 
 #include <vulkan/vulkan.h>
 
+#pragma warning(suppress : 4275 6285 26498 26451 26800)
 #include <spdlog/spdlog.h>
 #include <GLFW/glfw3.h>
 

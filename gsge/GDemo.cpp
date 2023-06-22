@@ -7,6 +7,7 @@
 
 #include <easy/profiler.h>
 
+#pragma warning(suppress : 4275 6285 26498 26451 26800)
 #include <spdlog/spdlog.h>
 
 int main(int argc, char *argv[])

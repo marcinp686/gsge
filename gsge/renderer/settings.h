@@ -5,8 +5,10 @@
 
 #include <enums.h>
 
+#pragma warning(suppress : 4275 6285 26498 26451 26800)
 #include <spdlog/spdlog.h>
 #include <vulkan/vulkan.h>
+
 
 #define GSGE_SETTINGS_INSTANCE_DECL Settings &settings = Settings::getInstance()
 

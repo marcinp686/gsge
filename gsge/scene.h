@@ -6,10 +6,14 @@
 
 #include <entt/entity/registry.hpp>
 
+#pragma warning(push)
+#pragma warning(disable : 26451)
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h> // Post processing flags
 #include <assimp/scene.h>       // Output data structure
+#pragma warning(pop)
 
+#pragma warning(suppress : 4275 6285 26498 26451 26800)
 #include <spdlog/spdlog.h>
 
 #include <glm/glm.hpp>
@@ -51,7 +55,7 @@ class scene
     entt::registry registry;
     entt::entity suzanne, suzanne_smooth, icoSphere, testCube, companionCube, squareFloor, simpleCube, plane, lightGizmo;
 
-    static constexpr int c_arraySize = 20;
+    static constexpr int c_arraySize = 40;
     std::array<entt::entity, c_arraySize * c_arraySize * c_arraySize> cubes;
 
     std::vector<uint32_t> objects;

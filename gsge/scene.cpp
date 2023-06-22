@@ -148,7 +148,7 @@ void scene::loadModel(entt::entity entity, std::string fileName, uint32_t meshId
 
     auto &meshComp = registry.get<component::mesh>(entity);
     meshComp.vertices.assign(pVertices, pVertices + nVertices);
-    meshComp.indices.assign(pIndices, pIndices + nFaces * 3);
+    meshComp.indices.assign(pIndices, pIndices + static_cast<size_t>(nFaces) * 3);
     meshComp.normals.assign(pNormals, pNormals + nVertices);
     meshComp.nVertices = nVertices;
     meshComp.nIndices = nFaces * 3;
