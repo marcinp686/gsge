@@ -1,0 +1,41 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "gsge",
+  "version": "0.1",
+  "description": "Giraffe Studio Game Engine",
+  "dependencies": [
+    {
+      "name": "spdlog",
+      "version>=": "1.10.0",
+      "platform": "windows & x64",
+      "features": ["wchar"]
+    },
+    {
+      "name": "glfw3",
+      "version>=": "3.3.8",
+      "platform": "windows & x64"     
+    },
+    {
+      "name": "directxmath",
+      "platform": "windows & x64"
+    },
+    {
+      "name": "assimp",
+      "platform": "windows & x64",
+      "version>=": "5.2.4"
+    },
+    {
+      "name": "glm",
+      "platform": "windows & x64"
+    },
+    {
+      "name": "entt",
+      "version>=": "3.12.0"
+    },
+    {
+      "name": "vulkan-memory-allocator",
+      "version>=": "3.0.0"
+    }
+  ],
+  "builtin-baseline": "f6a5d4e8eb7476b8d7fc12a56dff300c1c986131"
+}

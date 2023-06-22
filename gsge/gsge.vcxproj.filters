@@ -222,7 +222,4 @@
       <Filter>ShaderFiles</Filter>
     </GLSLShader>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
 </Project>
