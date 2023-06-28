@@ -296,8 +296,7 @@ void Device::addQueueToCreate(uint32_t familyIdx, float priority, VkQueue *handl
         .name = queueName,
     };
 
-    queueFamilies[familyIdx]
-        .queues.push_back(newQueue);
+    queueFamilies[familyIdx].queues.push_back(newQueue);
     queueFamilies[familyIdx].priorities.push_back(priority);
 }
 

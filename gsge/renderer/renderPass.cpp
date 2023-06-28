@@ -25,7 +25,7 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
     // Depth attachment
     VkAttachmentDescription2 depthAttachment{
         .sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
-        .format = VK_FORMAT_D32_SFLOAT, // TODO: Add method to find supported depth forma
+        .format = VK_FORMAT_D32_SFLOAT, // TODO: Add method to find supported depth format
         .samples = settings.Renderer.enableMSAA ? settings.Renderer.msaaSampleCount : VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -43,7 +43,7 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
 
     // Attachment for resolving multisampled color attachment to swapchain's color attachment
     // It needs to be have 1 sample count regardless of the settings.Renderer.msaaSampleCount
-    VkAttachmentDescription2 colorAttachmentResolve{
+    VkAttachmentDescription2 resolveAttachment{
         .sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
         .format = swapchain->getImageFormat(),
         .samples = VK_SAMPLE_COUNT_1_BIT,
@@ -55,35 +55,57 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
     };
 
-    VkAttachmentReference2 colorAttachmentResolveRef{
+    VkAttachmentReference2 resolveAttachmentRef{
         .sType = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2,
         .attachment = 2,
         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     };
-    // -- Subpasses --
 
+    std::vector<VkAttachmentDescription2> attachments;
+    attachments.push_back(colorAttachment);
+    attachments.push_back(depthAttachment);
+
+    if (settings.Renderer.enableMSAA)
+        attachments.push_back(resolveAttachment);
+
+    // Subpasses
     VkSubpassDescription2 subpass{
         .sType = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2,
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         .colorAttachmentCount = 1,
         .pColorAttachments = &colorAttachmentRef,
-        .pResolveAttachments = settings.Renderer.enableMSAA ? &colorAttachmentResolveRef : VK_NULL_HANDLE,
+        .pResolveAttachments = settings.Renderer.enableMSAA ? &resolveAttachmentRef : VK_NULL_HANDLE,
         .pDepthStencilAttachment = &depthAttachmentRef,
     };
 
-    VkSubpassDependency2 dependency{
+    // Subpass dependencies
+    // - Color attachment
+    VkSubpassDependency2 colorDependency{
         .sType = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
         .srcSubpass = VK_SUBPASS_EXTERNAL,
         .dstSubpass = 0,
-        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+        .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
         .srcAccessMask = 0,
-        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT,
+        .dependencyFlags = 0,
     };
 
-    std::vector<VkAttachmentDescription2> attachments = {colorAttachment, depthAttachment};
-    if (settings.Renderer.enableMSAA)
-        attachments.push_back(colorAttachmentResolve);
+    // - Depth attachment
+    VkSubpassDependency2 depthDependency{
+        .sType = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
+        .srcSubpass = VK_SUBPASS_EXTERNAL,
+        .dstSubpass = 0,
+        .srcStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+        .srcAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
+        .dependencyFlags = 0,
+    };
+
+    std::vector<VkSubpassDependency2> dependencies;
+    dependencies.push_back(depthDependency);
+    dependencies.push_back(colorDependency);
 
     VkRenderPassCreateInfo2 renderPassInfo{
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2,
@@ -91,8 +113,8 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         .pAttachments = attachments.data(),
         .subpassCount = 1,
         .pSubpasses = &subpass,
-        .dependencyCount = 1,
-        .pDependencies = &dependency,
+        .dependencyCount = static_cast<uint32_t>(dependencies.size()),
+        .pDependencies = dependencies.data(),
     };
 
     if (vkCreateRenderPass2(*device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)

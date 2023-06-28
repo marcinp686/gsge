@@ -13,11 +13,15 @@ Framebuffer::Framebuffer(std::shared_ptr<Device> &device, std::shared_ptr<Swapch
         std::vector<VkImageView> attachments;
         if (settings.Renderer.enableMSAA)
         {
-            attachments = {swapchain->getColorImageView(), swapchain->getDepthImageView(), swapchain->getImageView(i)};
+            // TODO: Why the hell is it in reverse order compared to renderpass attachments???
+            attachments.push_back(swapchain->getColorImageView());
+            attachments.push_back(swapchain->getDepthImageView());
+            attachments.push_back(swapchain->getImageView(i));
         }
         else
         {
-            attachments = {swapchain->getImageView(i), swapchain->getDepthImageView()};
+            attachments.push_back(swapchain->getImageView(i));
+            attachments.push_back(swapchain->getDepthImageView());
         }       
 
         VkFramebufferCreateInfo framebufferInfo{};
