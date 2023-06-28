@@ -31,6 +31,13 @@ void Swapchain::createImages()
     images.resize(imageCount);
     vkGetSwapchainImagesKHR(*device, swapchain, &imageCount, images.data());
 
+    for (size_t i = 0; i < imageCount; ++i)
+    {
+        std::stringstream debugName;
+        debugName << "Swapchain image " << i;
+        GSGE_DEBUGGER_SET_OBJECT_NAME(images[i], debugName.str().c_str());
+    }
+
     SPDLOG_TRACE("[Swapchain / Images] Created");
 }
 
@@ -152,11 +159,13 @@ VkPresentModeKHR Swapchain::chooseSwapPresentMode()
     {
         if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
         {
+            SPDLOG_TRACE("[Swapchain] Present mode MAILBOX");
             return availablePresentMode;
         }
     }
 
-    return VK_PRESENT_MODE_IMMEDIATE_KHR; //    FIFO_KHR;
+    SPDLOG_TRACE("[Swapchain] Present mode IMMEDIATE");
+    return VK_PRESENT_MODE_IMMEDIATE_KHR;
 }
 
 uint32_t Swapchain::getImageCount() const
@@ -201,6 +210,9 @@ void Swapchain::createImageViews()
     for (size_t i = 0; i < images.size(); i++)
     {
         imageViews[i] = createImageView(images[i], imageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+        std::stringstream debugName;
+        debugName << "Swapchain image view " << i;
+        GSGE_DEBUGGER_SET_OBJECT_NAME(imageViews[i], debugName.str().c_str());
     }
 
     SPDLOG_TRACE("[Swapchain / Image views] Created");
@@ -238,6 +250,8 @@ void Swapchain::createDepthResources()
                 depthImage, depthImageMemory);
     depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 
+    GSGE_DEBUGGER_SET_OBJECT_NAME(depthImage, "Depth image");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(depthImageView, "Depth image view");
     SPDLOG_TRACE("[Swapchain / Depth resources ] Created");
 }
 
@@ -248,6 +262,8 @@ void Swapchain::createColorResources()
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, colorImage, colorImageMemory);
     colorImageView = createImageView(colorImage, imageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 
+    GSGE_DEBUGGER_SET_OBJECT_NAME(colorImage, "MS color image");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(colorImageView, "MS color image view");
     SPDLOG_TRACE("[Swapchain / Color resources ] Created");
 }
 

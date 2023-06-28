@@ -62,6 +62,9 @@ template void Debugger::setObjectName(VkCommandBuffer object, const char *name);
 template void Debugger::setObjectName(VkPipeline object, const char *name);
 template void Debugger::setObjectName(VkQueue object, const char *name);
 template void Debugger::setObjectName(VkSemaphore object, const char *name);
+template void Debugger::setObjectName(VkImage object, const char *name);
+template void Debugger::setObjectName(VkImageView object, const char *name);
+template void Debugger::setObjectName(VkBuffer object, const char *name);
 
 template <typename T> void Debugger::setObjectName(T object, const char *name)
 {
@@ -80,6 +83,12 @@ template <typename T> void Debugger::setObjectName(T object, const char *name)
         objectNameInfo.objectType = VK_OBJECT_TYPE_QUEUE;
     if (std::is_same<VkSemaphore, T>::value)
         objectNameInfo.objectType = VK_OBJECT_TYPE_SEMAPHORE;
+    if (std::is_same<VkImage, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_IMAGE;
+    if (std::is_same<VkImageView, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_IMAGE_VIEW;
+    if (std::is_same<VkBuffer, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_BUFFER;
 
     objectNameInfo.objectHandle = reinterpret_cast<uint64_t>(object);
     objectNameInfo.pObjectName = name;
