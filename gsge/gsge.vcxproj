@@ -59,35 +59,35 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\include;C:\Users\epic007\source\repos\gsge\gsge;$(VK_SDK_PATH)\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(VK_SDK_PATH)\Lib;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)..\easy_profiler\out\install\x64-Release\include;$(ProjectDir);$(VK_SDK_PATH)\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VK_SDK_PATH)\Lib;$(SolutionDir)..\easy_profiler\out\install\x64-Release\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)$(Platform)\Intermediate\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets>
     </CustomBuildBeforeTargets>
     <LinkIncremental>false</LinkIncremental>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
     <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
-    <IncludePath>C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\include;C:\Users\epic007\source\repos\gsge\gsge;$(VK_SDK_PATH)\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(VK_SDK_PATH)\Lib;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)..\easy_profiler\out\install\x64-Release\include;$(ProjectDir);$(VK_SDK_PATH)\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VK_SDK_PATH)\Lib;$(SolutionDir)..\easy_profiler\out\install\x64-Release\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)$(Platform)\Intermediate\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets />
     <LinkIncremental>false</LinkIncremental>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
     <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\include;C:\Users\epic007\source\repos\gsge\gsge;$(VK_SDK_PATH)\Include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
-    <LibraryPath>$(VK_SDK_PATH)\Lib;C:\Users\epic007\source\repos\easy_profiler\out\install\x64-Release\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)..\easy_profiler\out\install\x64-Release\include;$(ProjectDir);$(VK_SDK_PATH)\Include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(VK_SDK_PATH)\Lib;$(SolutionDir)..\easy_profiler\out\install\x64-Release\lib;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)$(Platform)\Intermediate\$(Configuration)\</IntDir>
     <CustomBuildBeforeTargets>
     </CustomBuildBeforeTargets>
     <LinkIncremental>false</LinkIncremental>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
     <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -125,16 +125,18 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;fmtd.lib;glfw3dll.lib;spdlogd.lib;easy_profiler.lib;zlibd.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;glfw3.lib;spdlogd.lib;easy_profiler.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(SolutionDir)gsge\models\*.fbx $(OutDir)models /y /q /i /e</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copying models</Message>
+      <Message>
+      </Message>
     </PostBuildEvent>
     <CustomBuildStep>
       <Command>
@@ -171,10 +173,12 @@
       <Profile>true</Profile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(SolutionDir)gsge\models\*.fbx $(OutDir)models /y /q /i /e</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copying models</Message>
+      <Message>
+      </Message>
     </PostBuildEvent>
     <CustomBuildStep>
       <Command>
@@ -211,10 +215,12 @@
       <Profile>true</Profile>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(SolutionDir)gsge\models\*.fbx $(OutDir)models /y /q /i /e</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copying models</Message>
+      <Message>
+      </Message>
     </PostBuildEvent>
     <CustomBuildStep>
       <Command>
@@ -303,6 +309,5 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
-    <Import Project="Shaders.targets" />
   </ImportGroup>
 </Project>
