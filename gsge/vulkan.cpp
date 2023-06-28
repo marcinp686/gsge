@@ -349,24 +349,12 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
     // beginInfo.flags = 0;                  // Optional
     // beginInfo.pInheritanceInfo = nullptr; // Optional
 
-    GSGE_DEBUGGER_CMD_BUFFER_LABEL_BEGIN(commandBuffer, "Graphics CB");
-
     if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to begin recording command buffer!");
     }
 
-    // Memory buffer barrier
-    VkBufferMemoryBarrier2 memBarrier{};
-    memBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
-    memBarrier.pNext = VK_NULL_HANDLE;
-    memBarrier.dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT;
-    memBarrier.dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT;
-    memBarrier.srcQueueFamilyIndex = device->getTransferQueueFamilyIdx();
-    memBarrier.dstQueueFamilyIndex = device->getGraphicsQueueFamilyIdx();
-    memBarrier.buffer = transformMatricesBuffer[currentFrame];
-    memBarrier.offset = 0;
-    memBarrier.size = VK_WHOLE_SIZE;
+    GSGE_DEBUGGER_CMD_BUFFER_LABEL_BEGIN(commandBuffer, "Graphics CB");
 
     VkDependencyInfo depInfo{};
     depInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
@@ -428,13 +416,13 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
     // End render pass
     vkCmdEndRenderPass(commandBuffer);
 
+    GSGE_DEBUGGER_CMD_BUFFER_LABEL_END(commandBuffer);
+
     // End command buffer
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to record command buffer!");
     }
-
-    GSGE_DEBUGGER_CMD_BUFFER_LABEL_END(commandBuffer);
 }
 
 void vulkan::drawFrame()
@@ -708,6 +696,8 @@ void vulkan::createVertexBuffer()
     copyBuffer(stagingBuffer, vertexBuffer, bufferSize, false);
     vkDestroyBuffer(*device, stagingBuffer, nullptr);
     vkFreeMemory(*device, stagingBufferMemory, nullptr);
+
+    GSGE_DEBUGGER_SET_OBJECT_NAME(vertexBuffer, "Vertex buffer");
 }
 
 uint32_t vulkan::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
@@ -795,9 +785,8 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_FALSE, 2000000000);
     vkResetFences(*device, 1, &transferFinishedFences[currentFrame]);
 
-    GSGE_DEBUGGER_CMD_BUFFER_LABEL_BEGIN(transferCommandBuffers[currentFrame], "transfer CB");
-
     vkBeginCommandBuffer(transferCommandBuffers[currentFrame], &beginInfo);
+    GSGE_DEBUGGER_CMD_BUFFER_LABEL_BEGIN(transferCommandBuffers[currentFrame], "transfer CB");
 
     VkBufferCopy copyRegion{};
     copyRegion.srcOffset = 0; // Optional
@@ -827,9 +816,9 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
 
         vkCmdPipelineBarrier2(transferCommandBuffers[currentFrame], &depInfo);
     }
-    vkEndCommandBuffer(transferCommandBuffers[currentFrame]);
 
     GSGE_DEBUGGER_CMD_BUFFER_LABEL_END(transferCommandBuffers[currentFrame]);
+    vkEndCommandBuffer(transferCommandBuffers[currentFrame]);
 
     VkCommandBufferSubmitInfo cbSubmitInfo{};
     cbSubmitInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
@@ -886,6 +875,9 @@ void vulkan::createUniformBuffers()
                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i],
                      uniformBuffersMemory[i]);
     }
+
+    GSGE_DEBUGGER_SET_OBJECT_NAME(uniformBuffers[0], "Uniform buffer 0");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(uniformBuffers[1], "Uniform buffer 1");
 
     SPDLOG_TRACE("[Uniform buffers] Created");
 }
@@ -1000,6 +992,8 @@ void vulkan::createIndexBuffer()
 
     vkDestroyBuffer(*device, stagingBuffer, nullptr);
     vkFreeMemory(*device, stagingBufferMemory, nullptr);
+
+    GSGE_DEBUGGER_SET_OBJECT_NAME(indexBuffer, "Index buffer");
 }
 
 void vulkan::createTransformMatricesBuffer()
@@ -1020,6 +1014,9 @@ void vulkan::createTransformMatricesBuffer()
         createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, transformMatricesBuffer[i], transformMatricesBufferMemory[i]);
     }
+
+    GSGE_DEBUGGER_SET_OBJECT_NAME(transformMatricesBuffer[0], "Transform matrices buffer 0");
+    GSGE_DEBUGGER_SET_OBJECT_NAME(transformMatricesBuffer[1], "Transform matrices buffer 1");
 }
 
 void vulkan::updateTransformMatrixBuffer(uint32_t currentImage)
@@ -1077,4 +1074,6 @@ void vulkan::createVertexNormalsBuffer()
 
     vkDestroyBuffer(*device, stagingBuffer, nullptr);
     vkFreeMemory(*device, stagingBufferMemory, nullptr);
+
+    GSGE_DEBUGGER_SET_OBJECT_NAME(vertexNormalsBuffer, "Vertex normals buffer");
 }
