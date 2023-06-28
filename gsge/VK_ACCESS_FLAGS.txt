@@ -1,0 +1,121 @@
+Access flags (VkAccessFlagBits2)
+
+VK_ACCESS_2_NONE = 0ULL;
+	specifies no accesses
+
+VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT = 0x00000001ULL;
+	specifies read access to command data read from indirect buffers as part of an indirect build, trace, 
+	drawing or dispatch command. Such access occurs in the VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT pipeline stage.
+
+VK_ACCESS_2_INDEX_READ_BIT = 0x00000002ULL;
+	specifies read access to an index buffer as part of an indexed drawing command, bound by vkCmdBindIndexBuffer.
+	Such access occurs in the VK_PIPELINE_STAGE_2_INDEX_INPUT_BIT pipeline stage
+
+VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT = 0x00000004ULL;
+	specifies read access to a vertex buffer as part of a drawing command, bound by vkCmdBindVertexBuffers.
+	Such access occurs in the VK_PIPELINE_STAGE_2_VERTEX_ATTRIBUTE_INPUT_BIT pipeline stage.
+
+VK_ACCESS_2_UNIFORM_READ_BIT = 0x00000008ULL;
+	specifies read access to a uniform buffer in any shader pipeline stage
+
+VK_ACCESS_2_INPUT_ATTACHMENT_READ_BIT = 0x00000010ULL;
+	specifies read access to an input attachment within a render pass during subpass shading or fragment shading.
+	Such access occurs in the VK_PIPELINE_STAGE_2_SUBPASS_SHADING_BIT_HUAWEI or VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT pipeline stage.
+
+VK_ACCESS_2_SHADER_READ_BIT = 0x00000020ULL;
+	is equivalent to the logical OR of:	
+		VK_ACCESS_2_UNIFORM_READ_BIT
+		VK_ACCESS_2_SHADER_SAMPLED_READ_BIT
+		VK_ACCESS_2_SHADER_STORAGE_READ_BIT
+
+VK_ACCESS_2_SHADER_BINDING_TABLE_READ_BIT_KHR
+	specifies read access to a shader binding table in any shader pipeline stage.
+
+VK_ACCESS_2_SHADER_WRITE_BIT = 0x00000040ULL;
+	is equivalent to VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT.
+
+VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT = 0x00000080ULL;
+	specifies read access to a color attachment, such as via blending (other than advanced blend operations), logic operations,
+	or via certain subpass load operations or fragment shader tile image reads.
+	Such access occurs in the VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT pipeline stage.
+
+VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT = 0x00000100ULL;
+	specifies write access to a color, resolve, or depth/stencil resolve attachment during a render pass or via certain subpass load and store operations.
+	Such access occurs in the VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT pipeline stage.
+
+VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT = 0x00000200ULL;
+	specifies read access to a depth/stencil attachment, via depth or stencil operations or certain subpass load operations.
+	Such access occurs in the VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT or VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT pipeline stages
+
+VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT = 0x00000400ULL;
+	specifies write depth or stencil operations in the VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT_KHR or VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT_KHR
+	pipeline stages or via certain subpass load operations or fragment shader tile image reads in the
+	VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT_KHR pipeline stage.
+
+VK_ACCESS_2_TRANSFER_READ_BIT = 0x00000800ULL;
+	specifies read access to an image or buffer in a copy operation.
+	Such access occurs in the
+		VK_PIPELINE_STAGE_2_COPY_BIT
+		VK_PIPELINE_STAGE_2_BLIT_BIT
+		VK_PIPELINE_STAGE_2_RESOLVE_BIT
+	pipeline stages
+
+VK_ACCESS_2_TRANSFER_WRITE_BIT = 0x00001000ULL;
+	specifies write access to an image or buffer in a clear or copy operation.
+	Such access occurs in the
+		VK_PIPELINE_STAGE_2_COPY_BIT
+		VK_PIPELINE_STAGE_2_BLIT_BIT
+		VK_PIPELINE_STAGE_2_CLEAR_BIT
+		VK_PIPELINE_STAGE_2_RESOLVE_BIT
+	pipeline stages.
+
+VK_ACCESS_2_HOST_READ_BIT = 0x00002000ULL;
+	specifies read access by a host operation. Accesses of this type are not performed through a resource, but directly on memory.
+	Such access occurs in the VK_PIPELINE_STAGE_2_HOST_BIT pipeline stage.
+
+VK_ACCESS_2_HOST_WRITE_BIT = 0x00004000ULL;
+	specifies write access by a host operation. Accesses of this type are not performed through a resource, but directly on memory.
+	Such access occurs in the VK_PIPELINE_STAGE_2_HOST_BIT pipeline stage.
+
+VK_ACCESS_2_MEMORY_READ_BIT = 0x00008000ULL;
+	specifies all read accesses. It is always valid in any access mask, and is treated as equivalent to setting all READ access
+	flags that are valid where it is used.
+
+VK_ACCESS_2_MEMORY_WRITE_BIT = 0x00010000ULL;
+	specifies all write accesses. It is always valid in any access mask, and is treated as equivalent to setting all WRITE access
+	flags that are valid where it is used.
+
+VK_ACCESS_2_SHADER_SAMPLED_READ_BIT = 0x100000000ULL;
+	specifies read access to a uniform texel buffer or sampled image in any shader pipeline stage.
+
+VK_ACCESS_2_SHADER_STORAGE_READ_BIT = 0x200000000ULL;
+	specifies read access to a storage buffer, physical storage buffer, storage texel buffer, or storage image in any shader pipeline stage.
+
+VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT = 0x400000000ULL;
+	specifies write access to a storage buffer, physical storage buffer, storage texel buffer, or storage image in any shader pipeline stage.
+
+VK_ACCESS_2_VIDEO_DECODE_READ_BIT_KHR (VK_KHR_video_decode_queue)
+VK_ACCESS_2_VIDEO_DECODE_WRITE_BIT_KHR (VK_KHR_video_decode_queue)
+VK_ACCESS_2_VIDEO_ENCODE_READ_BIT_KHR (VK_KHR_video_encode_queue)
+VK_ACCESS_2_VIDEO_ENCODE_WRITE_BIT_KHR (VK_KHR_video_encode_queue)
+VK_ACCESS_2_TRANSFORM_FEEDBACK_WRITE_BIT_EXT (VK_KHR_synchronization2 with VK_EXT_transform_feedback)
+VK_ACCESS_2_TRANSFORM_FEEDBACK_COUNTER_READ_BIT_EXT (VK_KHR_synchronization2 with VK_EXT_transform_feedback)
+VK_ACCESS_2_TRANSFORM_FEEDBACK_COUNTER_WRITE_BIT_EXT (VK_KHR_synchronization2 with VK_EXT_transform_feedback)
+VK_ACCESS_2_CONDITIONAL_RENDERING_READ_BIT_EXT (VK_KHR_synchronization2 with VK_EXT_conditional_rendering)
+VK_ACCESS_2_COMMAND_PREPROCESS_READ_BIT_NV (VK_KHR_synchronization2 with VK_NV_device_generated_commands)
+VK_ACCESS_2_COMMAND_PREPROCESS_WRITE_BIT_NV (VK_KHR_synchronization2 with VK_NV_device_generated_commands)
+VK_ACCESS_2_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR (VK_KHR_fragment_shading_rate with VK_KHR_synchronization2)
+VK_ACCESS_2_SHADING_RATE_IMAGE_READ_BIT_NV (VK_KHR_synchronization2 with VK_NV_shading_rate_image)
+VK_ACCESS_2_ACCELERATION_STRUCTURE_READ_BIT_KHR (VK_KHR_acceleration_structure with VK_KHR_synchronization2)
+VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_KHR (VK_KHR_acceleration_structure with VK_KHR_synchronization2)
+VK_ACCESS_2_ACCELERATION_STRUCTURE_READ_BIT_NV (VK_KHR_synchronization2 with VK_NV_ray_tracing)
+VK_ACCESS_2_ACCELERATION_STRUCTURE_WRITE_BIT_NV (VK_KHR_synchronization2 with VK_NV_ray_tracing)
+VK_ACCESS_2_FRAGMENT_DENSITY_MAP_READ_BIT_EXT (VK_KHR_synchronization2 with VK_EXT_fragment_density_map)
+VK_ACCESS_2_COLOR_ATTACHMENT_READ_NONCOHERENT_BIT_EXT (VK_KHR_synchronization2 with VK_EXT_blend_operation_advanced)
+VK_ACCESS_2_DESCRIPTOR_BUFFER_READ_BIT_EXT (VK_EXT_descriptor_buffer)
+VK_ACCESS_2_INVOCATION_MASK_READ_BIT_HUAWEI (VK_HUAWEI_invocation_mask)
+VK_ACCESS_2_SHADER_BINDING_TABLE_READ_BIT_KHR (VK_KHR_ray_tracing_maintenance1 with VK_KHR_synchronization2 and VK_KHR_ray_tracing_pipeline)
+VK_ACCESS_2_MICROMAP_READ_BIT_EXT (VK_EXT_opacity_micromap)
+VK_ACCESS_2_MICROMAP_WRITE_BIT_EXT (VK_EXT_opacity_micromap)
+VK_ACCESS_2_OPTICAL_FLOW_READ_BIT_NV (VK_NV_optical_flow)
+VK_ACCESS_2_OPTICAL_FLOW_WRITE_BIT_NV (VK_NV_optical_flow)
