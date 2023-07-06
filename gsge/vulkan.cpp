@@ -373,27 +373,30 @@ void vulkan::recordPresentCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
 
     vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-    // A layout transition which happens as part of an ownership transfer needs to be specified twice; one for the
-    // release, and one for the acquire. No srcStage/AccessMask is needed, waiting for a semaphore does that
-    // automatically (all commands in submitted queue need to be finished before semaphore signal).
-    // No dstStage/AccessMask is needed, signalling a semaphore does that automatically.
-    VkImageMemoryBarrier2 presentImageAO_MB = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-        //.oldLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL, Renderpass handles that
-        //.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, Renderpass handles that
-        .srcQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
-        .dstQueueFamilyIndex = device->getPresentQueueFamilyIdx(),
-        .image = swapchain->getImage(imageIndex),
-        .subresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
-    };
+    if (device->getGraphicsQueueFamilyIdx() != device->getPresentQueueFamilyIdx())
+    {
+        // A layout transition which happens as part of an ownership transfer needs to be specified twice; one for the
+        // release, and one for the acquire. No srcStage/AccessMask is needed, waiting for a semaphore does that
+        // automatically (all commands in submitted queue need to be finished before semaphore signal).
+        // No dstStage/AccessMask is needed, signalling a semaphore does that automatically.
+        VkImageMemoryBarrier2 presentImageAO_MB = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            //.oldLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL, Renderpass handles that
+            //.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, Renderpass handles that
+            .srcQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
+            .dstQueueFamilyIndex = device->getPresentQueueFamilyIdx(),
+            .image = swapchain->getImage(imageIndex),
+            .subresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
+        };
 
-    VkDependencyInfo presentImageAOMBdepInfo = {
-        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-        .imageMemoryBarrierCount = 1,
-        .pImageMemoryBarriers = &presentImageAO_MB,
-    };
+        VkDependencyInfo presentImageAOMBdepInfo = {
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .imageMemoryBarrierCount = 1,
+            .pImageMemoryBarriers = &presentImageAO_MB,
+        };
 
-    vkCmdPipelineBarrier2(presentCommandBuffers[currentFrame], &presentImageAOMBdepInfo);
+        vkCmdPipelineBarrier2(presentCommandBuffers[currentFrame], &presentImageAOMBdepInfo);
+    }
 
     // End command buffer
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
@@ -519,48 +522,34 @@ void vulkan::recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
     vkCmdEndRenderPass(commandBuffer);
 
     // ---- MEMORY BARRIERS
-    // Buffer memory barrier to release  ownership of transformation matrices in this queue family
-    VkBufferMemoryBarrier2 transformMatricesBufferMB_RO{
-        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
-        .pNext = VK_NULL_HANDLE,
-        .srcStageMask = 0,
-        .srcAccessMask = 0,
-        .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_ATTRIBUTE_INPUT_BIT,
-        .dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT,
-        .srcQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
-        .dstQueueFamilyIndex = device->getTransferQueueFamilyIdx(),
-        .buffer = transformMatricesBuffer[currentFrame],
-        .offset = 0,
-        .size = VK_WHOLE_SIZE,
-    };
-
     // Release ownership of an image and transition image layout for presentation
     // But what happens if QF are equal? No ownership transfer? does ownership apply only to queue family and not queue itself?
     // If the values of srcQueueFamilyIndex and dstQueueFamilyIndex are equal, no ownership transfer is performed,
     // and the barrier operates as if they were both set to VK_QUEUE_FAMILY_IGNORED.
-    VkImageMemoryBarrier2 presentImageReleaseMB{
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-        .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_2_NONE, // or 0 - this is ownership release
-        .dstAccessMask = VK_ACCESS_2_NONE,        // or 0 - this is ownership release
-        //.oldLayout = COLOR_ATTACHMENT_OPTIMAL,  // This is done in renderpass automatically
-        //.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, // This is done in renderpass automatically
-        .srcQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
-        .dstQueueFamilyIndex = device->getPresentQueueFamilyIdx(),
-        .image = swapchain->getImage(imageIndex),
-        .subresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
-    };
+    if (device->getGraphicsQueueFamilyIdx() != device->getPresentQueueFamilyIdx())
+    {
+        VkImageMemoryBarrier2 presentImageReleaseMB{
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_NONE, // or 0 - this is ownership release
+            .dstAccessMask = VK_ACCESS_2_NONE,        // or 0 - this is ownership release
+            //.oldLayout = COLOR_ATTACHMENT_OPTIMAL,  // This is done in renderpass automatically
+            //.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, // This is done in renderpass automatically
+            .srcQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
+            .dstQueueFamilyIndex = device->getPresentQueueFamilyIdx(),
+            .image = swapchain->getImage(imageIndex),
+            .subresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
+        };
 
-    VkDependencyInfo depInfo2{
-        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-        .bufferMemoryBarrierCount = 0,
-        .pBufferMemoryBarriers = nullptr,//&transformMatricesBufferMB_RO,
-        .imageMemoryBarrierCount = 1,
-        .pImageMemoryBarriers = &presentImageReleaseMB,
-    };
+        VkDependencyInfo depInfo2{
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .imageMemoryBarrierCount = 1,
+            .pImageMemoryBarriers = &presentImageReleaseMB,
+        };
 
-    vkCmdPipelineBarrier2(commandBuffer, &depInfo2);
+        vkCmdPipelineBarrier2(commandBuffer, &depInfo2);
+    }
 
     GSGE_DEBUGGER_CMD_BUFFER_LABEL_END(commandBuffer);
 
@@ -1083,37 +1072,12 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     If the values of srcQueueFamilyIndex and dstQueueFamilyIndex are equal, no ownership transfer is performed,
     and the barrier operates as if they were both set to VK_QUEUE_FAMILY_IGNORED.
 
+    NOTE: If an application does not need the contents of a resource to remain valid when transferring from one queue family to
+    another, then the ownership transfer should be skipped. - since transform matrices buffer is updated every frame we do not
+    care about it's contents from previous frame and do not need to transfer ownership back from graphics queue family
+
     https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap7.html#synchronization-queue-transfers
     */
-
-    if (withSemaphores)
-    {
-        // Acquire buffer ownership from graphics to transfer queue family
-        // First synchronization and access scopes do not synchronize operations on that queue
-        // But: If an application does not need the contents of a resource to remain valid when transferring from one queue family to another,
-        // then the ownership transfer should be skipped.
-        VkBufferMemoryBarrier2 memBarrier{
-            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
-            .pNext = VK_NULL_HANDLE,
-            .srcStageMask = 0,
-            .srcAccessMask = 0,
-            .dstStageMask = VK_PIPELINE_STAGE_2_COPY_BIT,
-            .dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
-            .srcQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
-            .dstQueueFamilyIndex = device->getTransferQueueFamilyIdx(),
-            .buffer = transformMatricesBuffer[currentFrame],
-            .offset = 0,
-            .size = VK_WHOLE_SIZE,
-        };
-
-        VkDependencyInfo depInfo{
-            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-            .bufferMemoryBarrierCount = 1,
-            .pBufferMemoryBarriers = &memBarrier,
-        };
-
-        //vkCmdPipelineBarrier2(transferCommandBuffers[currentFrame], &depInfo);
-    }
 
     vkCmdCopyBuffer(transferCommandBuffers[currentFrame], srcBuffer, dstBuffer, 1, &copyRegion);
 
