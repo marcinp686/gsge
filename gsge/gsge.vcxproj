@@ -117,7 +117,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointModel>Fast</FloatingPointModel>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <DisableSpecificWarnings>26495;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -156,7 +156,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <DisableSpecificWarnings>26495;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -198,7 +198,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <DisableSpecificWarnings>26495;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -280,21 +280,6 @@
     <ClInclude Include="vulkan.h" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\..\entt\natvis\entt\config.natvis" />
-    <Natvis Include="..\..\entt\natvis\entt\container.natvis" />
-    <Natvis Include="..\..\entt\natvis\entt\core.natvis" />
-    <Natvis Include="..\..\entt\natvis\entt\entity.natvis" />
-    <Natvis Include="..\..\entt\natvis\entt\graph.natvis" />
-    <Natvis Include="..\..\entt\natvis\entt\locator.natvis" />
-    <Natvis Include="..\..\entt\natvis\entt\meta.natvis" />
-    <Natvis Include="..\..\entt\natvis\entt\platform.natvis" />
-    <Natvis Include="..\..\entt\natvis\entt\poly.natvis" />
-    <Natvis Include="..\..\entt\natvis\entt\process.natvis" />
-    <Natvis Include="..\..\entt\natvis\entt\resource.natvis" />
-    <Natvis Include="..\..\entt\natvis\entt\signal.natvis" />
-    <Natvis Include="..\..\glm\util\glm.natvis" />
-  </ItemGroup>
-  <ItemGroup>
     <MASM Include="tmatrix.asm">
       <DeploymentContent>true</DeploymentContent>
       <FileType>Document</FileType>
@@ -305,6 +290,11 @@
     <GLSLShader Include="shaders\per_fragment_light_shader.vert" />
     <GLSLShader Include="shaders\per_vertex_light_shader.frag" />
     <GLSLShader Include="shaders\per_vertex_light_shader.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="VK_STAGE_FLAGS.txt" />
+    <Text Include="VK_ACCESS_FLAGS.txt" />
+    <Text Include="VK_STAGE_ORDER.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

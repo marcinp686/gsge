@@ -55,6 +55,7 @@ class vulkan
     std::shared_ptr<Framebuffer> framebuffer;   
     std::unique_ptr<CommandPool> graphicsCommandPool;
     std::unique_ptr<CommandPool> transferCommandPool;
+    std::unique_ptr<CommandPool> presentCommandPool;
 
     GSGE_DEBUGGER_INSTANCE_DECL;
     GSGE_SETTINGS_INSTANCE_DECL;
@@ -76,9 +77,12 @@ class vulkan
 
     std::vector<VkCommandBuffer> graphicsCommandBuffers;
     std::vector<VkCommandBuffer> transferCommandBuffers;
+    std::vector<VkCommandBuffer> presentCommandBuffers;
 
     std::vector<VkSemaphore> imageAquiredSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
+    std::vector<VkSemaphore> prePresentCompleteSemaphores;
+    std::vector<VkSemaphore> transferFinishedSemaphores;
     std::vector<VkFence> drawingFinishedFences;
     std::vector<VkFence> transferFinishedFences;
 
@@ -119,7 +123,9 @@ class vulkan
 
     void createGraphicsCommandBuffers();
     void createTransferCommandBuffers();
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    void createPresentCommandBuffers();
+    void recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    void recordPresentCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void drawFrame();
     
     void handleSurfaceResize();
@@ -128,6 +134,8 @@ class vulkan
     
     void createSyncObjects();
     void destroySyncObjects();
+
+    void initResourceOwnerships();
 
     void createVertexBuffer();
     void createIndexBuffer();

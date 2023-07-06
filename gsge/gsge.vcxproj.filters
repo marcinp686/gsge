@@ -163,47 +163,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\..\entt\natvis\entt\config.natvis">
-      <Filter>Natvis</Filter>
-    </Natvis>
-    <Natvis Include="..\..\entt\natvis\entt\container.natvis">
-      <Filter>Natvis</Filter>
-    </Natvis>
-    <Natvis Include="..\..\entt\natvis\entt\core.natvis">
-      <Filter>Natvis</Filter>
-    </Natvis>
-    <Natvis Include="..\..\entt\natvis\entt\entity.natvis">
-      <Filter>Natvis</Filter>
-    </Natvis>
-    <Natvis Include="..\..\entt\natvis\entt\graph.natvis">
-      <Filter>Natvis</Filter>
-    </Natvis>
-    <Natvis Include="..\..\entt\natvis\entt\locator.natvis">
-      <Filter>Natvis</Filter>
-    </Natvis>
-    <Natvis Include="..\..\entt\natvis\entt\meta.natvis">
-      <Filter>Natvis</Filter>
-    </Natvis>
-    <Natvis Include="..\..\entt\natvis\entt\platform.natvis">
-      <Filter>Natvis</Filter>
-    </Natvis>
-    <Natvis Include="..\..\entt\natvis\entt\poly.natvis">
-      <Filter>Natvis</Filter>
-    </Natvis>
-    <Natvis Include="..\..\entt\natvis\entt\process.natvis">
-      <Filter>Natvis</Filter>
-    </Natvis>
-    <Natvis Include="..\..\entt\natvis\entt\resource.natvis">
-      <Filter>Natvis</Filter>
-    </Natvis>
-    <Natvis Include="..\..\entt\natvis\entt\signal.natvis">
-      <Filter>Natvis</Filter>
-    </Natvis>
-    <Natvis Include="..\..\glm\util\glm.natvis">
-      <Filter>Natvis</Filter>
-    </Natvis>
-  </ItemGroup>
-  <ItemGroup>
     <MASM Include="tmatrix.asm">
       <Filter>Pliki źródłowe</Filter>
     </MASM>
@@ -221,5 +180,16 @@
     <GLSLShader Include="shaders\per_vertex_light_shader.vert">
       <Filter>ShaderFiles</Filter>
     </GLSLShader>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="VK_STAGE_FLAGS.txt">
+      <Filter>Pliki źródłowe</Filter>
+    </Text>
+    <Text Include="VK_ACCESS_FLAGS.txt">
+      <Filter>Pliki źródłowe</Filter>
+    </Text>
+    <Text Include="VK_STAGE_ORDER.txt">
+      <Filter>Pliki źródłowe</Filter>
+    </Text>
   </ItemGroup>
 </Project>
