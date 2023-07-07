@@ -38,8 +38,8 @@ vulkan::~vulkan()
 
 void vulkan::update()
 {
-    static size_t framenumber;
-    SPDLOG_INFO("Frame {}", framenumber++);
+   // static size_t framenumber;
+   // SPDLOG_INFO("Frame {}", framenumber++);
     EASY_FUNCTION(profiler::colors::Green200);
     drawFrame();
 }
@@ -598,6 +598,11 @@ void vulkan::drawFrame()
         .deviceMask = 1, // TODO: For now assuming only device with bit 0 set
     };
 
+    EASY_BLOCK("Update buffers");
+    updateTransformMatrixBuffer(currentFrame);
+    updateUniformBuffer(currentFrame);
+    EASY_END_BLOCK;
+
     VkResult result = vkAcquireNextImage2KHR(*device, &acquireInfo, &swapchainImageIndex);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
     {
@@ -610,10 +615,7 @@ void vulkan::drawFrame()
     }
     EASY_END_BLOCK;
 
-    EASY_BLOCK("Update buffers");
-    updateTransformMatrixBuffer(currentFrame);
-    updateUniformBuffer(currentFrame);
-    EASY_END_BLOCK;
+
 
     EASY_BLOCK("Record command buffers");
     // Reset a fence indicating that drawing has been finished
@@ -646,7 +648,7 @@ void vulkan::drawFrame()
     VkSemaphoreSubmitInfo renderFinishedSemaphoreSubmitInfo{
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
         .semaphore = renderFinishedSemaphores[currentFrame],
-        .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
     };
 
     VkSemaphoreSubmitInfo transferFinishedSemaphoreSubmitInfo{
@@ -670,7 +672,7 @@ void vulkan::drawFrame()
         .signalSemaphoreInfoCount = 1,
         .pSignalSemaphoreInfos = &renderFinishedSemaphoreSubmitInfo,
     };
-
+    
     VkResult reult = vkQueueSubmit2(device->getGraphicsQueue(), 1, &graphicsQueueSubmitInfo, nullptr);
     if (result != VK_SUCCESS)
     {
@@ -683,7 +685,7 @@ void vulkan::drawFrame()
     VkSemaphoreSubmitInfo prePresentCompleteSemaphoreInfo{
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
         .semaphore = prePresentCompleteSemaphores[currentFrame],
-        .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,
+        .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
     };
 
     VkCommandBufferSubmitInfo presentCommandBufferInfo{
@@ -700,7 +702,7 @@ void vulkan::drawFrame()
         .signalSemaphoreInfoCount = 1,
         .pSignalSemaphoreInfos = &prePresentCompleteSemaphoreInfo,
     };
-
+    
     vkQueueSubmit2(device->getPresentQueue(), 1, &prePresentSubmitInfo, drawingFinishedFences[currentFrame]);
     EASY_BLOCK("Present");
 
@@ -716,7 +718,7 @@ void vulkan::drawFrame()
     };
 
     // Presentation of current frame's image after renderFinishedSemaphore[currentFrame] is signalled
-    vkQueuePresentKHR(device->getPresentQueue(), &presentInfo);
+    vkQueuePresentKHR(device->getGraphicsQueue(), &presentInfo);
     EASY_END_BLOCK;
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }

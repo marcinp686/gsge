@@ -48,7 +48,6 @@ void Swapchain::initializeSwapchainImages()
     {
         imageViews[i] = createImageView(images[i], imageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
         
-        
         std::stringstream debugName;
         debugName << "Color image view " << i;
         GSGE_DEBUGGER_SET_OBJECT_NAME(imageViews[i], debugName.str().c_str());

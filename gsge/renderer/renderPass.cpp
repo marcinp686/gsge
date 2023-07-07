@@ -74,7 +74,7 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         .colorAttachmentCount = 1,
         .pColorAttachments = settings.Renderer.enableMSAA ? &multisampleAttachmentRef : &presentAttachmentRef,
         .pResolveAttachments = settings.Renderer.enableMSAA ? &presentAttachmentRef : VK_NULL_HANDLE,
-        .pDepthStencilAttachment = nullptr,//&depthAttachmentRef,
+        .pDepthStencilAttachment = &depthAttachmentRef,
     };
 
     //// Subpass dependencies
@@ -145,7 +145,7 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
     };
 
     // depth
-    // Firs to synchronize image layout transition and subsequent reads from and writes to a depth buffer
+    // First to synchronize image layout transition and subsequent reads from and writes to a depth buffer
     VkMemoryBarrier2 depthAttachmentMB1{
         .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
         .srcStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
@@ -177,15 +177,16 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         .dstSubpass = VK_SUBPASS_EXTERNAL,
         .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
     };
-    /*
+
     // Memory barrier to synchronize access to multisample image
     VkMemoryBarrier2 multisampleAttachmentMB{
         .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
         .srcStageMask = VK_PIPELINE_STAGE_2_RESOLVE_BIT,
-        .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
         .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
         .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT_KHR,
     };
+    // https://vulkan.lunarg.com/doc/view/1.3.250.1/windows/1.3-extensions/vkspec.html#synchronization-access-masks
     VkSubpassDependency2 multisampleAttachmentDep{
         .sType = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
         .pNext = &multisampleAttachmentMB,
@@ -193,13 +194,14 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         .dstSubpass = 0,
         .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
     };
-    */
+
     std::vector<VkSubpassDependency2> dependencies;
     dependencies.push_back(singlesampleAttachmentDep1);
     dependencies.push_back(singlesampleAttachmentDep2);
     dependencies.push_back(depthAttachmentDep1);
-    //dependencies.push_back(depthAttachmentDep2);
-    // dependencies.push_back(multisampleAttachmentDep);
+    // dependencies.push_back(depthAttachmentDep2);
+    if (settings.Renderer.enableMSAA)
+        dependencies.push_back(multisampleAttachmentDep);
 
     VkRenderPassCreateInfo2 renderPassInfo{
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2,

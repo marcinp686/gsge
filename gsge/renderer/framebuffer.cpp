@@ -5,7 +5,7 @@ Framebuffer::Framebuffer(std::shared_ptr<Device> &device, std::shared_ptr<Swapch
     : device(device), swapchain(swapchain), renderPass(renderPass)
 {
     if (settings.Renderer.enableMSAA)
-        createResolveResources();
+        createMultisampleResources();
     createDepthResources();
 
     msaaEnabledAtCreation = settings.Renderer.enableMSAA;
@@ -20,13 +20,13 @@ Framebuffer::Framebuffer(std::shared_ptr<Device> &device, std::shared_ptr<Swapch
         if (settings.Renderer.enableMSAA)
         {
             attachments.push_back(swapchain->getImageView(i));
-            attachments.push_back(depthImageView);
-            attachments.push_back(multisampleImageView);
+            attachments.push_back(depthImageView[i]);
+            attachments.push_back(multisampleImageView[i]);
         }
         else
         {
             attachments.push_back(swapchain->getImageView(i));
-            attachments.push_back(depthImageView);
+            attachments.push_back(depthImageView[i]);
         }
 
         VkFramebufferCreateInfo framebufferInfo{};
@@ -51,14 +51,20 @@ Framebuffer::~Framebuffer()
 {
     if (msaaEnabledAtCreation)
     {
-        vkDestroyImageView(*device, multisampleImageView, nullptr);
-        vkDestroyImage(*device, multisampleImage, nullptr);
-        vkFreeMemory(*device, multisampleImageMemory, nullptr);
+        for (size_t i = 0; i < multisampleImage.size(); ++i)
+        {
+            vkDestroyImageView(*device, multisampleImageView[i], nullptr);
+            vkDestroyImage(*device, multisampleImage[i], nullptr);
+            vkFreeMemory(*device, multisampleImageMemory[i], nullptr);
+        }
     }
 
-    vkDestroyImageView(*device, depthImageView, nullptr);
-    vkDestroyImage(*device, depthImage, nullptr);
-    vkFreeMemory(*device, depthImageMemory, nullptr);
+    for (size_t i = 0; i < depthImage.size(); ++i)
+    {
+        vkDestroyImageView(*device, depthImageView[i], nullptr);
+        vkDestroyImage(*device, depthImage[i], nullptr);
+        vkFreeMemory(*device, depthImageMemory[i], nullptr);
+    }
 
     for (auto &buffer : buffers)
     {
@@ -68,52 +74,80 @@ Framebuffer::~Framebuffer()
     SPDLOG_TRACE("[Frambuffer(s)] Destroyed");
 }
 
-VkImageView &Framebuffer::getDepthImageView()
+VkImageView &Framebuffer::getDepthImageView(size_t index)
 {
-    return depthImageView;
+    return depthImageView[index];
 }
 
-VkImageView &Framebuffer::getMultisampleImageView()
+VkImageView &Framebuffer::getMultisampleImageView(size_t index)
 {
-    return multisampleImageView;
+    return multisampleImageView[index];
 }
 
-VkImage &Framebuffer::getDepthImage()
+VkImage &Framebuffer::getDepthImage(size_t index)
 {
-    return depthImage;
+    return depthImage[index];
 }
 
-VkImage &Framebuffer::getMultisampleImage()
+VkImage &Framebuffer::getMultisampleImage(size_t index)
 {
-    return multisampleImage;
+    return multisampleImage[index];
 }
 
 void Framebuffer::createDepthResources()
 {
     VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
 
-    createImage(swapchain->getExtent().width, swapchain->getExtent().height,
-                settings.Renderer.enableMSAA ? settings.Renderer.msaaSampleCount : VK_SAMPLE_COUNT_1_BIT, depthFormat,
-                VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory, VK_IMAGE_LAYOUT_UNDEFINED);
-    depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+    uint32_t imageCount = swapchain->getImageCount();
 
-    GSGE_DEBUGGER_SET_OBJECT_NAME(depthImage, "Depth image");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(depthImageView, "Depth image view");
+    depthImage.resize(imageCount);
+    depthImageView.resize(imageCount);
+    depthImageMemory.resize(imageCount);
+
+    for (size_t i = 0; i < imageCount; ++i)
+    {
+        createImage(swapchain->getExtent().width, swapchain->getExtent().height,
+                    settings.Renderer.enableMSAA ? settings.Renderer.msaaSampleCount : VK_SAMPLE_COUNT_1_BIT, depthFormat,
+                    VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage[i], depthImageMemory[i], VK_IMAGE_LAYOUT_UNDEFINED);
+        depthImageView[i] = createImageView(depthImage[i], depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+        std::stringstream di_name, diview_name;
+        di_name << "Depth image " << i;
+        diview_name << "Depth image view " << i;
+
+        GSGE_DEBUGGER_SET_OBJECT_NAME(depthImage[i], di_name.str().c_str());
+        GSGE_DEBUGGER_SET_OBJECT_NAME(depthImageView[i], diview_name.str().c_str());
+    }
+
     SPDLOG_TRACE("[Framebuffer / Depth resources ] Created");
 }
 
-void Framebuffer::createResolveResources()
+void Framebuffer::createMultisampleResources()
 {
-    createImage(swapchain->getExtent().width, swapchain->getExtent().height, settings.Renderer.msaaSampleCount,
-                swapchain->getImageFormat(),
-                VK_IMAGE_TILING_OPTIMAL,
-                VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, multisampleImage, multisampleImageMemory, VK_IMAGE_LAYOUT_UNDEFINED);
-    multisampleImageView = createImageView(multisampleImage, swapchain->getImageFormat(), VK_IMAGE_ASPECT_COLOR_BIT);
+    uint32_t imageCount = swapchain->getImageCount();
 
-    GSGE_DEBUGGER_SET_OBJECT_NAME(multisampleImage, "Multisample image");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(multisampleImageView, "Multisample image view");
+    multisampleImage.resize(imageCount);
+    multisampleImageView.resize(imageCount);
+    multisampleImageMemory.resize(imageCount);
+
+    for (size_t i = 0; i < imageCount; ++i)
+    {
+        createImage(swapchain->getExtent().width, swapchain->getExtent().height, settings.Renderer.msaaSampleCount,
+                    swapchain->getImageFormat(), VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, multisampleImage[i], multisampleImageMemory[i],
+                    VK_IMAGE_LAYOUT_UNDEFINED);
+        multisampleImageView[i] = createImageView(multisampleImage[i], swapchain->getImageFormat(), VK_IMAGE_ASPECT_COLOR_BIT);
+
+        std::stringstream mi_name, miview_name;
+        mi_name << "Multisample image " << i;
+        miview_name << "Multisample image view " << i;
+
+        GSGE_DEBUGGER_SET_OBJECT_NAME(multisampleImage[i], mi_name.str().c_str());
+        GSGE_DEBUGGER_SET_OBJECT_NAME(multisampleImageView[i], miview_name.str().c_str());
+    }
     SPDLOG_TRACE("[Framebuffer / Multisample resources ] Created");
 }
 

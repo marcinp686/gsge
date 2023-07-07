@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include <vulkan/vulkan.h>
 
 #include "device.h"
@@ -14,10 +16,11 @@ class Framebuffer
     Framebuffer &operator=(const Framebuffer &) = delete;
     ~Framebuffer();
 
-    inline VkImageView &getDepthImageView();
-    inline VkImageView &getMultisampleImageView();
-    inline VkImage &getDepthImage();
-    inline VkImage &getMultisampleImage();
+    inline VkImage &getDepthImage(size_t index);
+    inline VkImageView &getDepthImageView(size_t index);
+    
+    inline VkImage &getMultisampleImage(size_t index);
+    inline VkImageView &getMultisampleImageView(size_t index);
 
     inline VkFramebuffer &operator[](uint32_t index)
     {
@@ -29,14 +32,14 @@ class Framebuffer
     GSGE_SETTINGS_INSTANCE_DECL;
 
     // Depth buffer resources
-    VkImage depthImage;
-    VkDeviceMemory depthImageMemory;
-    VkImageView depthImageView;
+    std::vector<VkImage> depthImage;
+    std::vector<VkDeviceMemory> depthImageMemory;
+    std::vector<VkImageView> depthImageView;
 
     // For MSAA - image that multisampled color image is being resolved to
-    VkImage multisampleImage;
-    VkDeviceMemory multisampleImageMemory;
-    VkImageView multisampleImageView;
+    std::vector<VkImage> multisampleImage;
+    std::vector<VkDeviceMemory> multisampleImageMemory;
+    std::vector<VkImageView> multisampleImageView;
     bool msaaEnabledAtCreation;
 
     std::shared_ptr<Device> device;
@@ -45,7 +48,7 @@ class Framebuffer
     std::vector<VkFramebuffer> buffers;
     
     void createDepthResources();
-    void createResolveResources();
+    void createMultisampleResources();
     
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
     void createImage(uint32_t width, uint32_t height, VkSampleCountFlagBits sampleCount, VkFormat format, VkImageTiling tiling,
