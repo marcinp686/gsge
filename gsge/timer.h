@@ -14,6 +14,7 @@ class timer
 
     float resetTimer();
     void printTimer();
+    float getTimeAsSeconds();
 
   private:
     std::string name;
