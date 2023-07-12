@@ -11,21 +11,23 @@ Instance::Instance()
 
     prepareExtensionList();
 
-    VkApplicationInfo appInfo{};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "GSGE Demo";
-    appInfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 3, 0);
-    appInfo.pEngineName = "Giraffe Studio Game Engine";
-    appInfo.engineVersion = VK_MAKE_API_VERSION(0, 1, 3, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_3;
+    VkApplicationInfo appInfo{
+        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .pApplicationName = "GSGE Demo",
+        .applicationVersion = VK_MAKE_API_VERSION(0, 1, 3, 0),
+        .pEngineName = "Giraffe Studio Game Engine",
+        .engineVersion = VK_MAKE_API_VERSION(0, 1, 3, 0),
+        .apiVersion = VK_API_VERSION_1_3,
+    };
 
-    VkInstanceCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &appInfo;
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(instanceExtensions.size());
-    createInfo.ppEnabledExtensionNames = instanceExtensions.data();
-    createInfo.enabledLayerCount = static_cast<uint32_t>(instanceLayers.size());
-    createInfo.ppEnabledLayerNames = instanceLayers.data();
+    VkInstanceCreateInfo createInfo{
+        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pApplicationInfo = &appInfo,
+        .enabledLayerCount = static_cast<uint32_t>(instanceLayers.size()),
+        .ppEnabledLayerNames = instanceLayers.data(),
+        .enabledExtensionCount = static_cast<uint32_t>(instanceExtensions.size()),
+        .ppEnabledExtensionNames = instanceExtensions.data(),
+    };
 
 #ifndef NDEBUG
 
