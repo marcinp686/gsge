@@ -35,24 +35,15 @@ void Swapchain::initializeSwapchainImages()
 
     vkGetSwapchainImagesKHR(*device, swapchain, &imgCount, images.data());
 
-    for (size_t i = 0; i < imgCount; ++i)
-    {
-        std::stringstream debugName;
-        debugName << "Color image " << i;
-        GSGE_DEBUGGER_SET_OBJECT_NAME(images[i], debugName.str().c_str());
-    }
-
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(images, "Singlesample image");
     SPDLOG_TRACE("[Swapchain / Images] Created");
 
     for (size_t i = 0; i < images.size(); i++)
     {
         imageViews[i] = createImageView(images[i], imageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
-        
-        std::stringstream debugName;
-        debugName << "Color image view " << i;
-        GSGE_DEBUGGER_SET_OBJECT_NAME(imageViews[i], debugName.str().c_str());
     }
 
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(imageViews, "Singlesample image view");
     SPDLOG_TRACE("[Swapchain / Image views] Created");
 }
 

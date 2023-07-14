@@ -325,9 +325,7 @@ void vulkan::createGraphicsCommandBuffers()
         throw std::runtime_error("failed to allocate command buffers!");
     }
 
-    GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsCommandBuffers[0], "Graphics command buffer 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsCommandBuffers[1], "Graphics command buffer 1");
-
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(graphicsCommandBuffers, "Graphics Command Buffer");
     SPDLOG_TRACE("[Graphics command buffers] Created");
 }
 
@@ -346,9 +344,7 @@ void vulkan::createTransferCommandBuffers()
         throw std::runtime_error("failed to allocate command buffers!");
     }
 
-    GSGE_DEBUGGER_SET_OBJECT_NAME(transferCommandBuffers[0], "Transfer command buffer 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(transferCommandBuffers[1], "Transfer command buffer 1");
-
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transferCommandBuffers, "Transfer command buffer");
     SPDLOG_TRACE("[Transfer command buffers] Created");
 }
 
@@ -367,9 +363,7 @@ void vulkan::createPresentCommandBuffers()
         throw std::runtime_error("failed to allocate command buffers!");
     }
 
-    GSGE_DEBUGGER_SET_OBJECT_NAME(presentCommandBuffers[0], "Present command buffer 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(presentCommandBuffers[1], "Present command buffer 1");
-
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(presentCommandBuffers, "Present command buffer");
     SPDLOG_TRACE("[Present command buffers] Created");
 }
 
@@ -473,7 +467,7 @@ void vulkan::recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
 
     // Begin render pass
     std::array<VkClearValue, 3> clearValues{};
-    clearValues[0].color = {0.02f, 0.02f, 0.02f, 1.0f};
+    clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
     clearValues[1].depthStencil = {1.0f, 0};
     clearValues[2].color = {0.02f, 0.02f, 0.02f, 1.0f};
 
@@ -595,7 +589,6 @@ void vulkan::drawFrame()
         SPDLOG_ERROR("Fence timeout");
     }
     EASY_END_BLOCK;
-
     // Acquire next available image
     EASY_BLOCK("Aquire next img");
     uint32_t swapchainImageIndex;
@@ -833,20 +826,12 @@ void vulkan::createSyncObjects()
         }
     }
 
-    // TODO: Names and number, you know what...
-    GSGE_DEBUGGER_SET_OBJECT_NAME(drawingFinishedFences[0], "Drawing Finished Fence 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(drawingFinishedFences[1], "Drawing Finished Fence 1");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(transferFinishedFences[0], "Transfer Finished Fence 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(transferFinishedFences[1], "Transfer Finished Fence 1");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(imageAquiredSemaphores[0], "Image Acquired Semaphore 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(imageAquiredSemaphores[1], "Image Acquired Semaphore 1");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(renderFinishedSemaphores[0], "Render Finished Semaphore 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(renderFinishedSemaphores[1], "Render Finished Semaphore 1");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(prePresentCompleteSemaphores[0], "Pre present complete semaphore 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(prePresentCompleteSemaphores[1], "Pre present complete semaphore 1");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(transferFinishedSemaphores[0], "Transfer finished semaphore 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(transferFinishedSemaphores[1], "Transfer finished semaphore 1");
-
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(drawingFinishedFences, "Drawing finished fence");
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transferFinishedFences, "Transfer finished fence");
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(imageAquiredSemaphores, "Image acquired semaphore");
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(renderFinishedSemaphores, "Render finished semaphore");
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(prePresentCompleteSemaphores, "Pre-present complete semaphore");
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transferFinishedSemaphores, "Transfer finished semaphore");
     SPDLOG_TRACE("[Synchronization objects] Created");
 }
 
@@ -1192,9 +1177,7 @@ void vulkan::createUniformBuffers()
                      uniformBuffersMemory[i]);
     }
 
-    GSGE_DEBUGGER_SET_OBJECT_NAME(uniformBuffers[0], "Uniform buffer 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(uniformBuffers[1], "Uniform buffer 1");
-
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(uniformBuffers, "Uniform buffer");
     SPDLOG_TRACE("[Uniform buffers] Created");
 }
 
@@ -1333,8 +1316,8 @@ void vulkan::createTransformMatricesBuffer()
                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, transformMatricesBuffer[i], transformMatricesBufferMemory[i]);
     }
 
-    GSGE_DEBUGGER_SET_OBJECT_NAME(transformMatricesBuffer[0], "Transform matrices buffer 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(transformMatricesBuffer[1], "Transform matrices buffer 1");
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transformMatricesBuffer, "Transform matrices buffer");
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transformMatricesStagingBuffer, "Transform matrices staging buffer");
 }
 
 void vulkan::updateTransformMatrixBuffer(uint32_t currentImage)
