@@ -140,7 +140,6 @@ void gsge::mainLoop()
 
         level->update(frameStats.dt);
 
-        renderer->pushTransformMatricesToGpu(level->getTransformMatricesLump());
         renderer->updateUniformBufferEx(level->ubo);
         renderer->update();
 

@@ -723,7 +723,7 @@ void vulkan::drawFrame()
     };
 
     // Presentation of current frame's image after renderFinishedSemaphore[currentFrame] is signalled
-    vkQueuePresentKHR(device->getGraphicsQueue(), &presentInfo);
+    vkQueuePresentKHR(device->getPresentQueue(), &presentInfo);
     EASY_END_BLOCK;
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
