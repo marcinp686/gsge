@@ -191,5 +191,8 @@
     <Text Include="VK_STAGE_ORDER.txt">
       <Filter>Pliki źródłowe</Filter>
     </Text>
+    <Text Include="vk_layer_settings.txt">
+      <Filter>Pliki źródłowe</Filter>
+    </Text>
   </ItemGroup>
 </Project>
