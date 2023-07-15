@@ -7,6 +7,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
+/**
+ * \brief Simple class for a camera.
+ */
 class camera
 {
   public:
@@ -18,38 +21,38 @@ class camera
     glm::vec3 &getPosition();
 
     void setPosition(glm::vec3 newPosition);
-    void setCenter(glm::vec3 newCenter); /**< Set point in space for the camera to look at */
-    void setUpVector(glm::vec3 newUpVector);
-    void setFov(float newFov);
-    void setAspect(float newAspect);
-    void setZNear(float newZNear);
-    void setZFar(float newZFar);
-    void update(float dt, float mouseDx, float mouseDy);
-    void strafeLeft(float dt);
-    void strafeRight(float dt);
-    void moveForward(float dt);
-    void moveBackward(float dt);
-    void moveUp(float dt);
-    void moveDown(float dt);
+    void setCenter(glm::vec3 newCenter);                 //!< Set point in space for the camera to look at
+    void setUpVector(glm::vec3 newUpVector);             //!< Set up vector for the camera
+    void setFov(float newFov);                           //!< Set field of view for the camera
+    void setAspect(float newAspect);                     //!< Set aspect ratio for the camera
+    void setZNear(float newZNear);                       //!< Set near clipping plane for the camera
+    void setZFar(float newZFar);                         //!< Set far clipping plane for the camera
+    void update(float dt, float mouseDx, float mouseDy); //!< Update camera position and orientation
+    void strafeLeft(float dt);                           //!< Move camera to the left
+    void strafeRight(float dt);                          //!< Move camera to the right
+    void moveForward(float dt);                          //!< Move camera forward
+    void moveBackward(float dt);                         //!< Move camera backward
+    void moveUp(float dt);                               //!< Move camera up
+    void moveDown(float dt);                             //!< Move camera down
 
   private:
     // Data to calculate view matrix
     glm::vec3 position{0.0f, 0.0f, 0.0f};
     glm::vec3 center{0.0f, 0.0f, 0.0f};
-    glm::vec3 up{0.0f, -1.0f, 0.0f};
+    glm::vec3 up{0.0f, 1.0f, 0.0f};
 
     // Data to calculate projection matrix
-    float fov{75.f};
-    float aspect{1.0f};
-    float zNear{0.1f};
-    float zFar{150.0f};
+    float fov{60.f};    //!< Field of view in degrees
+    float aspect{1.0f}; //!< Aspect ratio of the camera (width/height)
+    float zNear{0.1f};  //!< Near clipping plane
+    float zFar{150.0f}; //!< Far clipping plane
 
     // rotation around x (pitch) and y (yaw) axis
     float pitch{0.0f};
     float yaw{0.0f};
 
     // camera movement
-    const float speed{10.0f};
+    const float speed{12.0f};
     float sensitivityX{0.1f};
     float sensitivityY{0.1f};
 
