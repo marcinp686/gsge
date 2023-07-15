@@ -100,6 +100,7 @@ class vulkan
     std::vector<VkDeviceMemory> transformMatricesStagingBufferMemory;
     std::vector<VkBuffer> transformMatricesBuffer;
     std::vector<VkDeviceMemory> transformMatricesBufferMemory;
+    std::vector<void*> transformMatricesMappedMemory;
 
     UniformBufferObject local_ubo;
 

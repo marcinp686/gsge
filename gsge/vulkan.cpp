@@ -7,6 +7,8 @@ vulkan::~vulkan()
     // destroy uniform buffers
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
+        vkUnmapMemory(*device, transformMatricesStagingBufferMemory[i]);
+
         vkDestroyBuffer(*device, uniformBuffers[i], nullptr);
         vkFreeMemory(*device, uniformBuffersMemory[i], nullptr);
 
@@ -41,6 +43,10 @@ void vulkan::update()
    // static size_t framenumber;
    // SPDLOG_INFO("Frame {}", framenumber++);
     EASY_FUNCTION(profiler::colors::Green200);
+    EASY_BLOCK("Update buffers");
+    updateTransformMatrixBuffer(currentFrame);
+    updateUniformBuffer(currentFrame);
+    EASY_END_BLOCK;
     drawFrame();
 }
 
@@ -602,11 +608,6 @@ void vulkan::drawFrame()
         .deviceMask = 1, // TODO: For now assuming only device with bit 0 set
     };
 
-    EASY_BLOCK("Update buffers");
-    updateTransformMatrixBuffer(currentFrame);
-    updateUniformBuffer(currentFrame);
-    EASY_END_BLOCK;
-
     VkResult result = vkAcquireNextImage2KHR(*device, &acquireInfo, &swapchainImageIndex);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
     {
@@ -901,6 +902,8 @@ void vulkan::createVertexBuffer()
                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
 
     copyBuffer(stagingBuffer, vertexBuffer, bufferSize, false);
+
+    vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
     vkDestroyBuffer(*device, stagingBuffer, nullptr);
     vkFreeMemory(*device, stagingBufferMemory, nullptr);
 
@@ -1051,10 +1054,22 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     vkBeginCommandBuffer(transferCommandBuffers[currentFrame], &beginInfo);
     GSGE_DEBUGGER_CMD_BUFFER_LABEL_BEGIN(transferCommandBuffers[currentFrame], "transfer CB");
 
-    VkBufferCopy copyRegion{};
-    copyRegion.srcOffset = 0; // Optional
-    copyRegion.dstOffset = 0; // Optional
-    copyRegion.size = size;
+    VkBufferCopy2 copyRegion{
+        .sType = VK_STRUCTURE_TYPE_BUFFER_COPY_2,
+        .pNext = VK_NULL_HANDLE,
+        .srcOffset = 0,
+        .dstOffset = 0,
+        .size = size,
+    };
+
+    VkCopyBufferInfo2 cbi{
+        .sType = VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2,
+        .pNext = VK_NULL_HANDLE,
+        .srcBuffer = srcBuffer,
+        .dstBuffer = dstBuffer,
+        .regionCount = 1,
+        .pRegions = &copyRegion,
+    };
 
     /*
     If buffer was created with VK_SHARING_MODE_EXCLUSIVE, and srcQueueFamilyIndex is not equal to dstQueueFamilyIndex,
@@ -1078,22 +1093,42 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap7.html#synchronization-queue-transfers
     */
 
-    vkCmdCopyBuffer(transferCommandBuffers[currentFrame], srcBuffer, dstBuffer, 1, &copyRegion);
+    VkBufferMemoryBarrier2 host_write_complete{
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+        .pNext = VK_NULL_HANDLE,
+        .srcStageMask = VK_PIPELINE_STAGE_2_HOST_BIT,
+        .srcAccessMask = VK_ACCESS_2_HOST_WRITE_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+        .dstAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT,
+        .buffer = srcBuffer,
+        .offset = 0,
+        .size = VK_WHOLE_SIZE,
+    };
+
+    VkDependencyInfo host_write_depInfo{
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .bufferMemoryBarrierCount = 1,
+        .pBufferMemoryBarriers = &host_write_complete,
+    };
+
+    vkCmdPipelineBarrier2(transferCommandBuffers[currentFrame], &host_write_depInfo);
+
+    vkCmdCopyBuffer2(transferCommandBuffers[currentFrame], &cbi);
 
     if (withSemaphores)
     {
-        // Release buffer ownership from transfer queue family from graphics
+        // Release buffer ownership from transfer queue family
         // Second synchronization and access scopes do not synchronize operations on that queue
         VkBufferMemoryBarrier2 memBarrier{
             .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
             .pNext = VK_NULL_HANDLE,
-            .srcStageMask = VK_PIPELINE_STAGE_2_COPY_BIT,
-            .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+            .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+            .srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT,
             .dstStageMask = 0,
             .dstAccessMask = 0,
             .srcQueueFamilyIndex = device->getTransferQueueFamilyIdx(),
             .dstQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
-            .buffer = transformMatricesBuffer[currentFrame],
+            .buffer = dstBuffer,
             .offset = 0,
             .size = VK_WHOLE_SIZE,
         };
@@ -1291,6 +1326,7 @@ void vulkan::createIndexBuffer()
 
     copyBuffer(stagingBuffer, indexBuffer, bufferSize, false);
 
+    vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
     vkDestroyBuffer(*device, stagingBuffer, nullptr);
     vkFreeMemory(*device, stagingBufferMemory, nullptr);
 
@@ -1305,15 +1341,17 @@ void vulkan::createTransformMatricesBuffer()
     transformMatricesBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
     transformMatricesStagingBuffer.resize(MAX_FRAMES_IN_FLIGHT);
     transformMatricesStagingBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
+    transformMatricesMappedMemory.resize(MAX_FRAMES_IN_FLIGHT);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
                      transformMatricesStagingBuffer[i], transformMatricesStagingBufferMemory[i]);
 
         createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, transformMatricesBuffer[i], transformMatricesBufferMemory[i]);
+
+        vkMapMemory(*device, transformMatricesStagingBufferMemory[i], 0, bufferSize, 0, &transformMatricesMappedMemory[i]);
     }
 
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transformMatricesBuffer, "Transform matrices buffer");
@@ -1323,10 +1361,19 @@ void vulkan::createTransformMatricesBuffer()
 void vulkan::updateTransformMatrixBuffer(uint32_t currentImage)
 {
     VkDeviceSize bufferSize = sizeof((*transformMatrices)[0]) * (*transformMatrices).size();
-    void *data;
-    vkMapMemory(*device, transformMatricesStagingBufferMemory[currentImage], 0, bufferSize, 0, &data);
-    memcpy(data, (*transformMatrices).data(), static_cast<size_t>(bufferSize));
-    vkUnmapMemory(*device, transformMatricesStagingBufferMemory[currentImage]);
+
+    memcpy(transformMatricesMappedMemory[currentImage], (*transformMatrices).data(), static_cast<size_t>(bufferSize));
+
+    // Flush memory from host cache
+    VkMappedMemoryRange memoryRange{
+        .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+        .memory = transformMatricesStagingBufferMemory[currentImage],
+        .offset = 0,
+        .size = VK_WHOLE_SIZE,
+    };
+
+    vkFlushMappedMemoryRanges(*device, 1, &memoryRange);
+
     copyBuffer(transformMatricesStagingBuffer[currentImage], transformMatricesBuffer[currentImage], bufferSize, true);
 }
 
@@ -1373,6 +1420,7 @@ void vulkan::createVertexNormalsBuffer()
 
     copyBuffer(stagingBuffer, vertexNormalsBuffer, bufferSize, false);
 
+    vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
     vkDestroyBuffer(*device, stagingBuffer, nullptr);
     vkFreeMemory(*device, stagingBufferMemory, nullptr);
 
