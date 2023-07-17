@@ -40,8 +40,6 @@ vulkan::~vulkan()
 
 void vulkan::update()
 {
-   // static size_t framenumber;
-   // SPDLOG_INFO("Frame {}", framenumber++);
     EASY_FUNCTION(profiler::colors::Green200);
     EASY_BLOCK("Update buffers");
     updateTransformMatrixBuffer(currentFrame);
@@ -79,11 +77,8 @@ void vulkan::init()
     createSyncObjects();
     createTransferCommandBuffers();
     createVertexBuffer();
-    vkQueueWaitIdle(device->getTransferQueue());
     createIndexBuffer();
-    vkQueueWaitIdle(device->getTransferQueue());
     createVertexNormalsBuffer();
-    vkQueueWaitIdle(device->getTransferQueue());
     createTransformMatricesBuffer();
     createUniformBuffers();
 
@@ -145,8 +140,8 @@ VkShaderModule vulkan::createShaderModule(const std::vector<char> &code)
 
 /**
  * @brief Destroy command pools for graphics and transfer queues.
- * Frees command buffers allocated by the pools
- * *
+ * 
+ * @details Frees command buffers allocated by the pools as well.
  * */
 void vulkan::destroyCommandPools()
 {
@@ -729,7 +724,7 @@ void vulkan::drawFrame()
 }
 
 /**
- * \brief Recreate swapchain and all dependent objects when surface size changes.
+ * @brief Recreate swapchain and all dependent objects when surface size changes.
  *
  */
 void vulkan::handleSurfaceResize()
@@ -755,6 +750,12 @@ void vulkan::handleSurfaceResize()
     vkDeviceWaitIdle(*device);
 }
 
+/**
+ * @brief Recreate frame resources when number of samples per pixel changes.
+ * 
+ * When MSAA changes, framebuffer resources need to be recreated as their sample count is declared
+ * during creation.
+ */
 void vulkan::handleMSAAChange()
 {
     vkDeviceWaitIdle(*device);

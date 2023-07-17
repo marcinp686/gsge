@@ -94,8 +94,9 @@ void Device::enumerateSurfacePresentModes()
 }
 
 /**
- * \brief Checks if current device surface extent is {0,0}.
- * If surface extent is {0,0} then window or app is minimized and we cannot create subsequent dependent objects
+ * @brief Checks if current device surface extent is {0,0}.
+ * 
+ * @details If surface extent is {0,0} then window or app is minimized and we cannot create subsequent dependent objects
  * like images, views etc.
  */
 bool Device::isCurrentSurfaceExtentZero() const

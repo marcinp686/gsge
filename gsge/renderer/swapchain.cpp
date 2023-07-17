@@ -1,9 +1,9 @@
 /*********************************************************************
- * \file   swapchain.cpp
- * \brief  Swapchain class implementation
+ * @file   swapchain.cpp
+ * @brief  Swapchain class implementation
  *
- * \author Marcin Plichta
- * \date   May 2023
+ * @author Marcin Plichta
+ * @date   May 2023
  *********************************************************************/
 
 #include "swapchain.h"
