@@ -77,50 +77,18 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         .pDepthStencilAttachment = &depthAttachmentRef,
     };
 
-    //// Subpass dependencies
-    //// - Color attachment
-    // VkSubpassDependency2 colorDependency{
-    //     .sType = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
-    //     .srcSubpass = VK_SUBPASS_EXTERNAL,
-    //     .dstSubpass = 0,
-    //     .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-    //     .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-    //     .srcAccessMask = 0,
-    //     .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT,
-    //     .dependencyFlags = 0,
-    // };
-
-    //// - Depth attachment
-    // VkSubpassDependency2 depthDependency{
-    //     .sType = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
-    //     .srcSubpass = VK_SUBPASS_EXTERNAL,
-    //     .dstSubpass = 0,
-    //     .srcStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
-    //     .dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
-    //     .srcAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-    //     .dstAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
-    //     .dependencyFlags = 0,
-    // };
-
-    // std::vector<VkSubpassDependency2> dependencies;
-    // dependencies.push_back(depthDependency);
-    // dependencies.push_back(colorDependency);
-
-    // Trying to be very VERY explicit about synchronization and dependencies. Here we go:
-
-    // Memory barrier to synchronize access to color attachment after transition from UNDEFINED to COLOR_ATTACHMENT_OPTIMAL
-    // at the beginning of render pass
-    // pre-barrier operations executed in COLOR_ATTACHMENT_OUTPUT stage of VK_SUBPASS_EXTERNAL
-    // pre-barrier access type is COLOR_ATTACHMENT_WRITE
-    // post-barrier operations executed in COLOR_ATTACHMENT_OUTPUT stage of subpass 0
-    // post-barrier access is COLOR_ATTACHMENT_WRITE
-    // TODO: Do we need a read access in dst as well?
+    // Memory barrier to synchronize access to single sample color attachment after transition
+    // from UNDEFINED to COLOR_ATTACHMENT_OPTIMAL at the beginning of render pass (VK_SUBPASS_EXTERNAL -> subpass #0)
+    //   * For singlesample color attachment, we do not care about content of the image at the beginning of the render pass,
+    //     becasue multisample image will be resolved into singlesample image at the end of the render pass
+    //     thus LOAD_OP_DONT_CARE is used and this barrier has no effect
+    //   * For multisample color attachment, we need to wait for the image to cleared before we start wrting to it
     VkMemoryBarrier2 singlesampleAttachmentMB1{
         .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
         .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
         .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
         .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
     };
     VkSubpassDependency2 singlesampleAttachmentDep1{
         .sType = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
@@ -129,6 +97,9 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         .dstSubpass = 0,
         .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
     };
+
+    // Memory barrier to synchronize transition from COLOR_ATTACHMENT_OPTIMAL to PRESENT_SRC_KHR
+    // at the end of render pass (subpass #0 -> VK_SUBPASS_EXTERNAL)
     VkMemoryBarrier2 singlesampleAttachmentMB2{
         .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
         .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -144,8 +115,9 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
     };
 
-    // depth
-    // First to synchronize image layout transition and subsequent reads from and writes to a depth buffer
+    // Synchronize image layout transition and subsequent reads from and writes to a depth buffer
+    // We need to wait for the transition from UNDEFINED to DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+    // at (VK_SUBPASS_EXTERNAL->subpass #0) and clearing due to LOAD_OP_CLEAR
     VkMemoryBarrier2 depthAttachmentMB1{
         .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
         .srcStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
@@ -159,22 +131,6 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         .pNext = &depthAttachmentMB1,
         .srcSubpass = VK_SUBPASS_EXTERNAL,
         .dstSubpass = 0,
-        .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
-    };
-
-    VkMemoryBarrier2 depthAttachmentMB2{
-        .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
-        .srcStageMask = VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
-        .srcAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-        .dstAccessMask = VK_ACCESS_2_NONE,
-    };
-
-    VkSubpassDependency2 depthAttachmentDep2{
-        .sType = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2,
-        .pNext = &depthAttachmentMB2,
-        .srcSubpass = 0,
-        .dstSubpass = VK_SUBPASS_EXTERNAL,
         .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
     };
 
@@ -196,10 +152,11 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
     };
 
     std::vector<VkSubpassDependency2> dependencies;
-    dependencies.push_back(singlesampleAttachmentDep1);
+    
+    if (!settings.Renderer.enableMSAA)
+        dependencies.push_back(singlesampleAttachmentDep1);
     dependencies.push_back(singlesampleAttachmentDep2);
     dependencies.push_back(depthAttachmentDep1);
-    // dependencies.push_back(depthAttachmentDep2);
     if (settings.Renderer.enableMSAA)
         dependencies.push_back(multisampleAttachmentDep);
 

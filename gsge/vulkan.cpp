@@ -88,7 +88,7 @@ void vulkan::init()
     createGraphicsCommandBuffers();
     createPresentCommandBuffers();
 
-    initResourceOwnerships();
+    // initResourceOwnerships();
 }
 
 void vulkan::loadShaders()
@@ -212,10 +212,6 @@ void vulkan::createGraphicsPipeline()
         .scissorCount = 1,
         .pScissors = &scissor,
     };
-
-    /*VkPipelineRasterizationStateRasterizationOrderAMD orderAMD = {};
-    orderAMD.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_RASTERIZATION_ORDER_AMD;
-    orderAMD.rasterizationOrder = VK_RASTERIZATION_ORDER_RELAXED_AMD;*/
 
     VkPipelineRasterizationStateCreateInfo rasterizer{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
@@ -371,7 +367,6 @@ void vulkan::createPresentCommandBuffers()
 void vulkan::recordPresentCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 {
     VkCommandBufferBeginInfo beginInfo{.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-
     vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
     if (device->getGraphicsQueueFamilyIdx() != device->getPresentQueueFamilyIdx())
@@ -442,26 +437,26 @@ void vulkan::recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
     we are not required to perform an ownership transfer from the presentation queue to graphics.
     This transition could also be made as an EXTERNAL -> subpass #0 render pass dependency as shown earlier.
     */
-    VkImageMemoryBarrier2 singlesampleImageAcquireMB{
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-        .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .srcAccessMask = VK_ACCESS_2_NONE,
-        .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
-        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .newLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
-        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-        .image = swapchain->getImage(imageIndex),
-        .subresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
-    };
+    // VkImageMemoryBarrier2 singlesampleImageAcquireMB{
+    //     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+    //     .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+    //     .srcAccessMask = VK_ACCESS_2_NONE,
+    //     .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+    //     .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+    //     .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    //     .newLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+    //     .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    //     .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    //     .image = swapchain->getImage(imageIndex),
+    //     .subresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
+    // };
 
     VkDependencyInfo depInfo{
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
         .bufferMemoryBarrierCount = 1,
         .pBufferMemoryBarriers = &transformMatricesBufferMB_AO,
-        .imageMemoryBarrierCount = 1,
-        .pImageMemoryBarriers = &singlesampleImageAcquireMB,
+        //.imageMemoryBarrierCount = 1,
+        //.pImageMemoryBarriers = &singlesampleImageAcquireMB,
     };
 
     vkCmdPipelineBarrier2(commandBuffer, &depInfo);
@@ -532,30 +527,30 @@ void vulkan::recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
     // But what happens if QF are equal? No ownership transfer? does ownership apply only to queue family and not queue itself?
     // If the values of srcQueueFamilyIndex and dstQueueFamilyIndex are equal, no ownership transfer is performed,
     // and the barrier operates as if they were both set to VK_QUEUE_FAMILY_IGNORED.
-    if (device->getGraphicsQueueFamilyIdx() != device->getPresentQueueFamilyIdx())
-    {
-        VkImageMemoryBarrier2 presentImageReleaseMB{
-            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-            .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-            .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
-            .dstStageMask = VK_PIPELINE_STAGE_2_NONE, // or 0 - this is ownership release
-            .dstAccessMask = VK_ACCESS_2_NONE,        // or 0 - this is ownership release
-            //.oldLayout = COLOR_ATTACHMENT_OPTIMAL,  // This is done in renderpass automatically
-            //.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, // This is done in renderpass automatically
-            .srcQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
-            .dstQueueFamilyIndex = device->getPresentQueueFamilyIdx(),
-            .image = swapchain->getImage(imageIndex),
-            .subresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
-        };
+    // if (device->getGraphicsQueueFamilyIdx() != device->getPresentQueueFamilyIdx())
+    //{
+    //    VkImageMemoryBarrier2 presentImageReleaseMB{
+    //        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+    //        .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+    //        .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+    //        .dstStageMask = VK_PIPELINE_STAGE_2_NONE, // or 0 - this is ownership release
+    //        .dstAccessMask = VK_ACCESS_2_NONE,        // or 0 - this is ownership release
+    //        //.oldLayout = COLOR_ATTACHMENT_OPTIMAL,  // This is done in renderpass automatically
+    //        //.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, // This is done in renderpass automatically
+    //        .srcQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
+    //        .dstQueueFamilyIndex = device->getPresentQueueFamilyIdx(),
+    //        .image = swapchain->getImage(imageIndex),
+    //        .subresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
+    //    };
 
-        VkDependencyInfo depInfo2{
-            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-            .imageMemoryBarrierCount = 1,
-            .pImageMemoryBarriers = &presentImageReleaseMB,
-        };
+    //    VkDependencyInfo depInfo2{
+    //        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+    //        .imageMemoryBarrierCount = 1,
+    //        .pImageMemoryBarriers = &presentImageReleaseMB,
+    //    };
 
-        vkCmdPipelineBarrier2(commandBuffer, &depInfo2);
-    }
+    //    vkCmdPipelineBarrier2(commandBuffer, &depInfo2);
+    //}
 
     GSGE_DEBUGGER_CMD_BUFFER_LABEL_END(commandBuffer);
 
@@ -615,8 +610,6 @@ void vulkan::drawFrame()
     }
     EASY_END_BLOCK;
 
-
-
     EASY_BLOCK("Record command buffers");
     // Reset a fence indicating that drawing has been finished
     vkResetFences(*device, 1, &drawingFinishedFences[currentFrame]);
@@ -648,7 +641,7 @@ void vulkan::drawFrame()
     VkSemaphoreSubmitInfo renderFinishedSemaphoreSubmitInfo{
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
         .semaphore = renderFinishedSemaphores[currentFrame],
-        .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+        .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
     };
 
     VkSemaphoreSubmitInfo transferFinishedSemaphoreSubmitInfo{
@@ -672,45 +665,50 @@ void vulkan::drawFrame()
         .signalSemaphoreInfoCount = 1,
         .pSignalSemaphoreInfos = &renderFinishedSemaphoreSubmitInfo,
     };
-    
-    VkResult reult = vkQueueSubmit2(device->getGraphicsQueue(), 1, &graphicsQueueSubmitInfo, nullptr);
+
+    VkResult reult = vkQueueSubmit2(device->getGraphicsQueue(), 1, &graphicsQueueSubmitInfo, drawingFinishedFences[currentFrame]);
     if (result != VK_SUCCESS)
     {
-        SPDLOG_CRITICAL("Error: {}", static_cast<uint32_t>(result));
+        SPDLOG_CRITICAL("Error: {}", static_cast<int>(result));
         throw std::runtime_error("failed to submit draw command buffer!");
     }
     EASY_END_BLOCK;
 
-    // present queue submission
-    VkSemaphoreSubmitInfo prePresentCompleteSemaphoreInfo{
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .semaphore = prePresentCompleteSemaphores[currentFrame],
-        .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-    };
+    //// present queue submission
+    // VkSemaphoreSubmitInfo prePresentCompleteSemaphoreInfo{
+    //     .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+    //     .semaphore = prePresentCompleteSemaphores[currentFrame],
+    //     .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+    // };
 
-    VkCommandBufferSubmitInfo presentCommandBufferInfo{
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-        .commandBuffer = presentCommandBuffers[currentFrame],
-    };
+    // VkCommandBufferSubmitInfo presentCommandBufferInfo{
+    //     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+    //     .commandBuffer = presentCommandBuffers[currentFrame],
+    // };
 
-    VkSubmitInfo2 prePresentSubmitInfo{
-        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-        .waitSemaphoreInfoCount = 1,
-        .pWaitSemaphoreInfos = &renderFinishedSemaphoreSubmitInfo,
-        .commandBufferInfoCount = 1,
-        .pCommandBufferInfos = &presentCommandBufferInfo,
-        .signalSemaphoreInfoCount = 1,
-        .pSignalSemaphoreInfos = &prePresentCompleteSemaphoreInfo,
-    };
-    
-    vkQueueSubmit2(device->getPresentQueue(), 1, &prePresentSubmitInfo, drawingFinishedFences[currentFrame]);
+    // VkSubmitInfo2 prePresentSubmitInfo{
+    //     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+    //     .waitSemaphoreInfoCount = 1,
+    //     .pWaitSemaphoreInfos = &renderFinishedSemaphoreSubmitInfo,
+    //     .commandBufferInfoCount = 1,
+    //     .pCommandBufferInfos = &presentCommandBufferInfo,
+    //     .signalSemaphoreInfoCount = 1,
+    //     .pSignalSemaphoreInfos = &prePresentCompleteSemaphoreInfo,
+    // };
+
+    ////result = vkQueueSubmit2(device->getPresentQueue(), 1, &prePresentSubmitInfo, nullptr);
+    // if (result != VK_SUCCESS)
+    //{
+    //     SPDLOG_CRITICAL("Error: {}", static_cast<int>(result));
+    //     throw std::runtime_error("failed to submit present command buffer!");
+    // }
     EASY_BLOCK("Present");
 
     VkSwapchainKHR swapchains = {*swapchain};
     VkPresentInfoKHR presentInfo{
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &prePresentCompleteSemaphores[currentFrame],
+        .pWaitSemaphores = &renderFinishedSemaphores[currentFrame],
         .swapchainCount = 1,
         .pSwapchains = &swapchains,
         .pImageIndices = &swapchainImageIndex,
@@ -825,7 +823,7 @@ void vulkan::createSyncObjects()
             vkCreateFence(*device, &fenceInfo, nullptr, &transferFinishedFences[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create synchronization objects for a frame!");
-        }
+        }     
     }
 
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(drawingFinishedFences, "Drawing finished fence");
@@ -1007,7 +1005,7 @@ void vulkan::initResourceOwnerships()
             .srcStageMask = 0,
             .srcAccessMask = 0,
             .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_ATTRIBUTE_INPUT_BIT,
-            .dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT,
+            .dstAccessMask = 0,
             .srcQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
             .dstQueueFamilyIndex = device->getTransferQueueFamilyIdx(),
             .buffer = transformMatricesBuffer[i],
@@ -1035,9 +1033,17 @@ void vulkan::initResourceOwnerships()
             .pCommandBufferInfos = &cbsi,
         };
 
-        vkQueueSubmit2(device->getGraphicsQueue(), 1, &submitInfo, nullptr);
+        VkFenceCreateInfo fenceInfo{
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+            .flags = 0,
+        };
+
+        VkFence fence;
+        vkCreateFence(*device, &fenceInfo, nullptr, &fence);
+        vkQueueSubmit2(device->getGraphicsQueue(), 1, &submitInfo, fence);
+        vkWaitForFences(*device, 1, &fence, VK_TRUE, UINT64_MAX);
+        vkDestroyFence(*device, fence, nullptr);
     }
-    vkDeviceWaitIdle(*device);
 
     SPDLOG_TRACE("Initialized ownership of resources");
 }
@@ -1155,7 +1161,7 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     VkSemaphoreSubmitInfo transferSemaphoreInfo{
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
         .semaphore = transferFinishedSemaphores[currentFrame],
-        .stageMask = VK_PIPELINE_STAGE_2_COPY_BIT,
+        .stageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
     };
 
     VkSubmitInfo2 submitInfo{
@@ -1354,7 +1360,7 @@ void vulkan::createTransformMatricesBuffer()
 
         vkMapMemory(*device, transformMatricesStagingBufferMemory[i], 0, bufferSize, 0, &transformMatricesMappedMemory[i]);
     }
-
+    
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transformMatricesBuffer, "Transform matrices buffer");
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transformMatricesStagingBuffer, "Transform matrices staging buffer");
 }
