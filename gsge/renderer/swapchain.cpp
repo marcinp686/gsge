@@ -33,7 +33,7 @@ void Swapchain::initializeSwapchainImages()
 {
     uint32_t imgCount = static_cast<uint32_t>(images.size());
 
-    vkGetSwapchainImagesKHR(*device, swapchain, &imgCount, images.data());
+    GSGE_CHECK_RESULT(vkGetSwapchainImagesKHR(*device, swapchain, &imgCount, images.data()));
 
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(images, "Singlesample image");
     SPDLOG_TRACE("[Swapchain / Images] Created");
@@ -85,10 +85,7 @@ void Swapchain::createSwapchain()
         .clipped = VK_TRUE,
         .oldSwapchain = VK_NULL_HANDLE, // TODO: consider changing to use old swapchain
     };
-    if (vkCreateSwapchainKHR(*device, &createInfo, nullptr, &swapchain) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create swapchain!");
-    }
+    GSGE_CHECK_RESULT(vkCreateSwapchainKHR(*device, &createInfo, nullptr, &swapchain));
 
     images.resize(colorImageCount);
     imageViews.resize(colorImageCount);
@@ -178,22 +175,16 @@ VkExtent2D &Swapchain::getExtent()
 
 VkImageView Swapchain::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags)
 {
-    VkImageViewCreateInfo viewInfo{};
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.image = image;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = format;
-    viewInfo.subresourceRange.aspectMask = aspectFlags;
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = 1;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = 1;
+    VkImageViewCreateInfo viewInfo{
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image = image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = format,
+        .subresourceRange = {.aspectMask = aspectFlags, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1},
+    };
 
     VkImageView imageView;
-    if (vkCreateImageView(*device, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create texture image view!");
-    }
+    GSGE_CHECK_RESULT(vkCreateImageView(*device, &viewInfo, nullptr, &imageView));
 
     return imageView;
 }

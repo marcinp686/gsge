@@ -21,6 +21,7 @@
 #include "renderer/commandPool.h"
 #include "renderer/debugger.h"
 #include "renderer/settings.h"
+#include "core/tools.h"
 
 class vulkan
 {
@@ -135,8 +136,6 @@ class vulkan
     
     void createSyncObjects();
     void destroySyncObjects();
-
-    void initResourceOwnerships();
 
     void createVertexBuffer();
     void createIndexBuffer();

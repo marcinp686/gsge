@@ -10,6 +10,7 @@
 
 #include "debugger.h"
 #include "settings.h"
+#include "core/tools.h"
 
 class Instance
 {

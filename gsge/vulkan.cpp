@@ -1,5 +1,46 @@
 #include "vulkan.h"
 
+void vulkan::init()
+{
+    instance = std::make_shared<Instance>();
+    surface = std::make_shared<Surface>(instance, window);
+    device = std::make_shared<Device>(instance, surface);
+    swapchain = std::make_shared<Swapchain>(device, window, surface);
+    renderPass = std::make_shared<RenderPass>(device, swapchain);
+    framebuffer = std::make_shared<Framebuffer>(device, swapchain, renderPass);
+
+    // 1. Create vertex binding descriptors for vertex stage buffers
+    createVertexBindingDescriptors();
+
+    // 2. Create descriptor set layouts (to bind descriptor sets later on)
+    createDescriptorSetLayouts();
+
+    // 3. pass (2) as parameter to create pipeline layout and (1) to bind vertex buffers to pipeline
+    createGraphicsPipeline();
+
+    graphicsCommandPool = std::make_unique<CommandPool>(device, device->getGraphicsQueueFamilyIdx(), "Graphics command pool");
+    transferCommandPool = std::make_unique<CommandPool>(device, device->getTransferQueueFamilyIdx(), "Transfer command pool");
+    presentCommandPool = std::make_unique<CommandPool>(device, device->getPresentQueueFamilyIdx(), "Present command pool");
+
+    // 4. create descriptor pool
+    createDescriptorPool();
+
+    // 5. create buffers for descriptor sets data
+    createSyncObjects();
+    createTransferCommandBuffers();
+    createVertexBuffer();
+    createIndexBuffer();
+    createVertexNormalsBuffer();
+    createTransformMatricesBuffer();
+    createUniformBuffers();
+
+    // 6. create actual descriptor sets - after buffer creation
+    createDescriptorSets();
+
+    createGraphicsCommandBuffers();
+    createPresentCommandBuffers();
+}
+
 vulkan::~vulkan()
 {
     vkDeviceWaitIdle(*device);
@@ -48,48 +89,6 @@ void vulkan::update()
     drawFrame();
 }
 
-void vulkan::init()
-{
-    instance = std::make_shared<Instance>();
-    surface = std::make_shared<Surface>(instance, window);
-    device = std::make_shared<Device>(instance, surface);
-    swapchain = std::make_shared<Swapchain>(device, window, surface);
-    renderPass = std::make_shared<RenderPass>(device, swapchain);
-    framebuffer = std::make_shared<Framebuffer>(device, swapchain, renderPass);
-
-    // 1. Create vertex binding descriptors for vertex stage buffers
-    createVertexBindingDescriptors();
-
-    // 2. Create descriptor set layouts (to bind descriptor sets later on)
-    createDescriptorSetLayouts();
-
-    // 3. pass (2) as parameter to create pipeline layout and (1) to bind vertex buffers to pipeline
-    createGraphicsPipeline();
-
-    graphicsCommandPool = std::make_unique<CommandPool>(device, device->getGraphicsQueueFamilyIdx(), "Graphics command pool");
-    transferCommandPool = std::make_unique<CommandPool>(device, device->getTransferQueueFamilyIdx(), "Transfer command pool");
-    presentCommandPool = std::make_unique<CommandPool>(device, device->getPresentQueueFamilyIdx(), "Present command pool");
-
-    // 4. create descriptor pool
-    createDescriptorPool();
-
-    // 5. create buffers for descriptor sets data
-    createSyncObjects();
-    createTransferCommandBuffers();
-    createVertexBuffer();
-    createIndexBuffer();
-    createVertexNormalsBuffer();
-    createTransformMatricesBuffer();
-    createUniformBuffers();
-
-    // 6. create actual descriptor sets - after buffer creation
-    createDescriptorSets();
-
-    createGraphicsCommandBuffers();
-    createPresentCommandBuffers();
-
-}
-
 void vulkan::loadShaders()
 {
     /*const std::string vertShaderFilename = "shaders/per_vertex_light_shader.vert.spv";
@@ -123,16 +122,14 @@ void vulkan::loadShaders()
 
 VkShaderModule vulkan::createShaderModule(const std::vector<char> &code)
 {
-    VkShaderModuleCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    createInfo.codeSize = code.size();
-    createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
+    VkShaderModuleCreateInfo createInfo{
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .codeSize = code.size(),
+        .pCode = reinterpret_cast<const uint32_t *>(code.data()),
+    };
 
     VkShaderModule shaderModule;
-    if (vkCreateShaderModule(*device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create shader module!");
-    }
+    GSGE_CHECK_RESULT(vkCreateShaderModule(*device, &createInfo, nullptr, &shaderModule));
 
     return shaderModule;
 }
@@ -270,10 +267,7 @@ void vulkan::createGraphicsPipeline()
         .pPushConstantRanges = nullptr,
     };
 
-    if (vkCreatePipelineLayout(*device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create pipeline layout!");
-    }
+    GSGE_CHECK_RESULT(vkCreatePipelineLayout(*device, &pipelineLayoutInfo, nullptr, &pipelineLayout));
 
     VkGraphicsPipelineCreateInfo pipelineInfo{
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -294,10 +288,7 @@ void vulkan::createGraphicsPipeline()
         .basePipelineIndex = -1,
     };
 
-    if (vkCreateGraphicsPipelines(*device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create graphics pipeline!");
-    }
+    GSGE_CHECK_RESULT(vkCreateGraphicsPipelines(*device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline));
 
     vkDestroyShaderModule(*device, fragShaderModule, nullptr);
     vkDestroyShaderModule(*device, vertShaderModule, nullptr);
@@ -316,10 +307,7 @@ void vulkan::createGraphicsCommandBuffers()
         .commandBufferCount = static_cast<uint32_t>(graphicsCommandBuffers.size()),
     };
 
-    if (vkAllocateCommandBuffers(*device, &allocInfo, graphicsCommandBuffers.data()) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to allocate command buffers!");
-    }
+    GSGE_CHECK_RESULT(vkAllocateCommandBuffers(*device, &allocInfo, graphicsCommandBuffers.data()));
 
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(graphicsCommandBuffers, "Graphics Command Buffer");
     SPDLOG_TRACE("[Graphics command buffers] Created");
@@ -335,10 +323,7 @@ void vulkan::createTransferCommandBuffers()
         .commandBufferCount = static_cast<uint32_t>(transferCommandBuffers.size()),
     };
 
-    if (vkAllocateCommandBuffers(*device, &allocInfo, transferCommandBuffers.data()) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to allocate command buffers!");
-    }
+    GSGE_CHECK_RESULT(vkAllocateCommandBuffers(*device, &allocInfo, transferCommandBuffers.data()));
 
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transferCommandBuffers, "Transfer command buffer");
     SPDLOG_TRACE("[Transfer command buffers] Created");
@@ -354,10 +339,7 @@ void vulkan::createPresentCommandBuffers()
         .commandBufferCount = static_cast<uint32_t>(presentCommandBuffers.size()),
     };
 
-    if (vkAllocateCommandBuffers(*device, &allocInfo, presentCommandBuffers.data()) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to allocate command buffers!");
-    }
+    GSGE_CHECK_RESULT(vkAllocateCommandBuffers(*device, &allocInfo, presentCommandBuffers.data()));
 
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(presentCommandBuffers, "Present command buffer");
     SPDLOG_TRACE("[Present command buffers] Created");
@@ -366,7 +348,7 @@ void vulkan::createPresentCommandBuffers()
 void vulkan::recordPresentCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 {
     VkCommandBufferBeginInfo beginInfo{.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    GSGE_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
     if (device->getGraphicsQueueFamilyIdx() != device->getPresentQueueFamilyIdx())
     {
@@ -394,10 +376,7 @@ void vulkan::recordPresentCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     }
 
     // End command buffer
-    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to record present command buffer!");
-    }
+    GSGE_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
 }
 
 void vulkan::recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
@@ -407,11 +386,7 @@ void vulkan::recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
     };
-    VkResult res = vkBeginCommandBuffer(commandBuffer, &beginInfo);
-    if (res != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to begin recording command buffer!");
-    }
+    GSGE_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
     GSGE_DEBUGGER_CMD_BUFFER_LABEL_BEGIN(commandBuffer, "Graphics CB");
 
@@ -533,10 +508,7 @@ void vulkan::recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
     GSGE_DEBUGGER_CMD_BUFFER_LABEL_END(commandBuffer);
 
     // End command buffer
-    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to record graphics command buffer!");
-    }
+    GSGE_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
 }
 
 void vulkan::drawFrame()
@@ -554,18 +526,10 @@ void vulkan::drawFrame()
         isResizing = false;
     }
 
-    // wait until queue has finished processing previous graphicsCommandBuffers[currentFrame]
-    // TODO: Maybe we should wait for presentCompleteFence instead?
-    EASY_BLOCK("Wait for Fence");
-    VkResult res1 = vkWaitForFences(*device, 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
-    if (res1 == VK_TIMEOUT)
-    {
-        SPDLOG_ERROR("Fence timeout");
-    }
-    EASY_END_BLOCK;
-    // Acquire next available image
-    EASY_BLOCK("Aquire next img");
+    GSGE_CHECK_RESULT(vkWaitForFences(*device, 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX));
+
     uint32_t swapchainImageIndex;
+
     VkAcquireNextImageInfoKHR acquireInfo{
         .sType = VK_STRUCTURE_TYPE_ACQUIRE_NEXT_IMAGE_INFO_KHR,
         .pNext = nullptr,
@@ -586,11 +550,10 @@ void vulkan::drawFrame()
     {
         throw std::runtime_error("failed to acquire swapchain image!");
     }
-    EASY_END_BLOCK;
 
     EASY_BLOCK("Record command buffers");
     // Reset a fence indicating that drawing has been finished
-    vkResetFences(*device, 1, &drawingFinishedFences[currentFrame]);
+    GSGE_CHECK_RESULT(vkResetFences(*device, 1, &drawingFinishedFences[currentFrame]));
     recordGraphicsCommandBuffer(graphicsCommandBuffers[currentFrame], swapchainImageIndex);
     recordPresentCommandBuffer(presentCommandBuffers[currentFrame], swapchainImageIndex);
     EASY_END_BLOCK;
@@ -644,12 +607,9 @@ void vulkan::drawFrame()
         .pSignalSemaphoreInfos = &renderFinishedSemaphoreSubmitInfo,
     };
 
-    VkResult reult = vkQueueSubmit2(device->getGraphicsQueue(), 1, &graphicsQueueSubmitInfo, drawingFinishedFences[currentFrame]);
-    if (result != VK_SUCCESS)
-    {
-        SPDLOG_CRITICAL("Error: {}", static_cast<int>(result));
-        throw std::runtime_error("failed to submit draw command buffer!");
-    }
+    GSGE_CHECK_RESULT(
+        vkQueueSubmit2(device->getGraphicsQueue(), 1, &graphicsQueueSubmitInfo, drawingFinishedFences[currentFrame]));
+
     EASY_END_BLOCK;
 
     //// present queue submission
@@ -694,7 +654,7 @@ void vulkan::drawFrame()
     };
 
     // Presentation of current frame's image after renderFinishedSemaphore[currentFrame] is signalled
-    vkQueuePresentKHR(device->getPresentQueue(), &presentInfo);
+    GSGE_CHECK_RESULT(vkQueuePresentKHR(device->getPresentQueue(), &presentInfo));
     EASY_END_BLOCK;
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
@@ -705,7 +665,7 @@ void vulkan::drawFrame()
  */
 void vulkan::handleSurfaceResize()
 {
-    vkDeviceWaitIdle(*device);
+    GSGE_CHECK_RESULT(vkDeviceWaitIdle(*device));
     freeCommandBuffers();
     destroySyncObjects();
 
@@ -723,7 +683,7 @@ void vulkan::handleSurfaceResize()
     createGraphicsCommandBuffers();
     createSyncObjects();
     swapchainAspectChanged = true;
-    vkDeviceWaitIdle(*device);
+    GSGE_CHECK_RESULT(vkDeviceWaitIdle(*device));
 }
 
 /**
@@ -788,20 +748,19 @@ void vulkan::createSyncObjects()
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
     };
 
-    VkFenceCreateInfo fenceInfo{};
-    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    VkFenceCreateInfo fenceInfo{
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+    };
+
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        if (vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &imageAquiredSemaphores[i]) != VK_SUCCESS ||
-            vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-            vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &prePresentCompleteSemaphores[i]) != VK_SUCCESS ||
-            vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &transferFinishedSemaphores[i]) != VK_SUCCESS ||
-            vkCreateFence(*device, &fenceInfo, nullptr, &drawingFinishedFences[i]) != VK_SUCCESS ||
-            vkCreateFence(*device, &fenceInfo, nullptr, &transferFinishedFences[i]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create synchronization objects for a frame!");
-        }
+        GSGE_CHECK_RESULT(vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &imageAquiredSemaphores[i]));
+        GSGE_CHECK_RESULT(vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]));
+        GSGE_CHECK_RESULT(vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &prePresentCompleteSemaphores[i]));
+        GSGE_CHECK_RESULT(vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &transferFinishedSemaphores[i]));
+        GSGE_CHECK_RESULT(vkCreateFence(*device, &fenceInfo, nullptr, &drawingFinishedFences[i]));
+        GSGE_CHECK_RESULT(vkCreateFence(*device, &fenceInfo, nullptr, &transferFinishedFences[i]));
     }
 
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(drawingFinishedFences, "Drawing finished fence");
@@ -871,7 +830,7 @@ void vulkan::createVertexBuffer()
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
     void *data;
-    vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    GSGE_CHECK_RESULT(vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data));
     memcpy(data, vertices.data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(*device, stagingBufferMemory);
 
@@ -880,7 +839,7 @@ void vulkan::createVertexBuffer()
 
     copyBuffer(stagingBuffer, vertexBuffer, bufferSize, false);
 
-    vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
+    GSGE_CHECK_RESULT(vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX));
     vkDestroyBuffer(*device, stagingBuffer, nullptr);
     vkFreeMemory(*device, stagingBufferMemory, nullptr);
 
@@ -943,25 +902,27 @@ void vulkan::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryP
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     };
 
-    if (vkCreateBuffer(*device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create buffer!");
-    }
+    GSGE_CHECK_RESULT(vkCreateBuffer(*device, &bufferInfo, nullptr, &buffer));
 
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(*device, buffer, &memRequirements);
 
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+    VkMemoryAllocateInfo allocInfo{
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize = memRequirements.size,
+        .memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties),
+    };
 
-    if (vkAllocateMemory(*device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to allocate buffer memory!");
-    }
+    GSGE_CHECK_RESULT(vkAllocateMemory(*device, &allocInfo, nullptr, &bufferMemory));
 
-    vkBindBufferMemory(*device, buffer, bufferMemory, 0);
+    VkBindBufferMemoryInfo bindInfo{
+        .sType = VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_INFO,
+        .buffer = buffer,
+        .memory = bufferMemory,
+        .memoryOffset = 0,
+    };
+
+    GSGE_CHECK_RESULT(vkBindBufferMemory2(*device, 1, &bindInfo));
 }
 
 void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, bool withSemaphores)
@@ -971,10 +932,10 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
     };
 
-    vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_FALSE, UINT64_MAX);
-    vkResetFences(*device, 1, &transferFinishedFences[currentFrame]);
+    GSGE_CHECK_RESULT(vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_FALSE, UINT64_MAX));
+    GSGE_CHECK_RESULT(vkResetFences(*device, 1, &transferFinishedFences[currentFrame]));
 
-    vkBeginCommandBuffer(transferCommandBuffers[currentFrame], &beginInfo);
+    GSGE_CHECK_RESULT(vkBeginCommandBuffer(transferCommandBuffers[currentFrame], &beginInfo));
     GSGE_DEBUGGER_CMD_BUFFER_LABEL_BEGIN(transferCommandBuffers[currentFrame], "transfer CB");
 
     VkBufferCopy2 copyRegion{
@@ -1066,7 +1027,7 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
     }
 
     GSGE_DEBUGGER_CMD_BUFFER_LABEL_END(transferCommandBuffers[currentFrame]);
-    vkEndCommandBuffer(transferCommandBuffers[currentFrame]);
+    GSGE_CHECK_RESULT(vkEndCommandBuffer(transferCommandBuffers[currentFrame]));
 
     VkCommandBufferSubmitInfo cbSubmitInfo{
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
@@ -1088,7 +1049,7 @@ void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
         .pSignalSemaphoreInfos = withSemaphores ? &transferSemaphoreInfo : nullptr,
     };
 
-    vkQueueSubmit2(device->getTransferQueue(), 1, &submitInfo, transferFinishedFences[currentFrame]);
+    GSGE_CHECK_RESULT(vkQueueSubmit2(device->getTransferQueue(), 1, &submitInfo, transferFinishedFences[currentFrame]));
 }
 
 void vulkan::createDescriptorSetLayouts()
@@ -1108,16 +1069,14 @@ void vulkan::createDescriptorSetLayouts()
     descriptorSetLayoutBinding[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
     descriptorSetLayoutBinding[1].pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutCreateInfo layoutInfo{};
-    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = static_cast<uint32_t>(descriptorSetLayoutBinding.size());
-    layoutInfo.pBindings = descriptorSetLayoutBinding.data();
+    VkDescriptorSetLayoutCreateInfo layoutInfo{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = static_cast<uint32_t>(descriptorSetLayoutBinding.size()),
+        .pBindings = descriptorSetLayoutBinding.data(),
+    };
 
-    if (vkCreateDescriptorSetLayout(*device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create descriptor set layout!");
-    }
-
+    GSGE_CHECK_RESULT(vkCreateDescriptorSetLayout(*device, &layoutInfo, nullptr, &descriptorSetLayout));
+    
     SPDLOG_TRACE("[Descriptor set layouts] Created");
 }
 
@@ -1155,11 +1114,7 @@ void vulkan::createDescriptorPool()
         .pPoolSizes = poolSize.data(),
     };
 
-    if (vkCreateDescriptorPool(*device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create descriptor pool!");
-    }
-
+    GSGE_CHECK_RESULT(vkCreateDescriptorPool(*device, &poolInfo, nullptr, &descriptorPool));
     SPDLOG_TRACE("[Descriptor pool] created");
 }
 
@@ -1174,10 +1129,7 @@ void vulkan::createDescriptorSets()
     };
 
     descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-    if (vkAllocateDescriptorSets(*device, &allocInfo, descriptorSets.data()) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to allocate descriptor sets!");
-    }
+    GSGE_CHECK_RESULT(vkAllocateDescriptorSets(*device, &allocInfo, descriptorSets.data()));
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -1225,7 +1177,7 @@ void vulkan::updateUniformBufferEx(UniformBufferObject ubo)
 void vulkan::updateUniformBuffer(uint32_t currentImage)
 {
     void *data;
-    vkMapMemory(*device, uniformBuffersMemory[currentImage], 0, sizeof(local_ubo), 0, &data);
+    GSGE_CHECK_RESULT(vkMapMemory(*device, uniformBuffersMemory[currentImage], 0, sizeof(local_ubo), 0, &data));
     memcpy(data, &local_ubo, sizeof(local_ubo));
     vkUnmapMemory(*device, uniformBuffersMemory[currentImage]);
 }
@@ -1240,7 +1192,7 @@ void vulkan::createIndexBuffer()
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
     void *data;
-    vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    GSGE_CHECK_RESULT(vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data));
     memcpy(data, indices.data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(*device, stagingBufferMemory);
 
@@ -1249,7 +1201,7 @@ void vulkan::createIndexBuffer()
 
     copyBuffer(stagingBuffer, indexBuffer, bufferSize, false);
 
-    vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
+    GSGE_CHECK_RESULT(vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX));
     vkDestroyBuffer(*device, stagingBuffer, nullptr);
     vkFreeMemory(*device, stagingBufferMemory, nullptr);
 
@@ -1295,7 +1247,7 @@ void vulkan::updateTransformMatrixBuffer(uint32_t currentImage)
         .size = VK_WHOLE_SIZE,
     };
 
-    vkFlushMappedMemoryRanges(*device, 1, &memoryRange);
+    GSGE_CHECK_RESULT(vkFlushMappedMemoryRanges(*device, 1, &memoryRange));
 
     copyBuffer(transformMatricesStagingBuffer[currentImage], transformMatricesBuffer[currentImage], bufferSize, true);
 }
@@ -1334,7 +1286,7 @@ void vulkan::createVertexNormalsBuffer()
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
     void *data;
-    vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    GSGE_CHECK_RESULT(vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data));
     memcpy(data, vertexNormals.data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(*device, stagingBufferMemory);
 
@@ -1343,7 +1295,7 @@ void vulkan::createVertexNormalsBuffer()
 
     copyBuffer(stagingBuffer, vertexNormalsBuffer, bufferSize, false);
 
-    vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
+    GSGE_CHECK_RESULT(vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX));
     vkDestroyBuffer(*device, stagingBuffer, nullptr);
     vkFreeMemory(*device, stagingBufferMemory, nullptr);
 

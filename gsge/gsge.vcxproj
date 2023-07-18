@@ -236,6 +236,7 @@
     <ClCompile Include="component\transform.cpp" />
     <ClCompile Include="controller\mouse.cpp" />
     <ClCompile Include="core\stats.cpp" />
+    <ClCompile Include="core\tools.cpp" />
     <ClCompile Include="gsge.cpp" />
     <ClCompile Include="renderer\commandPool.cpp" />
     <ClCompile Include="renderer\debugger.cpp" />
@@ -262,6 +263,7 @@
     <ClInclude Include="component\transform.h" />
     <ClInclude Include="controller\mouse.h" />
     <ClInclude Include="core\stats.h" />
+    <ClInclude Include="core\tools.h" />
     <ClInclude Include="enums.h" />
     <ClInclude Include="gsge.h" />
     <ClInclude Include="renderer\commandPool.h" />

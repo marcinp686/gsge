@@ -169,11 +169,7 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         .pDependencies = dependencies.data(),
     };
 
-    if (vkCreateRenderPass2(*device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create render pass!");
-    }
-
+    GSGE_CHECK_RESULT(vkCreateRenderPass2(*device, &renderPassInfo, nullptr, &renderPass));
     SPDLOG_TRACE("[Render pass] Created");
 }
 

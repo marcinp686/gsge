@@ -29,19 +29,16 @@ Framebuffer::Framebuffer(std::shared_ptr<Device> &device, std::shared_ptr<Swapch
             attachments.push_back(depthImageView[i]);
         }
 
-        VkFramebufferCreateInfo framebufferInfo{};
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = *renderPass;
-        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-        framebufferInfo.pAttachments = attachments.data();
-        framebufferInfo.width = swapchain->getExtent().width;
-        framebufferInfo.height = swapchain->getExtent().height;
-        framebufferInfo.layers = 1;
-
-        if (vkCreateFramebuffer(*device, &framebufferInfo, nullptr, &buffers[i]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("[Frambuffer] Failed to create framebuffer!");
-        }
+        VkFramebufferCreateInfo framebufferInfo{
+            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .renderPass = *renderPass,
+            .attachmentCount = static_cast<uint32_t>(attachments.size()),
+            .pAttachments = attachments.data(),
+            .width = swapchain->getExtent().width,
+            .height = swapchain->getExtent().height,
+            .layers = 1,
+        };
+        GSGE_CHECK_RESULT(vkCreateFramebuffer(*device, &framebufferInfo, nullptr, &buffers[i]));
     }
 
     SPDLOG_TRACE("[Frambuffer(s)] Created");
@@ -160,10 +157,7 @@ void Framebuffer::createImage(uint32_t width, uint32_t height, VkSampleCountFlag
         .initialLayout = initialLayout,
     };
 
-    if (vkCreateImage(*device, &imageInfo, nullptr, &image) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create image!");
-    }
+    GSGE_CHECK_RESULT(vkCreateImage(*device, &imageInfo, nullptr, &image));
 
     VkMemoryRequirements memRequirements;
     vkGetImageMemoryRequirements(*device, image, &memRequirements);
@@ -174,12 +168,8 @@ void Framebuffer::createImage(uint32_t width, uint32_t height, VkSampleCountFlag
         .memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties),
     };
 
-    if (vkAllocateMemory(*device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to allocate image memory!");
-    }
-
-    vkBindImageMemory(*device, image, imageMemory, 0);
+    GSGE_CHECK_RESULT(vkAllocateMemory(*device, &allocInfo, nullptr, &imageMemory));    
+    GSGE_CHECK_RESULT(vkBindImageMemory(*device, image, imageMemory, 0));
 }
 
 VkImageView Framebuffer::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags)
@@ -193,11 +183,8 @@ VkImageView Framebuffer::createImageView(VkImage image, VkFormat format, VkImage
     };
 
     VkImageView imageView;
-    if (vkCreateImageView(*device, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create texture image view!");
-    }
-
+    GSGE_CHECK_RESULT(vkCreateImageView(*device, &viewInfo, nullptr, &imageView));
+    
     return imageView;
 }
 

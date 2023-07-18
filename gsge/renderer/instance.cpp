@@ -46,13 +46,7 @@ Instance::Instance()
     }
 #endif
 
-    VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
-
-    if (result != VK_SUCCESS)
-    {
-        throw std::runtime_error("[Instance] Vulkan instance creation failed.");
-    }
-
+    GSGE_CHECK_RESULT(vkCreateInstance(&createInfo, nullptr, &instance));
     GSGE_DEBUGGER_SET_INSTANCE(instance);
     SPDLOG_TRACE("[Instance] Created");
 }
@@ -92,11 +86,11 @@ bool Instance::checkLayerSupport()
     uint32_t layerCount;
 
     // First call to check layer count
-    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+    GSGE_CHECK_RESULT(vkEnumerateInstanceLayerProperties(&layerCount, nullptr));
 
     // Second call to actually enumerate layers
     std::vector<VkLayerProperties> availableLayers(layerCount);
-    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+    GSGE_CHECK_RESULT(vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data()));
 
     for (const char *layerName : instanceLayers)
     {

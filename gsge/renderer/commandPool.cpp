@@ -8,10 +8,7 @@ CommandPool::CommandPool(std::shared_ptr<Device> &device, uint32_t queueIndex, c
         .queueFamilyIndex = queueIndex,
     };
 
-    if (vkCreateCommandPool(*device, &poolInfo, nullptr, &pool) != VK_SUCCESS)
-    {
-        throw std::runtime_error("[Command pool] failed to create command pool!");
-    }
+    GSGE_CHECK_RESULT(vkCreateCommandPool(*device, &poolInfo, nullptr, &pool));
 
     if (!strlen(name))
         GSGE_DEBUGGER_SET_OBJECT_NAME(pool, name);

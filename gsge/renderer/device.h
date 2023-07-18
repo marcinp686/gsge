@@ -15,6 +15,7 @@
 #include "instance.h"
 #include "surface.h"
 #include "debugger.h"
+#include "core/tools.h"
 
 class Queue
 {

@@ -7,6 +7,7 @@
 #include "device.h"
 #include "swapchain.h"
 #include "renderPass.h"
+#include "core/tools.h"
 
 class Framebuffer
 {

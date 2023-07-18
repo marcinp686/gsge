@@ -11,6 +11,7 @@
 #include "surface.h"
 #include "renderPass.h"
 #include "settings.h"
+#include "core/tools.h"
 
 class RenderPass;
 
