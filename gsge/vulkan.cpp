@@ -88,7 +88,6 @@ void vulkan::init()
     createGraphicsCommandBuffers();
     createPresentCommandBuffers();
 
-    // initResourceOwnerships();
 }
 
 void vulkan::loadShaders()
@@ -140,7 +139,7 @@ VkShaderModule vulkan::createShaderModule(const std::vector<char> &code)
 
 /**
  * @brief Destroy command pools for graphics and transfer queues.
- * 
+ *
  * @details Frees command buffers allocated by the pools as well.
  * */
 void vulkan::destroyCommandPools()
@@ -226,7 +225,7 @@ void vulkan::createGraphicsPipeline()
 
     VkPipelineMultisampleStateCreateInfo multisampling{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .rasterizationSamples = settings.Renderer.enableMSAA ? settings.Renderer.msaaSampleCount : VK_SAMPLE_COUNT_1_BIT,
+        .rasterizationSamples = settings.Renderer.msaa.enabled ? settings.Renderer.msaa.sampleCount : VK_SAMPLE_COUNT_1_BIT,
         .sampleShadingEnable = VK_FALSE,
         .minSampleShading = 1.0f,
     };
@@ -432,31 +431,10 @@ void vulkan::recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
         .size = VK_WHOLE_SIZE,
     };
 
-    /* Queue ownership transfer is only required when we need the content to remain valid across queues.
-    Since we are transitioning from UNDEFINED -- and therefore discarding the image contents to begin with --
-    we are not required to perform an ownership transfer from the presentation queue to graphics.
-    This transition could also be made as an EXTERNAL -> subpass #0 render pass dependency as shown earlier.
-    */
-    // VkImageMemoryBarrier2 singlesampleImageAcquireMB{
-    //     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-    //     .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-    //     .srcAccessMask = VK_ACCESS_2_NONE,
-    //     .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-    //     .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
-    //     .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-    //     .newLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
-    //     .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-    //     .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-    //     .image = swapchain->getImage(imageIndex),
-    //     .subresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
-    // };
-
     VkDependencyInfo depInfo{
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
         .bufferMemoryBarrierCount = 1,
         .pBufferMemoryBarriers = &transformMatricesBufferMB_AO,
-        //.imageMemoryBarrierCount = 1,
-        //.pImageMemoryBarriers = &singlesampleImageAcquireMB,
     };
 
     vkCmdPipelineBarrier2(commandBuffer, &depInfo);
@@ -638,12 +616,6 @@ void vulkan::drawFrame()
         .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
     };
 
-    VkSemaphoreSubmitInfo renderFinishedSemaphoreSubmitInfo{
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .semaphore = renderFinishedSemaphores[currentFrame],
-        .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-    };
-
     VkSemaphoreSubmitInfo transferFinishedSemaphoreSubmitInfo{
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
         .semaphore = transferFinishedSemaphores[currentFrame],
@@ -653,6 +625,12 @@ void vulkan::drawFrame()
     std::array<VkSemaphoreSubmitInfo, 2> waitSemaphoresInfos = {
         imageAquiredSemaphoreSubmitInfo,
         transferFinishedSemaphoreSubmitInfo,
+    };
+
+    VkSemaphoreSubmitInfo renderFinishedSemaphoreSubmitInfo{
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = renderFinishedSemaphores[currentFrame],
+        .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
     };
 
     VkSubmitInfo2 graphicsQueueSubmitInfo{
@@ -750,7 +728,7 @@ void vulkan::handleSurfaceResize()
 
 /**
  * @brief Recreate frame resources when number of samples per pixel changes.
- * 
+ *
  * When MSAA changes, framebuffer resources need to be recreated as their sample count is declared
  * during creation.
  */
@@ -823,7 +801,7 @@ void vulkan::createSyncObjects()
             vkCreateFence(*device, &fenceInfo, nullptr, &transferFinishedFences[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create synchronization objects for a frame!");
-        }     
+        }
     }
 
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(drawingFinishedFences, "Drawing finished fence");
@@ -984,68 +962,6 @@ void vulkan::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryP
     }
 
     vkBindBufferMemory(*device, buffer, bufferMemory, 0);
-}
-
-void vulkan::initResourceOwnerships()
-{
-    // Dummy memory barrier to release ownership of transform matrices buffer from graphics queue family
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
-    {
-
-        VkCommandBufferBeginInfo beginInfo{
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-        };
-
-        vkBeginCommandBuffer(graphicsCommandBuffers[i], &beginInfo);
-
-        VkBufferMemoryBarrier2 transformMatricesBufferMB_RO{
-            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
-            .pNext = VK_NULL_HANDLE,
-            .srcStageMask = 0,
-            .srcAccessMask = 0,
-            .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_ATTRIBUTE_INPUT_BIT,
-            .dstAccessMask = 0,
-            .srcQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
-            .dstQueueFamilyIndex = device->getTransferQueueFamilyIdx(),
-            .buffer = transformMatricesBuffer[i],
-            .offset = 0,
-            .size = VK_WHOLE_SIZE,
-        };
-
-        VkDependencyInfo depInfo{
-            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-            .bufferMemoryBarrierCount = 1,
-            .pBufferMemoryBarriers = &transformMatricesBufferMB_RO,
-        };
-
-        vkCmdPipelineBarrier2(graphicsCommandBuffers[i], &depInfo);
-        vkEndCommandBuffer(graphicsCommandBuffers[i]);
-
-        VkCommandBufferSubmitInfo cbsi{
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-            .commandBuffer = graphicsCommandBuffers[i],
-        };
-
-        VkSubmitInfo2 submitInfo{
-            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
-            .commandBufferInfoCount = 1,
-            .pCommandBufferInfos = &cbsi,
-        };
-
-        VkFenceCreateInfo fenceInfo{
-            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-            .flags = 0,
-        };
-
-        VkFence fence;
-        vkCreateFence(*device, &fenceInfo, nullptr, &fence);
-        vkQueueSubmit2(device->getGraphicsQueue(), 1, &submitInfo, fence);
-        vkWaitForFences(*device, 1, &fence, VK_TRUE, UINT64_MAX);
-        vkDestroyFence(*device, fence, nullptr);
-    }
-
-    SPDLOG_TRACE("Initialized ownership of resources");
 }
 
 void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, bool withSemaphores)
@@ -1360,7 +1276,7 @@ void vulkan::createTransformMatricesBuffer()
 
         vkMapMemory(*device, transformMatricesStagingBufferMemory[i], 0, bufferSize, 0, &transformMatricesMappedMemory[i]);
     }
-    
+
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transformMatricesBuffer, "Transform matrices buffer");
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transformMatricesStagingBuffer, "Transform matrices staging buffer");
 }

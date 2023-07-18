@@ -43,8 +43,13 @@ class Settings
     
     struct Renderer
     {
-		bool enableMSAA{false};
-		VkSampleCountFlagBits msaaSampleCount{VK_SAMPLE_COUNT_4_BIT};
+        struct Msaa
+        {
+            bool enabled{false};
+			VkSampleCountFlagBits sampleCount{VK_SAMPLE_COUNT_4_BIT};
+		} msaa;
+        //bool enableMSAA{false};
+		//VkSampleCountFlagBits msaaSampleCount{VK_SAMPLE_COUNT_4_BIT};
 	} Renderer;
 
 

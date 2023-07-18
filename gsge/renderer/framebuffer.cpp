@@ -4,11 +4,11 @@ Framebuffer::Framebuffer(std::shared_ptr<Device> &device, std::shared_ptr<Swapch
                          std::shared_ptr<RenderPass> &renderPass)
     : device(device), swapchain(swapchain), renderPass(renderPass)
 {
-    if (settings.Renderer.enableMSAA)
+    if (settings.Renderer.msaa.enabled)
         createMultisampleResources();
     createDepthResources();
 
-    msaaEnabledAtCreation = settings.Renderer.enableMSAA;
+    msaaEnabledAtCreation = settings.Renderer.msaa.enabled;
 
     uint32_t imageCount = swapchain->getImageCount();
 
@@ -17,7 +17,7 @@ Framebuffer::Framebuffer(std::shared_ptr<Device> &device, std::shared_ptr<Swapch
     for (uint32_t i = 0; i < imageCount; i++)
     {
         std::vector<VkImageView> attachments;
-        if (settings.Renderer.enableMSAA)
+        if (settings.Renderer.msaa.enabled)
         {
             attachments.push_back(swapchain->getImageView(i));
             attachments.push_back(depthImageView[i]);
@@ -107,7 +107,7 @@ void Framebuffer::createDepthResources()
     for (size_t i = 0; i < imageCount; ++i)
     {
         createImage(swapchain->getExtent().width, swapchain->getExtent().height,
-                    settings.Renderer.enableMSAA ? settings.Renderer.msaaSampleCount : VK_SAMPLE_COUNT_1_BIT, depthFormat,
+                    settings.Renderer.msaa.enabled ? settings.Renderer.msaa.sampleCount : VK_SAMPLE_COUNT_1_BIT, depthFormat,
                     VK_IMAGE_TILING_OPTIMAL,
                     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage[i], depthImageMemory[i], VK_IMAGE_LAYOUT_UNDEFINED);
@@ -129,7 +129,7 @@ void Framebuffer::createMultisampleResources()
 
     for (size_t i = 0; i < imageCount; ++i)
     {
-        createImage(swapchain->getExtent().width, swapchain->getExtent().height, settings.Renderer.msaaSampleCount,
+        createImage(swapchain->getExtent().width, swapchain->getExtent().height, settings.Renderer.msaa.sampleCount,
                     swapchain->getImageFormat(), VK_IMAGE_TILING_OPTIMAL,
                     VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, multisampleImage[i], multisampleImageMemory[i],

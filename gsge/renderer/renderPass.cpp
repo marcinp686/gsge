@@ -8,7 +8,7 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         .sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
         .format = swapchain->getImageFormat(),
         .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = settings.Renderer.enableMSAA ? VK_ATTACHMENT_LOAD_OP_DONT_CARE : VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .loadOp = settings.Renderer.msaa.enabled ? VK_ATTACHMENT_LOAD_OP_DONT_CARE : VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -26,7 +26,7 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
     VkAttachmentDescription2 depthAttachment{
         .sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
         .format = VK_FORMAT_D32_SFLOAT, // TODO: Add method to find supported depth format
-        .samples = settings.Renderer.enableMSAA ? settings.Renderer.msaaSampleCount : VK_SAMPLE_COUNT_1_BIT,
+        .samples = settings.Renderer.msaa.enabled ? settings.Renderer.msaa.sampleCount : VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
@@ -41,11 +41,11 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
         .layout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
     };
 
-    // multisample image used as render target for multisampling - discard after resolution
+    // Multisample image used as render target for multisampling - discard after resolution
     VkAttachmentDescription2 multisampleAttachment{
         .sType = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2,
         .format = swapchain->getImageFormat(),
-        .samples = settings.Renderer.msaaSampleCount,
+        .samples = settings.Renderer.msaa.sampleCount,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
@@ -64,16 +64,15 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
     attachments.push_back(singlesampleAttachment);
     attachments.push_back(depthAttachment);
 
-    if (settings.Renderer.enableMSAA)
+    if (settings.Renderer.msaa.enabled)
         attachments.push_back(multisampleAttachment);
 
-    // Subpasses
     VkSubpassDescription2 subpass{
         .sType = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2,
         .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
         .colorAttachmentCount = 1,
-        .pColorAttachments = settings.Renderer.enableMSAA ? &multisampleAttachmentRef : &presentAttachmentRef,
-        .pResolveAttachments = settings.Renderer.enableMSAA ? &presentAttachmentRef : VK_NULL_HANDLE,
+        .pColorAttachments = settings.Renderer.msaa.enabled ? &multisampleAttachmentRef : &presentAttachmentRef,
+        .pResolveAttachments = settings.Renderer.msaa.enabled ? &presentAttachmentRef : VK_NULL_HANDLE,
         .pDepthStencilAttachment = &depthAttachmentRef,
     };
 
@@ -82,7 +81,7 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
     //   * For singlesample color attachment, we do not care about content of the image at the beginning of the render pass,
     //     becasue multisample image will be resolved into singlesample image at the end of the render pass
     //     thus LOAD_OP_DONT_CARE is used and this barrier has no effect
-    //   * For multisample color attachment, we need to wait for the image to cleared before we start wrting to it
+    //   * For multisample color attachment, we need to wait for the image to be cleared before we start wrting to it
     VkMemoryBarrier2 singlesampleAttachmentMB1{
         .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2,
         .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -152,12 +151,12 @@ RenderPass::RenderPass(std::shared_ptr<Device> &device, std::shared_ptr<Swapchai
     };
 
     std::vector<VkSubpassDependency2> dependencies;
-    
-    if (!settings.Renderer.enableMSAA)
+
+    //if (!settings.Renderer.msaa.enabled)
         dependencies.push_back(singlesampleAttachmentDep1);
     dependencies.push_back(singlesampleAttachmentDep2);
     dependencies.push_back(depthAttachmentDep1);
-    if (settings.Renderer.enableMSAA)
+    if (settings.Renderer.msaa.enabled)
         dependencies.push_back(multisampleAttachmentDep);
 
     VkRenderPassCreateInfo2 renderPassInfo{
