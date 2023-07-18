@@ -140,7 +140,7 @@ VkShaderModule vulkan::createShaderModule(const std::vector<char> &code)
 
 /**
  * @brief Destroy command pools for graphics and transfer queues.
- * 
+ *
  * @details Frees command buffers allocated by the pools as well.
  * */
 void vulkan::destroyCommandPools()
@@ -226,7 +226,7 @@ void vulkan::createGraphicsPipeline()
 
     VkPipelineMultisampleStateCreateInfo multisampling{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-        .rasterizationSamples = settings.Renderer.enableMSAA ? settings.Renderer.msaaSampleCount : VK_SAMPLE_COUNT_1_BIT,
+        .rasterizationSamples = settings.Renderer.msaa.enabled ? settings.Renderer.msaa.sampleCount : VK_SAMPLE_COUNT_1_BIT,
         .sampleShadingEnable = VK_FALSE,
         .minSampleShading = 1.0f,
     };
@@ -750,7 +750,7 @@ void vulkan::handleSurfaceResize()
 
 /**
  * @brief Recreate frame resources when number of samples per pixel changes.
- * 
+ *
  * When MSAA changes, framebuffer resources need to be recreated as their sample count is declared
  * during creation.
  */
@@ -823,7 +823,7 @@ void vulkan::createSyncObjects()
             vkCreateFence(*device, &fenceInfo, nullptr, &transferFinishedFences[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create synchronization objects for a frame!");
-        }     
+        }
     }
 
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(drawingFinishedFences, "Drawing finished fence");
@@ -1360,7 +1360,7 @@ void vulkan::createTransformMatricesBuffer()
 
         vkMapMemory(*device, transformMatricesStagingBufferMemory[i], 0, bufferSize, 0, &transformMatricesMappedMemory[i]);
     }
-    
+
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transformMatricesBuffer, "Transform matrices buffer");
     GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transformMatricesStagingBuffer, "Transform matrices staging buffer");
 }
