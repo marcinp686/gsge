@@ -30,7 +30,7 @@ void Debugger::setupDebugFuctionPointers()
 }
 
 Debugger &Debugger::getInstance()
-{   
+{
     static Debugger debugUtilsInstance;
     return debugUtilsInstance;
 }
@@ -56,17 +56,19 @@ void Debugger::setDevice(VkDevice &device)
     SPDLOG_TRACE("[Debugger] Device set");
 }
 
-template void Debugger::setObjectName(VkFence object, const char *name);
-template void Debugger::setObjectName(VkCommandPool object, const char *name);
-template void Debugger::setObjectName(VkCommandBuffer object, const char *name);
-template void Debugger::setObjectName(VkPipeline object, const char *name);
-template void Debugger::setObjectName(VkQueue object, const char *name);
-template void Debugger::setObjectName(VkSemaphore object, const char *name);
+template void Debugger::setObjectName(VkFence &object, const char *name);
+template void Debugger::setObjectName(VkCommandPool &object, const char *name);
+template void Debugger::setObjectName(VkCommandBuffer &object, const char *name);
+template void Debugger::setObjectName(VkPipeline &object, const char *name);
+template void Debugger::setObjectName(VkQueue &object, const char *name);
+template void Debugger::setObjectName(VkSemaphore &object, const char *name);
+template void Debugger::setObjectName(VkImage &object, const char *name);
+template void Debugger::setObjectName(VkImageView &object, const char *name);
+template void Debugger::setObjectName(VkBuffer &object, const char *name);
 
-template <typename T> void Debugger::setObjectName(T object, const char *name)
+template <typename T> void Debugger::setObjectName(T &object, const char *name)
 {
-    VkDebugUtilsObjectNameInfoEXT objectNameInfo{};
-    objectNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+    VkDebugUtilsObjectNameInfoEXT objectNameInfo{VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT};
 
     if (std::is_same<VkFence, T>::value)
         objectNameInfo.objectType = VK_OBJECT_TYPE_FENCE;
@@ -80,10 +82,58 @@ template <typename T> void Debugger::setObjectName(T object, const char *name)
         objectNameInfo.objectType = VK_OBJECT_TYPE_QUEUE;
     if (std::is_same<VkSemaphore, T>::value)
         objectNameInfo.objectType = VK_OBJECT_TYPE_SEMAPHORE;
+    if (std::is_same<VkImage, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_IMAGE;
+    if (std::is_same<VkImageView, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_IMAGE_VIEW;
+    if (std::is_same<VkBuffer, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_BUFFER;
 
     objectNameInfo.objectHandle = reinterpret_cast<uint64_t>(object);
     objectNameInfo.pObjectName = name;
     vkSetDebugUtilsObjectNameEXT(device, &objectNameInfo);
+}
+
+template void Debugger::setIndexedObjectName(std::vector<VkFence> &object, const char *name);
+template void Debugger::setIndexedObjectName(std::vector<VkCommandPool> &object, const char *name);
+template void Debugger::setIndexedObjectName(std::vector<VkCommandBuffer> &object, const char *name);
+template void Debugger::setIndexedObjectName(std::vector<VkPipeline> &object, const char *name);
+template void Debugger::setIndexedObjectName(std::vector<VkQueue> &object, const char *name);
+template void Debugger::setIndexedObjectName(std::vector<VkSemaphore> &object, const char *name);
+template void Debugger::setIndexedObjectName(std::vector<VkImage> &object, const char *name);
+template void Debugger::setIndexedObjectName(std::vector<VkImageView> &object, const char *name);
+template void Debugger::setIndexedObjectName(std::vector<VkBuffer> &object, const char *name);
+
+template <typename T> void Debugger::setIndexedObjectName(T &objects, const char *name)
+{
+    VkDebugUtilsObjectNameInfoEXT objectNameInfo{VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT};
+
+    if (std::is_same<std::vector<VkFence>, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_FENCE;
+    if (std::is_same<std::vector<VkCommandBuffer>, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_COMMAND_BUFFER;
+    if (std::is_same<std::vector<VkCommandPool>, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_COMMAND_POOL;
+    if (std::is_same<std::vector<VkPipeline>, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_PIPELINE;
+    if (std::is_same<std::vector<VkQueue>, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_QUEUE;
+    if (std::is_same<std::vector<VkSemaphore>, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_SEMAPHORE;
+    if (std::is_same<std::vector<VkImage>, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_IMAGE;
+    if (std::is_same<std::vector<VkImageView>, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_IMAGE_VIEW;
+    if (std::is_same<std::vector<VkBuffer>, T>::value)
+        objectNameInfo.objectType = VK_OBJECT_TYPE_BUFFER;
+
+    for (size_t i=0;i<objects.size();++i)
+    {
+        std::string nameWithIndex = std::string(name) + " [" + std::to_string(i) + "]";
+        objectNameInfo.objectHandle = reinterpret_cast<uint64_t>(objects[i]);
+		objectNameInfo.pObjectName = nameWithIndex.c_str();
+		vkSetDebugUtilsObjectNameEXT(device, &objectNameInfo);
+	}
 }
 
 void Debugger::commandBufferLabelBegin(VkCommandBuffer &commandBuffer, const char *labelName)

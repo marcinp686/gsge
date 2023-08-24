@@ -55,7 +55,7 @@ class scene
     entt::registry registry;
     entt::entity suzanne, suzanne_smooth, icoSphere, testCube, companionCube, squareFloor, simpleCube, plane, lightGizmo;
 
-    static constexpr int c_arraySize = 40;
+    static constexpr int c_arraySize = 20;
     std::array<entt::entity, c_arraySize * c_arraySize * c_arraySize> cubes;
 
     std::vector<uint32_t> objects;

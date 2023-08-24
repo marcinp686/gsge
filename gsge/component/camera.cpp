@@ -72,7 +72,7 @@ void camera::update(float dt, float mouseDx, float mouseDy)
 {
     yaw += (mouseDx * sensitivityX);
     pitch += (mouseDy * sensitivityY);
-
+    
     if (pitch > 89.0f)
         pitch = 89.0f;
     if (pitch < -89.0f)
@@ -91,13 +91,13 @@ void camera::update(float dt, float mouseDx, float mouseDy)
 
 void camera::strafeLeft(float dt)
 {
-    position -= glm::normalize(glm::cross(front, up)) * speed * dt;
+    position += glm::normalize(glm::cross(front, up)) * speed * dt;
     updateViewMatrix();
 }
 
 void camera::strafeRight(float dt)
 {
-    position += glm::normalize(glm::cross(front, up)) * speed * dt;
+    position -= glm::normalize(glm::cross(front, up)) * speed * dt;
     updateViewMatrix();
 }
 
@@ -115,13 +115,13 @@ void camera::moveBackward(float dt)
 
 void camera::moveUp(float dt)
 {
-    position += up * speed * dt;
+    position -= up * speed * dt;
 	updateViewMatrix();
 }
 
 void camera::moveDown(float dt)
 {
-	position -= up * speed * dt;
+	position += up * speed * dt;
 	updateViewMatrix();
 }
 
@@ -133,7 +133,7 @@ void camera::updateViewMatrix()
 
 void camera::updateProjMatrix()
 {
-    projMatrix = glm::perspective(fov, aspect, zNear, zFar);
+    projMatrix = glm::perspective(glm::radians(fov), aspect, zNear, zFar);
     updatePVMatrix();
 }
 

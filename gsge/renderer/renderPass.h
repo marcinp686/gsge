@@ -5,6 +5,7 @@
 
 #include "device.h"
 #include "swapchain.h"
+#include "core/tools.h"
 
 class Swapchain;
 

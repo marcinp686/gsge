@@ -1,6 +1,6 @@
 Pipeline stage flag bits (VkPipelineStageFlagBits2)
 https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap7.html#VkPipelineStageFlags2
-	VK_PIPELINE_STAGE_2_NONE []
+	VK_PIPELINE_STAGE_2_NONE=0 []
 		specifies no stages of execution.
 	
 	VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT (old: TOP_OF_PIPE_BIT) []

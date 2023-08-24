@@ -11,28 +11,28 @@ Instance::Instance()
 
     prepareExtensionList();
 
-    VkApplicationInfo appInfo{};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "GSGE Demo";
-    appInfo.applicationVersion = VK_MAKE_API_VERSION(0, 1, 3, 0);
-    appInfo.pEngineName = "Giraffe Studio Game Engine";
-    appInfo.engineVersion = VK_MAKE_API_VERSION(0, 1, 3, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_3;
+    VkApplicationInfo appInfo{
+        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .pApplicationName = "GSGE Demo",
+        .applicationVersion = VK_MAKE_API_VERSION(0, 1, 3, 0),
+        .pEngineName = "Giraffe Studio Game Engine",
+        .engineVersion = VK_MAKE_API_VERSION(0, 1, 3, 0),
+        .apiVersion = VK_API_VERSION_1_3,
+    };
 
-    VkInstanceCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &appInfo;
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(instanceExtensions.size());
-    createInfo.ppEnabledExtensionNames = instanceExtensions.data();
-    createInfo.enabledLayerCount = static_cast<uint32_t>(instanceLayers.size());
-    createInfo.ppEnabledLayerNames = instanceLayers.data();
+    VkInstanceCreateInfo createInfo{
+        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pApplicationInfo = &appInfo,
+        .enabledLayerCount = static_cast<uint32_t>(instanceLayers.size()),
+        .ppEnabledLayerNames = instanceLayers.data(),
+        .enabledExtensionCount = static_cast<uint32_t>(instanceExtensions.size()),
+        .ppEnabledExtensionNames = instanceExtensions.data(),
+    };
 
 #ifndef NDEBUG
-
+    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
     if (settings.Debugger.debugInstanceCreation)
     {
-        VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-
         debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         debugCreateInfo.messageSeverity =
             VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
@@ -46,13 +46,7 @@ Instance::Instance()
     }
 #endif
 
-    VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
-
-    if (result != VK_SUCCESS)
-    {
-        throw std::runtime_error("[Instance] Vulkan instance creation failed.");
-    }
-
+    GSGE_CHECK_RESULT(vkCreateInstance(&createInfo, nullptr, &instance));
     GSGE_DEBUGGER_SET_INSTANCE(instance);
     SPDLOG_TRACE("[Instance] Created");
 }
@@ -92,11 +86,11 @@ bool Instance::checkLayerSupport()
     uint32_t layerCount;
 
     // First call to check layer count
-    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+    GSGE_CHECK_RESULT(vkEnumerateInstanceLayerProperties(&layerCount, nullptr));
 
     // Second call to actually enumerate layers
     std::vector<VkLayerProperties> availableLayers(layerCount);
-    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+    GSGE_CHECK_RESULT(vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data()));
 
     for (const char *layerName : instanceLayers)
     {

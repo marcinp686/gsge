@@ -67,7 +67,7 @@ void gsge::keyCallback(GLFWwindow *glfwWindow, int key, int scancode, int action
     case GLFW_KEY_M:
         if (action == GLFW_PRESS)
         {
-            settings.Renderer.enableMSAA = !settings.Renderer.enableMSAA;
+            settings.Renderer.msaa.enabled = !settings.Renderer.msaa.enabled;
             renderer->handleMSAAChange();
         }
         break;
@@ -140,7 +140,6 @@ void gsge::mainLoop()
 
         level->update(frameStats.dt);
 
-        renderer->pushTransformMatricesToGpu(level->getTransformMatricesLump());
         renderer->updateUniformBufferEx(level->ubo);
         renderer->update();
 

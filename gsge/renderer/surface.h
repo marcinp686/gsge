@@ -7,6 +7,7 @@
 
 #include "window.h"
 #include "instance.h"
+#include "core/tools.h"
 
 class Surface
 {

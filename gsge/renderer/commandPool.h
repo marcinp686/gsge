@@ -4,6 +4,7 @@
 
 #include "device.h"
 #include "debugger.h"
+#include "core/tools.h"
 
 class CommandPool
 {

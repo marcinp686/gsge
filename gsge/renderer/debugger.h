@@ -11,6 +11,7 @@
 #if !defined NDEBUG
 #define GSGE_DEBUGGER_INSTANCE_DECL Debugger &debugger = Debugger::getInstance()
 #define GSGE_DEBUGGER_SET_OBJECT_NAME(object, name) debugger.setObjectName(object, name)
+#define GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(objects, name) debugger.setIndexedObjectName(objects, name)
 #define GSGE_DEBUGGER_SET_INSTANCE(instance) debugger.setInstance(instance)
 #define GSGE_DEBUGGER_SET_DEVICE(device) debugger.setDevice(device)
 #define GSGE_DEBUGGER_DESTROY debugger.destroy()
@@ -19,6 +20,7 @@
 #else
 #define GSGE_DEBUGGER_INSTANCE_DECL
 #define GSGE_DEBUGGER_SET_OBJECT_NAME __noop
+#define GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME __noop
 #define GSGE_DEBUGGER_SET_INSTANCE __noop
 #define GSGE_DEBUGGER_SET_DEVICE __noop
 #define GSGE_DEBUGGER_DESTROY __noop
@@ -34,7 +36,8 @@ class Debugger
     void setInstance(VkInstance &instance);
     void setDevice(VkDevice &device);
 
-    template <typename T> void setObjectName(T object, const char *name);
+    template <typename T> void setObjectName(T& object, const char *name);
+	template <typename T> void setIndexedObjectName(T& objects, const char *name);
 
     void commandBufferLabelBegin(VkCommandBuffer &commandBuffer, const char *labelName);
     void commandBufferLabelEnd(VkCommandBuffer &commandBuffer);
@@ -47,7 +50,6 @@ class Debugger
                                                         void *pUserData);
 
   private:   
-
     Debugger();
     Debugger(Debugger &&) = delete;
     Debugger &operator=(Debugger &&) = delete;

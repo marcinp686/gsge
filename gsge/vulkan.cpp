@@ -1,5 +1,46 @@
 #include "vulkan.h"
 
+void vulkan::init()
+{
+    instance = std::make_shared<Instance>();
+    surface = std::make_shared<Surface>(instance, window);
+    device = std::make_shared<Device>(instance, surface);
+    swapchain = std::make_shared<Swapchain>(device, window, surface);
+    renderPass = std::make_shared<RenderPass>(device, swapchain);
+    framebuffer = std::make_shared<Framebuffer>(device, swapchain, renderPass);
+
+    // 1. Create vertex binding descriptors for vertex stage buffers
+    createVertexBindingDescriptors();
+
+    // 2. Create descriptor set layouts (to bind descriptor sets later on)
+    createDescriptorSetLayouts();
+
+    // 3. pass (2) as parameter to create pipeline layout and (1) to bind vertex buffers to pipeline
+    createGraphicsPipeline();
+
+    graphicsCommandPool = std::make_unique<CommandPool>(device, device->getGraphicsQueueFamilyIdx(), "Graphics command pool");
+    transferCommandPool = std::make_unique<CommandPool>(device, device->getTransferQueueFamilyIdx(), "Transfer command pool");
+    presentCommandPool = std::make_unique<CommandPool>(device, device->getPresentQueueFamilyIdx(), "Present command pool");
+
+    // 4. create descriptor pool
+    createDescriptorPool();
+
+    // 5. create buffers for descriptor sets data
+    createSyncObjects();
+    createTransferCommandBuffers();
+    createVertexBuffer();
+    createIndexBuffer();
+    createVertexNormalsBuffer();
+    createTransformMatricesBuffer();
+    createUniformBuffers();
+
+    // 6. create actual descriptor sets - after buffer creation
+    createDescriptorSets();
+
+    createGraphicsCommandBuffers();
+    createPresentCommandBuffers();
+}
+
 vulkan::~vulkan()
 {
     vkDeviceWaitIdle(*device);
@@ -7,6 +48,8 @@ vulkan::~vulkan()
     // destroy uniform buffers
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
+        vkUnmapMemory(*device, transformMatricesStagingBufferMemory[i]);
+
         vkDestroyBuffer(*device, uniformBuffers[i], nullptr);
         vkFreeMemory(*device, uniformBuffersMemory[i], nullptr);
 
@@ -39,49 +82,11 @@ vulkan::~vulkan()
 void vulkan::update()
 {
     EASY_FUNCTION(profiler::colors::Green200);
+    EASY_BLOCK("Update buffers");
+    updateTransformMatrixBuffer(currentFrame);
+    updateUniformBuffer(currentFrame);
+    EASY_END_BLOCK;
     drawFrame();
-}
-
-void vulkan::init()
-{
-    instance = std::make_shared<Instance>();
-    surface = std::make_shared<Surface>(instance, window);
-    device = std::make_shared<Device>(instance, surface);
-    swapchain = std::make_shared<Swapchain>(device, window, surface);
-    renderPass = std::make_shared<RenderPass>(device, swapchain);
-    framebuffer = std::make_shared<Framebuffer>(device, swapchain, renderPass);
-
-    // 1. Create vertex binding descriptors for vertex stage buffers
-    createVertexBindingDescriptors();
-
-    // 2. Create descriptor set layouts (to bind descriptor sets later on)
-    createDescriptorSetLayouts();
-
-    // 3. pass (2) as parameter to create pipeline layout and (1) to bind vertex buffers to pipeline
-    createGraphicsPipeline();
-
-    graphicsCommandPool = std::make_unique<CommandPool>(device, device->getGraphicsQueueFamilyIdx(), "Graphics command pool");
-    transferCommandPool = std::make_unique<CommandPool>(device, device->getTransferQueueFamilyIdx(), "Transfer command pool");
-
-    // 4. create descriptor pool
-    createDescriptorPool();
-
-    // 5. create buffers for descriptor sets data
-    createSyncObjects();
-    createTransferCommandBuffers();
-    createVertexBuffer();
-    vkQueueWaitIdle(device->getTransferQueue());
-    createIndexBuffer();
-    vkQueueWaitIdle(device->getTransferQueue());
-    createVertexNormalsBuffer();
-    vkQueueWaitIdle(device->getTransferQueue());
-    createTransformMatricesBuffer();
-    createUniformBuffers();
-
-    // 6. create actual descriptor sets - after buffer creation
-    createDescriptorSets();
-
-    createGraphicsCommandBuffers();
 }
 
 void vulkan::loadShaders()
@@ -117,24 +122,22 @@ void vulkan::loadShaders()
 
 VkShaderModule vulkan::createShaderModule(const std::vector<char> &code)
 {
-    VkShaderModuleCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    createInfo.codeSize = code.size();
-    createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
+    VkShaderModuleCreateInfo createInfo{
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .codeSize = code.size(),
+        .pCode = reinterpret_cast<const uint32_t *>(code.data()),
+    };
 
     VkShaderModule shaderModule;
-    if (vkCreateShaderModule(*device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create shader module!");
-    }
+    GSGE_CHECK_RESULT(vkCreateShaderModule(*device, &createInfo, nullptr, &shaderModule));
 
     return shaderModule;
 }
 
 /**
  * @brief Destroy command pools for graphics and transfer queues.
- * Frees command buffers allocated by the pools
- * *
+ *
+ * @details Frees command buffers allocated by the pools as well.
  * */
 void vulkan::destroyCommandPools()
 {
@@ -149,150 +152,143 @@ void vulkan::createGraphicsPipeline()
     VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
 
     // create shader stages
-    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertShaderStageInfo.module = vertShaderModule;
-    vertShaderStageInfo.pName = "main";
+    VkPipelineShaderStageCreateInfo vertShaderStageInfo{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_VERTEX_BIT,
+        .module = vertShaderModule,
+        .pName = "main",
+    };
 
-    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    fragShaderStageInfo.module = fragShaderModule;
-    fragShaderStageInfo.pName = "main";
+    VkPipelineShaderStageCreateInfo fragShaderStageInfo{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+        .module = fragShaderModule,
+        .pName = "main",
+    };
 
     VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(vertexBindingDesc.size());
-    vertexInputInfo.pVertexBindingDescriptions = vertexBindingDesc.data();
-    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttrDesc.size());
-    vertexInputInfo.pVertexAttributeDescriptions = vertexAttrDesc.data();
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .vertexBindingDescriptionCount = static_cast<uint32_t>(vertexBindingDesc.size()),
+        .pVertexBindingDescriptions = vertexBindingDesc.data(),
+        .vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttrDesc.size()),
+        .pVertexAttributeDescriptions = vertexAttrDesc.data(),
+    };
 
-    VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    inputAssembly.primitiveRestartEnable = VK_FALSE;
+    VkPipelineInputAssemblyStateCreateInfo inputAssembly{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .primitiveRestartEnable = VK_FALSE,
+    };
 
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = static_cast<float>(swapchain->getExtent().width);
-    viewport.height = static_cast<float>(swapchain->getExtent().height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
+    VkViewport viewport{
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = static_cast<float>(swapchain->getExtent().width),
+        .height = static_cast<float>(swapchain->getExtent().height),
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f,
+    };
 
-    VkRect2D scissor{};
-    scissor.offset = {0, 0};
-    scissor.extent = swapchain->getExtent();
-
+    VkRect2D scissor{
+        .offset = {0, 0},
+        .extent = swapchain->getExtent(),
+    };
     std::array<VkDynamicState, 2> dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-    VkPipelineDynamicStateCreateInfo dynamicState{};
-    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
-    dynamicState.pDynamicStates = dynamicStates.data();
+    VkPipelineDynamicStateCreateInfo dynamicState{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
+        .pDynamicStates = dynamicStates.data(),
+    };
+    VkPipelineViewportStateCreateInfo viewportState{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .viewportCount = 1,
+        .pViewports = &viewport,
+        .scissorCount = 1,
+        .pScissors = &scissor,
+    };
 
-    VkPipelineViewportStateCreateInfo viewportState{};
-    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportState.viewportCount = 1;
-    viewportState.pViewports = &viewport;
-    viewportState.scissorCount = 1;
-    viewportState.pScissors = &scissor;
+    VkPipelineRasterizationStateCreateInfo rasterizer{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .depthClampEnable = VK_FALSE,
+        .rasterizerDiscardEnable = VK_FALSE,
+        .polygonMode = VK_POLYGON_MODE_FILL,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .frontFace = VK_FRONT_FACE_CLOCKWISE,
+        .depthBiasEnable = VK_FALSE,
+        .lineWidth = 1.0f,
+    };
 
-    /*VkPipelineRasterizationStateRasterizationOrderAMD orderAMD = {};
-    orderAMD.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_RASTERIZATION_ORDER_AMD;
-    orderAMD.rasterizationOrder = VK_RASTERIZATION_ORDER_RELAXED_AMD;*/
+    VkPipelineMultisampleStateCreateInfo multisampling{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .rasterizationSamples = settings.Renderer.msaa.enabled ? settings.Renderer.msaa.sampleCount : VK_SAMPLE_COUNT_1_BIT,
+        .sampleShadingEnable = VK_FALSE,
+        .minSampleShading = 1.0f,
+    };
 
-    VkPipelineRasterizationStateCreateInfo rasterizer{};
-    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterizer.depthClampEnable = VK_FALSE;
-    rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    rasterizer.depthBiasEnable = VK_FALSE;
-    rasterizer.depthBiasConstantFactor = 0.0f; // Optional
-    rasterizer.depthBiasClamp = 0.0f;          // Optional
-    rasterizer.depthBiasSlopeFactor = 0.0f;    // Optional
-    // rasterizer.pNext = &orderAMD;
+    VkPipelineDepthStencilStateCreateInfo depthStencil{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_LESS,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
+        .minDepthBounds = 0.0f, // Optional - to discard fragments lying outside of rang,
+        .maxDepthBounds = 1.0f,
+    };
 
-    VkPipelineMultisampleStateCreateInfo multisampling{};
-    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multisampling.sampleShadingEnable = VK_FALSE;
-    multisampling.rasterizationSamples = settings.Renderer.enableMSAA ? settings.Renderer.msaaSampleCount : VK_SAMPLE_COUNT_1_BIT;
-    multisampling.minSampleShading = 1.0f;          // Optional
-    multisampling.pSampleMask = nullptr;            // Optional
-    multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
-    multisampling.alphaToOneEnable = VK_FALSE;      // Optional
+    VkPipelineColorBlendAttachmentState colorBlendAttachment{
+        .blendEnable = VK_FALSE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .colorBlendOp = VK_BLEND_OP_ADD,
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        .alphaBlendOp = VK_BLEND_OP_ADD,
+        .colorWriteMask =
+            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+    };
 
-    VkPipelineDepthStencilStateCreateInfo depthStencil{};
-    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencil.depthTestEnable = VK_TRUE;
-    depthStencil.depthWriteEnable = VK_TRUE;
-    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
-    depthStencil.depthBoundsTestEnable = VK_FALSE;
-    depthStencil.minDepthBounds = 0.0f; // Optional - to discard fragments lying outside of range
-    depthStencil.maxDepthBounds = 1.0f; // Optional
-    depthStencil.stencilTestEnable = VK_FALSE;
+    VkPipelineColorBlendStateCreateInfo colorBlending{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .logicOpEnable = VK_FALSE,
+        .logicOp = VK_LOGIC_OP_COPY,
+        .attachmentCount = 1,
+        .pAttachments = &colorBlendAttachment,
+        .blendConstants = {0.0f, 0.0f, 0.0f, 0.0f},
+    };
 
-    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-    colorBlendAttachment.colorWriteMask =
-        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_FALSE;
-    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
-    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;             // Optional
-    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
-    colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount = 1,
+        .pSetLayouts = &descriptorSetLayout,
+        .pushConstantRangeCount = 0,
+        .pPushConstantRanges = nullptr,
+    };
 
-    VkPipelineColorBlendStateCreateInfo colorBlending{};
-    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorBlending.logicOpEnable = VK_FALSE;
-    colorBlending.logicOp = VK_LOGIC_OP_COPY; // Optional
-    colorBlending.attachmentCount = 1;
-    colorBlending.pAttachments = &colorBlendAttachment;
-    colorBlending.blendConstants[0] = 0.0f; // Optional
-    colorBlending.blendConstants[1] = 0.0f; // Optional
-    colorBlending.blendConstants[2] = 0.0f; // Optional
-    colorBlending.blendConstants[3] = 0.0f; // Optional
+    GSGE_CHECK_RESULT(vkCreatePipelineLayout(*device, &pipelineLayoutInfo, nullptr, &pipelineLayout));
 
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-    // pipelineLayoutInfo.pushConstantRangeCount = 0;
-    // pipelineLayoutInfo.pPushConstantRanges = nullptr;
+    VkGraphicsPipelineCreateInfo pipelineInfo{
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .stageCount = 2,
+        .pStages = shaderStages,
+        .pVertexInputState = &vertexInputInfo,
+        .pInputAssemblyState = &inputAssembly,
+        .pViewportState = &viewportState,
+        .pRasterizationState = &rasterizer,
+        .pMultisampleState = &multisampling,
+        .pDepthStencilState = &depthStencil,
+        .pColorBlendState = &colorBlending,
+        .pDynamicState = &dynamicState,
+        .layout = pipelineLayout,
+        .renderPass = *renderPass,
+        .subpass = 0,
+        .basePipelineHandle = VK_NULL_HANDLE,
+        .basePipelineIndex = -1,
+    };
 
-    if (vkCreatePipelineLayout(*device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create pipeline layout!");
-    }
-
-    VkGraphicsPipelineCreateInfo pipelineInfo{};
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = 2;
-    pipelineInfo.pStages = shaderStages;
-    pipelineInfo.pVertexInputState = &vertexInputInfo;
-    pipelineInfo.pInputAssemblyState = &inputAssembly;
-    pipelineInfo.pViewportState = &viewportState;
-    pipelineInfo.pRasterizationState = &rasterizer;
-    pipelineInfo.pMultisampleState = &multisampling;
-    pipelineInfo.pDepthStencilState = &depthStencil; // Optional
-    pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.pDynamicState = &dynamicState;
-    pipelineInfo.layout = pipelineLayout;
-    pipelineInfo.renderPass = *renderPass;
-    pipelineInfo.subpass = 0;
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
-    pipelineInfo.basePipelineIndex = -1;              // Optional
-
-    if (vkCreateGraphicsPipelines(*device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create graphics pipeline!");
-    }
+    GSGE_CHECK_RESULT(vkCreateGraphicsPipelines(*device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline));
 
     vkDestroyShaderModule(*device, fragShaderModule, nullptr);
     vkDestroyShaderModule(*device, vertShaderModule, nullptr);
@@ -304,108 +300,159 @@ void vulkan::createGraphicsPipeline()
 void vulkan::createGraphicsCommandBuffers()
 {
     graphicsCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = *graphicsCommandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = static_cast<uint32_t>(graphicsCommandBuffers.size());
+    VkCommandBufferAllocateInfo allocInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = *graphicsCommandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = static_cast<uint32_t>(graphicsCommandBuffers.size()),
+    };
 
-    if (vkAllocateCommandBuffers(*device, &allocInfo, graphicsCommandBuffers.data()) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to allocate command buffers!");
-    }
+    GSGE_CHECK_RESULT(vkAllocateCommandBuffers(*device, &allocInfo, graphicsCommandBuffers.data()));
 
-    GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsCommandBuffers[0], "Graphics command buffer 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(graphicsCommandBuffers[1], "Graphics command buffer 1");
-
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(graphicsCommandBuffers, "Graphics Command Buffer");
     SPDLOG_TRACE("[Graphics command buffers] Created");
 }
 
 void vulkan::createTransferCommandBuffers()
 {
     transferCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = *transferCommandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = static_cast<uint32_t>(transferCommandBuffers.size());
+    VkCommandBufferAllocateInfo allocInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = *transferCommandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = static_cast<uint32_t>(transferCommandBuffers.size()),
+    };
 
-    if (vkAllocateCommandBuffers(*device, &allocInfo, transferCommandBuffers.data()) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to allocate command buffers!");
-    }
+    GSGE_CHECK_RESULT(vkAllocateCommandBuffers(*device, &allocInfo, transferCommandBuffers.data()));
 
-    GSGE_DEBUGGER_SET_OBJECT_NAME(transferCommandBuffers[0], "Transfer command buffer 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(transferCommandBuffers[1], "Transfer command buffer 1");
-
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transferCommandBuffers, "Transfer command buffer");
     SPDLOG_TRACE("[Transfer command buffers] Created");
 }
 
-void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+void vulkan::createPresentCommandBuffers()
+{
+    presentCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+    VkCommandBufferAllocateInfo allocInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = *presentCommandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = static_cast<uint32_t>(presentCommandBuffers.size()),
+    };
+
+    GSGE_CHECK_RESULT(vkAllocateCommandBuffers(*device, &allocInfo, presentCommandBuffers.data()));
+
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(presentCommandBuffers, "Present command buffer");
+    SPDLOG_TRACE("[Present command buffers] Created");
+}
+
+void vulkan::recordPresentCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+{
+    VkCommandBufferBeginInfo beginInfo{.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+    GSGE_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+
+    if (device->getGraphicsQueueFamilyIdx() != device->getPresentQueueFamilyIdx())
+    {
+        // A layout transition which happens as part of an ownership transfer needs to be specified twice; one for the
+        // release, and one for the acquire. No srcStage/AccessMask is needed, waiting for a semaphore does that
+        // automatically (all commands in submitted queue need to be finished before semaphore signal).
+        // No dstStage/AccessMask is needed, signalling a semaphore does that automatically.
+        VkImageMemoryBarrier2 presentImageAO_MB = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            //.oldLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL, Renderpass handles that
+            //.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, Renderpass handles that
+            .srcQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
+            .dstQueueFamilyIndex = device->getPresentQueueFamilyIdx(),
+            .image = swapchain->getImage(imageIndex),
+            .subresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
+        };
+
+        VkDependencyInfo presentImageAOMBdepInfo = {
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .imageMemoryBarrierCount = 1,
+            .pImageMemoryBarriers = &presentImageAO_MB,
+        };
+
+        vkCmdPipelineBarrier2(presentCommandBuffers[currentFrame], &presentImageAOMBdepInfo);
+    }
+
+    // End command buffer
+    GSGE_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
+}
+
+void vulkan::recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 {
     // Begin command buffer
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    // beginInfo.flags = 0;                  // Optional
-    // beginInfo.pInheritanceInfo = nullptr; // Optional
+    VkCommandBufferBeginInfo beginInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
+    GSGE_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
     GSGE_DEBUGGER_CMD_BUFFER_LABEL_BEGIN(commandBuffer, "Graphics CB");
 
-    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to begin recording command buffer!");
-    }
+    // ---- MEMORY BARRIERS
+    // Buffer memory barrier to acquire ownership of transformation matrices in this queue family
+    VkBufferMemoryBarrier2 transformMatricesBufferMB_AO{
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+        .pNext = VK_NULL_HANDLE,
+        .srcStageMask = 0,
+        .srcAccessMask = 0,
+        .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_ATTRIBUTE_INPUT_BIT,
+        .dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT,
+        .srcQueueFamilyIndex = device->getTransferQueueFamilyIdx(),
+        .dstQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
+        .buffer = transformMatricesBuffer[currentFrame],
+        .offset = 0,
+        .size = VK_WHOLE_SIZE,
+    };
 
-    // Memory buffer barrier
-    VkBufferMemoryBarrier2 memBarrier{};
-    memBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
-    memBarrier.pNext = VK_NULL_HANDLE;
-    memBarrier.dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT;
-    memBarrier.dstAccessMask = VK_ACCESS_2_MEMORY_READ_BIT;
-    memBarrier.srcQueueFamilyIndex = device->getTransferQueueFamilyIdx();
-    memBarrier.dstQueueFamilyIndex = device->getGraphicsQueueFamilyIdx();
-    memBarrier.buffer = transformMatricesBuffer[currentFrame];
-    memBarrier.offset = 0;
-    memBarrier.size = VK_WHOLE_SIZE;
+    VkDependencyInfo depInfo{
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .bufferMemoryBarrierCount = 1,
+        .pBufferMemoryBarriers = &transformMatricesBufferMB_AO,
+    };
 
-    VkDependencyInfo depInfo{};
-    depInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
-    depInfo.pBufferMemoryBarriers = &memBarrier;
-    depInfo.bufferMemoryBarrierCount = 1;
-
-    vkCmdPipelineBarrier2(graphicsCommandBuffers[currentFrame], &depInfo);
+    vkCmdPipelineBarrier2(commandBuffer, &depInfo);
 
     // Begin render pass
-    VkRenderPassBeginInfo renderPassInfo{};
-    std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = {0.05f, 0.05f, 0.05f, 1.0f};
+    std::array<VkClearValue, 3> clearValues{};
+    clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
     clearValues[1].depthStencil = {1.0f, 0};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = *renderPass;
-    renderPassInfo.framebuffer = (*framebuffer)[imageIndex];
-    renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = swapchain->getExtent();
-    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-    renderPassInfo.pClearValues = clearValues.data();
+    clearValues[2].color = {0.02f, 0.02f, 0.02f, 1.0f};
+
+    VkRenderPassBeginInfo renderPassInfo{
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .renderPass = *renderPass,
+        .framebuffer = (*framebuffer)[imageIndex],
+        .renderArea =
+            {
+                .offset = {0, 0},
+                .extent = swapchain->getExtent(),
+            },
+        .clearValueCount = static_cast<uint32_t>(clearValues.size()),
+        .pClearValues = clearValues.data(),
+    };
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     // Bind pipeline
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
     // Set viewport
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = static_cast<float>(swapchain->getExtent().width);
-    viewport.height = static_cast<float>(swapchain->getExtent().height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
+    VkViewport viewport{
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = static_cast<float>(swapchain->getExtent().width),
+        .height = static_cast<float>(swapchain->getExtent().height),
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f,
+    };
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
     // Set up scissor
-    VkRect2D scissor{};
-    scissor.offset = {0, 0};
-    scissor.extent = swapchain->getExtent();
+    VkRect2D scissor{
+        .offset = {0, 0},
+        .extent = swapchain->getExtent(),
+    };
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
     // Bind vertex and index buffers
@@ -428,21 +475,46 @@ void vulkan::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
     // End render pass
     vkCmdEndRenderPass(commandBuffer);
 
-    // End command buffer
-    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to record command buffer!");
-    }
+    // ---- MEMORY BARRIERS
+    // Release ownership of an image and transition image layout for presentation
+    // But what happens if QF are equal? No ownership transfer? does ownership apply only to queue family and not queue itself?
+    // If the values of srcQueueFamilyIndex and dstQueueFamilyIndex are equal, no ownership transfer is performed,
+    // and the barrier operates as if they were both set to VK_QUEUE_FAMILY_IGNORED.
+    // if (device->getGraphicsQueueFamilyIdx() != device->getPresentQueueFamilyIdx())
+    //{
+    //    VkImageMemoryBarrier2 presentImageReleaseMB{
+    //        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+    //        .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+    //        .srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+    //        .dstStageMask = VK_PIPELINE_STAGE_2_NONE, // or 0 - this is ownership release
+    //        .dstAccessMask = VK_ACCESS_2_NONE,        // or 0 - this is ownership release
+    //        //.oldLayout = COLOR_ATTACHMENT_OPTIMAL,  // This is done in renderpass automatically
+    //        //.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, // This is done in renderpass automatically
+    //        .srcQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
+    //        .dstQueueFamilyIndex = device->getPresentQueueFamilyIdx(),
+    //        .image = swapchain->getImage(imageIndex),
+    //        .subresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1},
+    //    };
+
+    //    VkDependencyInfo depInfo2{
+    //        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+    //        .imageMemoryBarrierCount = 1,
+    //        .pImageMemoryBarriers = &presentImageReleaseMB,
+    //    };
+
+    //    vkCmdPipelineBarrier2(commandBuffer, &depInfo2);
+    //}
 
     GSGE_DEBUGGER_CMD_BUFFER_LABEL_END(commandBuffer);
+
+    // End command buffer
+    GSGE_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
 }
 
 void vulkan::drawFrame()
 {
     EASY_FUNCTION(profiler::colors::Green400);
     EASY_VALUE("currentFrame", currentFrame);
-
-    uint32_t imageIndex;
 
     if (isResizing)
     {
@@ -454,20 +526,21 @@ void vulkan::drawFrame()
         isResizing = false;
     }
 
-    // wait until queue has finished processing previous graphicsCommandBuffers[currentFrame]
-    EASY_BLOCK("Wait for Fence");
-    VkResult res1 = vkWaitForFences(*device, 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX);
-    if (res1 == VK_TIMEOUT)
-    {
-        SPDLOG_ERROR("Fence timeout");
-    }
-    EASY_END_BLOCK;
+    GSGE_CHECK_RESULT(vkWaitForFences(*device, 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX));
 
-    // Acquire next available image
-    EASY_BLOCK("Aquire next img");
-    VkResult result =
-        vkAcquireNextImageKHR(*device, *swapchain, UINT64_MAX, imageAquiredSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+    uint32_t swapchainImageIndex;
 
+    VkAcquireNextImageInfoKHR acquireInfo{
+        .sType = VK_STRUCTURE_TYPE_ACQUIRE_NEXT_IMAGE_INFO_KHR,
+        .pNext = nullptr,
+        .swapchain = *swapchain,
+        .timeout = UINT64_MAX,
+        .semaphore = imageAquiredSemaphores[currentFrame],
+        .fence = VK_NULL_HANDLE,
+        .deviceMask = 1, // TODO: For now assuming only device with bit 0 set
+    };
+
+    VkResult result = vkAcquireNextImage2KHR(*device, &acquireInfo, &swapchainImageIndex);
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
     {
         isResizing = true;
@@ -477,72 +550,122 @@ void vulkan::drawFrame()
     {
         throw std::runtime_error("failed to acquire swapchain image!");
     }
+
+    EASY_BLOCK("Record command buffers");
+    // Reset a fence indicating that drawing has been finished
+    GSGE_CHECK_RESULT(vkResetFences(*device, 1, &drawingFinishedFences[currentFrame]));
+    recordGraphicsCommandBuffer(graphicsCommandBuffers[currentFrame], swapchainImageIndex);
+    recordPresentCommandBuffer(presentCommandBuffers[currentFrame], swapchainImageIndex);
     EASY_END_BLOCK;
 
-    EASY_BLOCK("Update buffers");
-    updateTransformMatrixBuffer(currentFrame);
-    updateUniformBuffer(currentFrame);
-    EASY_END_BLOCK;
-
-    EASY_BLOCK("Record command buffer");
-    //  Reset a fence indicating that drawing has been finished
-    vkResetFences(*device, 1, &drawingFinishedFences[currentFrame]);
-    recordCommandBuffer(graphicsCommandBuffers[currentFrame], imageIndex);
-    EASY_END_BLOCK;
-    //  Queue submit info
-
+    // Graphics queue submit info
     EASY_BLOCK("Queue submit");
-    VkCommandBufferSubmitInfo commandBufferSubmitInfo{};
-    commandBufferSubmitInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
-    commandBufferSubmitInfo.commandBuffer = graphicsCommandBuffers[currentFrame];
+    VkCommandBufferSubmitInfo graphicsCommandBufferSubmitInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .commandBuffer = graphicsCommandBuffers[currentFrame],
+    };
 
-    VkSemaphoreSubmitInfo imageAquiredSemaphoreSubmitInfo{};
-    imageAquiredSemaphoreSubmitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
-    imageAquiredSemaphoreSubmitInfo.semaphore = imageAquiredSemaphores[currentFrame];
+    // Sempahore to wait on until image acquisition is complete. stageMask defines second synchronization scope
+    // https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#synchronization-semaphores-waiting
+    // The second synchronization scope includes every command submitted in the same batch. In the case of vkQueueSubmit,
+    // the second synchronization scope is limited to operations on the pipeline stages determined by the destination stage mask
+    // specified by the corresponding element of pWaitDstStageMask. In the case of vkQueueSubmit2, the second synchronization
+    // scope is limited to the pipeline stage specified by VkSemaphoreSubmitInfo::stageMask. Also, in the case of either
+    // vkQueueSubmit2 or vkQueueSubmit, the second synchronization scope additionally includes all commands that occur later in
+    // submission order.
+    VkSemaphoreSubmitInfo imageAquiredSemaphoreSubmitInfo{
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = imageAquiredSemaphores[currentFrame],
+        .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+    };
 
-    VkSemaphoreSubmitInfo renderFinishedSemaphoreSubmitInfo{};
-    renderFinishedSemaphoreSubmitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
-    renderFinishedSemaphoreSubmitInfo.semaphore = renderFinishedSemaphores[currentFrame];
+    VkSemaphoreSubmitInfo transferFinishedSemaphoreSubmitInfo{
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = transferFinishedSemaphores[currentFrame],
+        .stageMask = VK_PIPELINE_STAGE_2_VERTEX_ATTRIBUTE_INPUT_BIT,
+    };
 
-    VkSubmitInfo2 submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
-    submitInfo.waitSemaphoreInfoCount = 1;
-    submitInfo.pWaitSemaphoreInfos = &imageAquiredSemaphoreSubmitInfo;
-    submitInfo.signalSemaphoreInfoCount = 1;
-    submitInfo.pSignalSemaphoreInfos = &renderFinishedSemaphoreSubmitInfo;
-    submitInfo.commandBufferInfoCount = 1;
-    submitInfo.pCommandBufferInfos = &commandBufferSubmitInfo;
+    std::array<VkSemaphoreSubmitInfo, 2> waitSemaphoresInfos = {
+        imageAquiredSemaphoreSubmitInfo,
+        transferFinishedSemaphoreSubmitInfo,
+    };
 
-    if (vkQueueSubmit2(device->getGraphicsQueue(), 1, &submitInfo, drawingFinishedFences[currentFrame]) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to submit draw command buffer!");
-    }
+    VkSemaphoreSubmitInfo renderFinishedSemaphoreSubmitInfo{
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = renderFinishedSemaphores[currentFrame],
+        .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+    };
+
+    VkSubmitInfo2 graphicsQueueSubmitInfo{
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .pNext = nullptr,
+        .waitSemaphoreInfoCount = static_cast<uint32_t>(waitSemaphoresInfos.size()),
+        .pWaitSemaphoreInfos = waitSemaphoresInfos.data(),
+        .commandBufferInfoCount = 1,
+        .pCommandBufferInfos = &graphicsCommandBufferSubmitInfo,
+        .signalSemaphoreInfoCount = 1,
+        .pSignalSemaphoreInfos = &renderFinishedSemaphoreSubmitInfo,
+    };
+
+    GSGE_CHECK_RESULT(
+        vkQueueSubmit2(device->getGraphicsQueue(), 1, &graphicsQueueSubmitInfo, drawingFinishedFences[currentFrame]));
+
     EASY_END_BLOCK;
 
+    //// present queue submission
+    // VkSemaphoreSubmitInfo prePresentCompleteSemaphoreInfo{
+    //     .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+    //     .semaphore = prePresentCompleteSemaphores[currentFrame],
+    //     .stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+    // };
+
+    // VkCommandBufferSubmitInfo presentCommandBufferInfo{
+    //     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+    //     .commandBuffer = presentCommandBuffers[currentFrame],
+    // };
+
+    // VkSubmitInfo2 prePresentSubmitInfo{
+    //     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+    //     .waitSemaphoreInfoCount = 1,
+    //     .pWaitSemaphoreInfos = &renderFinishedSemaphoreSubmitInfo,
+    //     .commandBufferInfoCount = 1,
+    //     .pCommandBufferInfos = &presentCommandBufferInfo,
+    //     .signalSemaphoreInfoCount = 1,
+    //     .pSignalSemaphoreInfos = &prePresentCompleteSemaphoreInfo,
+    // };
+
+    ////result = vkQueueSubmit2(device->getPresentQueue(), 1, &prePresentSubmitInfo, nullptr);
+    // if (result != VK_SUCCESS)
+    //{
+    //     SPDLOG_CRITICAL("Error: {}", static_cast<int>(result));
+    //     throw std::runtime_error("failed to submit present command buffer!");
+    // }
     EASY_BLOCK("Present");
+
     VkSwapchainKHR swapchains = {*swapchain};
-    VkPresentInfoKHR presentInfo{};
-    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = &renderFinishedSemaphores[currentFrame];
-    presentInfo.swapchainCount = 1;
-    presentInfo.pSwapchains = &swapchains;
-    presentInfo.pImageIndices = &imageIndex;
-    presentInfo.pResults = nullptr;
+    VkPresentInfoKHR presentInfo{
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &renderFinishedSemaphores[currentFrame],
+        .swapchainCount = 1,
+        .pSwapchains = &swapchains,
+        .pImageIndices = &swapchainImageIndex,
+        .pResults = nullptr,
+    };
 
     // Presentation of current frame's image after renderFinishedSemaphore[currentFrame] is signalled
-    vkQueuePresentKHR(device->getPresentQueue(), &presentInfo);
+    GSGE_CHECK_RESULT(vkQueuePresentKHR(device->getPresentQueue(), &presentInfo));
     EASY_END_BLOCK;
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 /**
- * \brief Recreate swapchain and all dependent objects when surface size changes.
+ * @brief Recreate swapchain and all dependent objects when surface size changes.
  *
  */
 void vulkan::handleSurfaceResize()
 {
-    vkDeviceWaitIdle(*device);
+    GSGE_CHECK_RESULT(vkDeviceWaitIdle(*device));
     freeCommandBuffers();
     destroySyncObjects();
 
@@ -560,9 +683,15 @@ void vulkan::handleSurfaceResize()
     createGraphicsCommandBuffers();
     createSyncObjects();
     swapchainAspectChanged = true;
-    vkDeviceWaitIdle(*device);
+    GSGE_CHECK_RESULT(vkDeviceWaitIdle(*device));
 }
 
+/**
+ * @brief Recreate frame resources when number of samples per pixel changes.
+ *
+ * When MSAA changes, framebuffer resources need to be recreated as their sample count is declared
+ * during creation.
+ */
 void vulkan::handleMSAAChange()
 {
     vkDeviceWaitIdle(*device);
@@ -610,35 +739,36 @@ void vulkan::createSyncObjects()
 {
     imageAquiredSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    prePresentCompleteSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    transferFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     drawingFinishedFences.resize(MAX_FRAMES_IN_FLIGHT);
     transferFinishedFences.resize(MAX_FRAMES_IN_FLIGHT);
 
-    VkSemaphoreCreateInfo semaphoreInfo{};
-    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    VkSemaphoreCreateInfo semaphoreInfo{
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+    };
 
-    VkFenceCreateInfo fenceInfo{};
-    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    VkFenceCreateInfo fenceInfo{
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+    };
+
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        if (vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &imageAquiredSemaphores[i]) != VK_SUCCESS ||
-            vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-            vkCreateFence(*device, &fenceInfo, nullptr, &drawingFinishedFences[i]) != VK_SUCCESS ||
-            vkCreateFence(*device, &fenceInfo, nullptr, &transferFinishedFences[i]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create synchronization objects for a frame!");
-        }
+        GSGE_CHECK_RESULT(vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &imageAquiredSemaphores[i]));
+        GSGE_CHECK_RESULT(vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]));
+        GSGE_CHECK_RESULT(vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &prePresentCompleteSemaphores[i]));
+        GSGE_CHECK_RESULT(vkCreateSemaphore(*device, &semaphoreInfo, nullptr, &transferFinishedSemaphores[i]));
+        GSGE_CHECK_RESULT(vkCreateFence(*device, &fenceInfo, nullptr, &drawingFinishedFences[i]));
+        GSGE_CHECK_RESULT(vkCreateFence(*device, &fenceInfo, nullptr, &transferFinishedFences[i]));
     }
 
-    GSGE_DEBUGGER_SET_OBJECT_NAME(drawingFinishedFences[0], "Drawing Finished Fence 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(drawingFinishedFences[1], "Drawing Finished Fence 1");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(transferFinishedFences[0], "Transfer Finished Fence 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(transferFinishedFences[1], "Transfer Finished Fence 1");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(imageAquiredSemaphores[0], "Image Acquired Semaphore 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(imageAquiredSemaphores[1], "Image Acquired Semaphore 1");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(renderFinishedSemaphores[0], "Render Finished Semaphore 0");
-    GSGE_DEBUGGER_SET_OBJECT_NAME(renderFinishedSemaphores[1], "Render Finished Semaphore 1");
-
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(drawingFinishedFences, "Drawing finished fence");
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transferFinishedFences, "Transfer finished fence");
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(imageAquiredSemaphores, "Image acquired semaphore");
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(renderFinishedSemaphores, "Render finished semaphore");
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(prePresentCompleteSemaphores, "Pre-present complete semaphore");
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transferFinishedSemaphores, "Transfer finished semaphore");
     SPDLOG_TRACE("[Synchronization objects] Created");
 }
 
@@ -652,6 +782,8 @@ void vulkan::destroySyncObjects()
     {
         vkDestroySemaphore(*device, imageAquiredSemaphores[i], nullptr);
         vkDestroySemaphore(*device, renderFinishedSemaphores[i], nullptr);
+        vkDestroySemaphore(*device, prePresentCompleteSemaphores[i], nullptr);
+        vkDestroySemaphore(*device, transferFinishedSemaphores[i], nullptr);
         vkDestroyFence(*device, transferFinishedFences[i], nullptr);
         vkDestroyFence(*device, drawingFinishedFences[i], nullptr);
     }
@@ -698,7 +830,7 @@ void vulkan::createVertexBuffer()
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
     void *data;
-    vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    GSGE_CHECK_RESULT(vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data));
     memcpy(data, vertices.data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(*device, stagingBufferMemory);
 
@@ -706,8 +838,12 @@ void vulkan::createVertexBuffer()
                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
 
     copyBuffer(stagingBuffer, vertexBuffer, bufferSize, false);
+
+    GSGE_CHECK_RESULT(vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX));
     vkDestroyBuffer(*device, stagingBuffer, nullptr);
     vkFreeMemory(*device, stagingBufferMemory, nullptr);
+
+    GSGE_DEBUGGER_SET_OBJECT_NAME(vertexBuffer, "Vertex buffer");
 }
 
 uint32_t vulkan::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
@@ -751,7 +887,7 @@ void vulkan::prepareVertexOffsets(std::vector<uint32_t> data)
     vertexOffsets.assign(data.begin(), data.end());
 }
 
-void vulkan::pushTransformMatricesToGpu(std::vector<DirectX::XMMATRIX>& data)
+void vulkan::pushTransformMatricesToGpu(std::vector<DirectX::XMMATRIX> &data)
 {
     transformMatrices = &data;
 }
@@ -759,88 +895,161 @@ void vulkan::pushTransformMatricesToGpu(std::vector<DirectX::XMMATRIX>& data)
 void vulkan::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
                           VkDeviceMemory &bufferMemory)
 {
-    VkBufferCreateInfo bufferInfo{};
-    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferInfo.size = size;
-    bufferInfo.usage = usage;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    VkBufferCreateInfo bufferInfo{
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = size,
+        .usage = usage,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+    };
 
-    if (vkCreateBuffer(*device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create buffer!");
-    }
+    GSGE_CHECK_RESULT(vkCreateBuffer(*device, &bufferInfo, nullptr, &buffer));
 
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(*device, buffer, &memRequirements);
 
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+    VkMemoryAllocateInfo allocInfo{
+        .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .allocationSize = memRequirements.size,
+        .memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties),
+    };
 
-    if (vkAllocateMemory(*device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to allocate buffer memory!");
-    }
+    GSGE_CHECK_RESULT(vkAllocateMemory(*device, &allocInfo, nullptr, &bufferMemory));
 
-    vkBindBufferMemory(*device, buffer, bufferMemory, 0);
+    VkBindBufferMemoryInfo bindInfo{
+        .sType = VK_STRUCTURE_TYPE_BIND_BUFFER_MEMORY_INFO,
+        .buffer = buffer,
+        .memory = bufferMemory,
+        .memoryOffset = 0,
+    };
+
+    GSGE_CHECK_RESULT(vkBindBufferMemory2(*device, 1, &bindInfo));
 }
 
 void vulkan::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, bool withSemaphores)
 {
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    VkCommandBufferBeginInfo beginInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
 
-    vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_FALSE, 2000000000);
-    vkResetFences(*device, 1, &transferFinishedFences[currentFrame]);
+    GSGE_CHECK_RESULT(vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_FALSE, UINT64_MAX));
+    GSGE_CHECK_RESULT(vkResetFences(*device, 1, &transferFinishedFences[currentFrame]));
 
+    GSGE_CHECK_RESULT(vkBeginCommandBuffer(transferCommandBuffers[currentFrame], &beginInfo));
     GSGE_DEBUGGER_CMD_BUFFER_LABEL_BEGIN(transferCommandBuffers[currentFrame], "transfer CB");
 
-    vkBeginCommandBuffer(transferCommandBuffers[currentFrame], &beginInfo);
+    VkBufferCopy2 copyRegion{
+        .sType = VK_STRUCTURE_TYPE_BUFFER_COPY_2,
+        .pNext = VK_NULL_HANDLE,
+        .srcOffset = 0,
+        .dstOffset = 0,
+        .size = size,
+    };
 
-    VkBufferCopy copyRegion{};
-    copyRegion.srcOffset = 0; // Optional
-    copyRegion.dstOffset = 0; // Optional
-    copyRegion.size = size;
+    VkCopyBufferInfo2 cbi{
+        .sType = VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2,
+        .pNext = VK_NULL_HANDLE,
+        .srcBuffer = srcBuffer,
+        .dstBuffer = dstBuffer,
+        .regionCount = 1,
+        .pRegions = &copyRegion,
+    };
 
-    vkCmdCopyBuffer(transferCommandBuffers[currentFrame], srcBuffer, dstBuffer, 1, &copyRegion);
+    /*
+    If buffer was created with VK_SHARING_MODE_EXCLUSIVE, and srcQueueFamilyIndex is not equal to dstQueueFamilyIndex,
+    this memory barrier defines a queue family transfer operation.
+
+    When executed on a queue in the family identified by srcQueueFamilyIndex,
+    this barrier defines a queue family release operation for the specified buffer range, and the second synchronization
+    and access scopes do not synchronize operations on that queue.
+
+    When executed on a queue in the family identified by dstQueueFamilyIndex,
+    this barrier defines a queue family acquire operation for the specified buffer range, and the first synchronization and access
+    scopes do not synchronize operations on that queue.
+
+    If the values of srcQueueFamilyIndex and dstQueueFamilyIndex are equal, no ownership transfer is performed,
+    and the barrier operates as if they were both set to VK_QUEUE_FAMILY_IGNORED.
+
+    NOTE: If an application does not need the contents of a resource to remain valid when transferring from one queue family to
+    another, then the ownership transfer should be skipped. - since transform matrices buffer is updated every frame we do not
+    care about it's contents from previous frame and do not need to transfer ownership back from graphics queue family
+
+    https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap7.html#synchronization-queue-transfers
+    */
+
+    VkBufferMemoryBarrier2 host_write_complete{
+        .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+        .pNext = VK_NULL_HANDLE,
+        .srcStageMask = VK_PIPELINE_STAGE_2_HOST_BIT,
+        .srcAccessMask = VK_ACCESS_2_HOST_WRITE_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+        .dstAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT,
+        .buffer = srcBuffer,
+        .offset = 0,
+        .size = VK_WHOLE_SIZE,
+    };
+
+    VkDependencyInfo host_write_depInfo{
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .bufferMemoryBarrierCount = 1,
+        .pBufferMemoryBarriers = &host_write_complete,
+    };
+
+    vkCmdPipelineBarrier2(transferCommandBuffers[currentFrame], &host_write_depInfo);
+
+    vkCmdCopyBuffer2(transferCommandBuffers[currentFrame], &cbi);
 
     if (withSemaphores)
     {
-        // Memory buffer barrier
-        VkBufferMemoryBarrier2 memBarrier{};
-        memBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
-        memBarrier.pNext = VK_NULL_HANDLE;
-        memBarrier.srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
-        memBarrier.srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT;
-        memBarrier.srcQueueFamilyIndex = device->getTransferQueueFamilyIdx();
-        memBarrier.dstQueueFamilyIndex = device->getGraphicsQueueFamilyIdx();
-        memBarrier.buffer = transformMatricesBuffer[currentFrame];
-        memBarrier.offset = 0;
-        memBarrier.size = VK_WHOLE_SIZE;
+        // Release buffer ownership from transfer queue family
+        // Second synchronization and access scopes do not synchronize operations on that queue
+        VkBufferMemoryBarrier2 memBarrier{
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+            .pNext = VK_NULL_HANDLE,
+            .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+            .srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT,
+            .dstStageMask = 0,
+            .dstAccessMask = 0,
+            .srcQueueFamilyIndex = device->getTransferQueueFamilyIdx(),
+            .dstQueueFamilyIndex = device->getGraphicsQueueFamilyIdx(),
+            .buffer = dstBuffer,
+            .offset = 0,
+            .size = VK_WHOLE_SIZE,
+        };
 
-        VkDependencyInfo depInfo{};
-        depInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
-        depInfo.pBufferMemoryBarriers = &memBarrier;
-        depInfo.bufferMemoryBarrierCount = 1;
+        VkDependencyInfo depInfo{
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .bufferMemoryBarrierCount = 1,
+            .pBufferMemoryBarriers = &memBarrier,
+        };
 
         vkCmdPipelineBarrier2(transferCommandBuffers[currentFrame], &depInfo);
     }
-    vkEndCommandBuffer(transferCommandBuffers[currentFrame]);
 
     GSGE_DEBUGGER_CMD_BUFFER_LABEL_END(transferCommandBuffers[currentFrame]);
+    GSGE_CHECK_RESULT(vkEndCommandBuffer(transferCommandBuffers[currentFrame]));
 
-    VkCommandBufferSubmitInfo cbSubmitInfo{};
-    cbSubmitInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
-    cbSubmitInfo.commandBuffer = transferCommandBuffers[currentFrame];
+    VkCommandBufferSubmitInfo cbSubmitInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .commandBuffer = transferCommandBuffers[currentFrame],
+    };
 
-    VkSubmitInfo2 submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
-    submitInfo.commandBufferInfoCount = 1;
-    submitInfo.pCommandBufferInfos = &cbSubmitInfo;
+    // Semaphore to signal completion of transfer operation
+    VkSemaphoreSubmitInfo transferSemaphoreInfo{
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = transferFinishedSemaphores[currentFrame],
+        .stageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+    };
 
-    vkQueueSubmit2(device->getTransferQueue(), 1, &submitInfo, transferFinishedFences[currentFrame]);
+    VkSubmitInfo2 submitInfo{
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .commandBufferInfoCount = 1,
+        .pCommandBufferInfos = &cbSubmitInfo,
+        .signalSemaphoreInfoCount = static_cast<uint32_t>(withSemaphores ? 1 : 0),
+        .pSignalSemaphoreInfos = withSemaphores ? &transferSemaphoreInfo : nullptr,
+    };
+
+    GSGE_CHECK_RESULT(vkQueueSubmit2(device->getTransferQueue(), 1, &submitInfo, transferFinishedFences[currentFrame]));
 }
 
 void vulkan::createDescriptorSetLayouts()
@@ -860,16 +1069,14 @@ void vulkan::createDescriptorSetLayouts()
     descriptorSetLayoutBinding[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
     descriptorSetLayoutBinding[1].pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutCreateInfo layoutInfo{};
-    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = static_cast<uint32_t>(descriptorSetLayoutBinding.size());
-    layoutInfo.pBindings = descriptorSetLayoutBinding.data();
+    VkDescriptorSetLayoutCreateInfo layoutInfo{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = static_cast<uint32_t>(descriptorSetLayoutBinding.size()),
+        .pBindings = descriptorSetLayoutBinding.data(),
+    };
 
-    if (vkCreateDescriptorSetLayout(*device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create descriptor set layout!");
-    }
-
+    GSGE_CHECK_RESULT(vkCreateDescriptorSetLayout(*device, &layoutInfo, nullptr, &descriptorSetLayout));
+    
     SPDLOG_TRACE("[Descriptor set layouts] Created");
 }
 
@@ -887,6 +1094,7 @@ void vulkan::createUniformBuffers()
                      uniformBuffersMemory[i]);
     }
 
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(uniformBuffers, "Uniform buffer");
     SPDLOG_TRACE("[Uniform buffers] Created");
 }
 
@@ -898,35 +1106,30 @@ void vulkan::createDescriptorPool()
     poolSize[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     poolSize[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-    VkDescriptorPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.flags = 0;
-    poolInfo.poolSizeCount = static_cast<uint32_t>(poolSize.size());
-    poolInfo.pPoolSizes = poolSize.data();
-    poolInfo.maxSets = 20;
+    VkDescriptorPoolCreateInfo poolInfo{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .flags = 0,
+        .maxSets = 20,
+        .poolSizeCount = static_cast<uint32_t>(poolSize.size()),
+        .pPoolSizes = poolSize.data(),
+    };
 
-    if (vkCreateDescriptorPool(*device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create descriptor pool!");
-    }
-
+    GSGE_CHECK_RESULT(vkCreateDescriptorPool(*device, &poolInfo, nullptr, &descriptorPool));
     SPDLOG_TRACE("[Descriptor pool] created");
 }
 
 void vulkan::createDescriptorSets()
 {
     std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
-    VkDescriptorSetAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = descriptorPool;
-    allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-    allocInfo.pSetLayouts = layouts.data();
+    VkDescriptorSetAllocateInfo allocInfo{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = descriptorPool,
+        .descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT),
+        .pSetLayouts = layouts.data(),
+    };
 
     descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-    if (vkAllocateDescriptorSets(*device, &allocInfo, descriptorSets.data()) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to allocate descriptor sets!");
-    }
+    GSGE_CHECK_RESULT(vkAllocateDescriptorSets(*device, &allocInfo, descriptorSets.data()));
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -974,7 +1177,7 @@ void vulkan::updateUniformBufferEx(UniformBufferObject ubo)
 void vulkan::updateUniformBuffer(uint32_t currentImage)
 {
     void *data;
-    vkMapMemory(*device, uniformBuffersMemory[currentImage], 0, sizeof(local_ubo), 0, &data);
+    GSGE_CHECK_RESULT(vkMapMemory(*device, uniformBuffersMemory[currentImage], 0, sizeof(local_ubo), 0, &data));
     memcpy(data, &local_ubo, sizeof(local_ubo));
     vkUnmapMemory(*device, uniformBuffersMemory[currentImage]);
 }
@@ -989,7 +1192,7 @@ void vulkan::createIndexBuffer()
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
     void *data;
-    vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    GSGE_CHECK_RESULT(vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data));
     memcpy(data, indices.data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(*device, stagingBufferMemory);
 
@@ -998,8 +1201,11 @@ void vulkan::createIndexBuffer()
 
     copyBuffer(stagingBuffer, indexBuffer, bufferSize, false);
 
+    GSGE_CHECK_RESULT(vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX));
     vkDestroyBuffer(*device, stagingBuffer, nullptr);
     vkFreeMemory(*device, stagingBufferMemory, nullptr);
+
+    GSGE_DEBUGGER_SET_OBJECT_NAME(indexBuffer, "Index buffer");
 }
 
 void vulkan::createTransformMatricesBuffer()
@@ -1010,32 +1216,46 @@ void vulkan::createTransformMatricesBuffer()
     transformMatricesBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
     transformMatricesStagingBuffer.resize(MAX_FRAMES_IN_FLIGHT);
     transformMatricesStagingBufferMemory.resize(MAX_FRAMES_IN_FLIGHT);
+    transformMatricesMappedMemory.resize(MAX_FRAMES_IN_FLIGHT);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
                      transformMatricesStagingBuffer[i], transformMatricesStagingBufferMemory[i]);
 
         createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, transformMatricesBuffer[i], transformMatricesBufferMemory[i]);
+
+        vkMapMemory(*device, transformMatricesStagingBufferMemory[i], 0, bufferSize, 0, &transformMatricesMappedMemory[i]);
     }
+
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transformMatricesBuffer, "Transform matrices buffer");
+    GSGE_DEBUGGER_SET_INDEXED_OBJECT_NAME(transformMatricesStagingBuffer, "Transform matrices staging buffer");
 }
 
 void vulkan::updateTransformMatrixBuffer(uint32_t currentImage)
 {
     VkDeviceSize bufferSize = sizeof((*transformMatrices)[0]) * (*transformMatrices).size();
-    void *data;
-    vkMapMemory(*device, transformMatricesStagingBufferMemory[currentImage], 0, bufferSize, 0, &data);
-    memcpy(data, (*transformMatrices).data(), static_cast<size_t>(bufferSize));
-    vkUnmapMemory(*device, transformMatricesStagingBufferMemory[currentImage]);
+
+    memcpy(transformMatricesMappedMemory[currentImage], (*transformMatrices).data(), static_cast<size_t>(bufferSize));
+
+    // Flush memory from host cache
+    VkMappedMemoryRange memoryRange{
+        .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+        .memory = transformMatricesStagingBufferMemory[currentImage],
+        .offset = 0,
+        .size = VK_WHOLE_SIZE,
+    };
+
+    GSGE_CHECK_RESULT(vkFlushMappedMemoryRanges(*device, 1, &memoryRange));
+
     copyBuffer(transformMatricesStagingBuffer[currentImage], transformMatricesBuffer[currentImage], bufferSize, true);
 }
 
 /**
  * \brief Check if view aspect of current surface has changed.
  *
- * \return bool if view aspect changed
+ * \return true if view aspect changed
  * \return false if view aspect has not changed
  */
 bool vulkan::viewAspectChanged()
@@ -1066,7 +1286,7 @@ void vulkan::createVertexNormalsBuffer()
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
     void *data;
-    vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    GSGE_CHECK_RESULT(vkMapMemory(*device, stagingBufferMemory, 0, bufferSize, 0, &data));
     memcpy(data, vertexNormals.data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(*device, stagingBufferMemory);
 
@@ -1075,6 +1295,9 @@ void vulkan::createVertexNormalsBuffer()
 
     copyBuffer(stagingBuffer, vertexNormalsBuffer, bufferSize, false);
 
+    GSGE_CHECK_RESULT(vkWaitForFences(*device, 1, &transferFinishedFences[currentFrame], VK_TRUE, UINT64_MAX));
     vkDestroyBuffer(*device, stagingBuffer, nullptr);
     vkFreeMemory(*device, stagingBufferMemory, nullptr);
+
+    GSGE_DEBUGGER_SET_OBJECT_NAME(vertexNormalsBuffer, "Vertex normals buffer");
 }

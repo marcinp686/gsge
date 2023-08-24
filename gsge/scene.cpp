@@ -155,8 +155,6 @@ void scene::loadModel(entt::entity entity, std::string fileName, uint32_t meshId
     meshComp.nFaces = nFaces;
 
     auto view = registry.view<component::transform, component::motion>();
-
-    hostTransformMatrixBuffer.resize(view.size_hint() + 10);
 }
 
 void scene::update(float deltaTime)
@@ -215,13 +213,17 @@ void scene::prepareFrameData()
     uint32_t totVertices = 0;
     uint32_t totIndices = 0;
 
+    size_t totEntities = {0};
+
     for (auto entity : view)
     {
         auto &mesh = view.get<component::mesh>(entity);
         totVertices += mesh.nVertices;
         totIndices += mesh.nIndices;
+        totEntities++;
     }
 
+    hostTransformMatrixBuffer.resize(totEntities);
     hostVertexBuffer.reserve(totVertices);
     hostVertexNormalBuffer.reserve(totVertices);
     hostIndexBuffer.reserve(totIndices);

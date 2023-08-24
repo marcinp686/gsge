@@ -19,6 +19,9 @@ class stats
     float currentFps = 0.0f;
     float minFps = 10000.0f;
 
+    size_t frameNumber{0};
+
   private:
     timer frameTime;
+    timer totalRunningTime;
 };

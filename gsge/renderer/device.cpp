@@ -66,36 +66,38 @@ VkQueue Device::getPresentQueue() const
 
 void Device::querySurfaceCapabilities()
 {
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, *surface, &surfaceCapabilities);
+    GSGE_CHECK_RESULT(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, *surface, &surfaceCapabilities));
 }
 
 void Device::enumerateSurfaceFormats()
 {
     uint32_t formatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, *surface, &formatCount, nullptr);
+    GSGE_CHECK_RESULT(vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, *surface, &formatCount, nullptr));
 
     if (formatCount != 0)
     {
         surfaceFormats.resize(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, *surface, &formatCount, surfaceFormats.data());
+        GSGE_CHECK_RESULT(vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, *surface, &formatCount, surfaceFormats.data()));
     }
 }
 
 void Device::enumerateSurfacePresentModes()
 {
     uint32_t presentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, *surface, &presentModeCount, nullptr);
+    GSGE_CHECK_RESULT(vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, *surface, &presentModeCount, nullptr));
 
     if (presentModeCount != 0)
     {
         surfacePresentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, *surface, &presentModeCount, surfacePresentModes.data());
+        GSGE_CHECK_RESULT(
+            vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, *surface, &presentModeCount, surfacePresentModes.data()));
     }
 }
 
 /**
- * \brief Checks if current device surface extent is {0,0}.
- * If surface extent is {0,0} then window or app is minimized and we cannot create subsequent dependent objects
+ * @brief Checks if current device surface extent is {0,0}.
+ *
+ * @details If surface extent is {0,0} then window or app is minimized and we cannot create subsequent dependent objects
  * like images, views etc.
  */
 bool Device::isCurrentSurfaceExtentZero() const
@@ -110,7 +112,7 @@ void Device::pickPhysicalDevice()
 {
     // query the number of devices in system
     uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(*instance, &deviceCount, nullptr);
+    GSGE_CHECK_RESULT(vkEnumeratePhysicalDevices(*instance, &deviceCount, nullptr));
 
     if (deviceCount == 0)
     {
@@ -118,7 +120,7 @@ void Device::pickPhysicalDevice()
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
-    vkEnumeratePhysicalDevices(*instance, &deviceCount, devices.data());
+    GSGE_CHECK_RESULT(vkEnumeratePhysicalDevices(*instance, &deviceCount, devices.data()));
 
     // Use an ordered map to automatically sort candidates by increasing score
     std::multimap<uint64_t, VkPhysicalDevice> candidates;
@@ -216,7 +218,7 @@ void Device::findQueueFamilies()
     for (const auto &properties : queueFamilyProperties)
     {
         VkBool32 presentationSupport = VK_FALSE;
-        vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, *surface, &presentationSupport);
+        GSGE_CHECK_RESULT(vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, *surface, &presentationSupport));
 
         queueFamilies.push_back(QueueFamily{.index = i, .properties = properties, .presentSupport = presentationSupport});
         i++;
@@ -296,8 +298,7 @@ void Device::addQueueToCreate(uint32_t familyIdx, float priority, VkQueue *handl
         .name = queueName,
     };
 
-    queueFamilies[familyIdx]
-        .queues.push_back(newQueue);
+    queueFamilies[familyIdx].queues.push_back(newQueue);
     queueFamilies[familyIdx].priorities.push_back(priority);
 }
 
@@ -327,13 +328,7 @@ void Device::createLogicalDevice()
     deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
     deviceCreateInfo.pNext = &physDevFeaturesSelected.v10;
 
-    VkResult result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
-    if (result != VK_SUCCESS)
-    {
-        SPDLOG_CRITICAL("[Device] Creation failed with error: {}", static_cast<int>(result));
-        throw std::runtime_error("");
-    }
-
+    GSGE_CHECK_RESULT(vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device));
     GSGE_DEBUGGER_SET_DEVICE(device);
     SPDLOG_TRACE("[Device] Created");
 }

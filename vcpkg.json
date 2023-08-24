@@ -35,6 +35,10 @@
     {
       "name": "vulkan-memory-allocator",
       "version>=": "3.0.0"
+    },
+    {
+      "name": "fastgltf",
+      "version>=": "0.5.0"
     }
   ],
   "builtin-baseline": "f6a5d4e8eb7476b8d7fc12a56dff300c1c986131"
