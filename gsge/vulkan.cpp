@@ -82,10 +82,28 @@ vulkan::~vulkan()
 void vulkan::update()
 {
     EASY_FUNCTION(profiler::colors::Green200);
+        
+    EASY_BLOCK("Acquire image");
+    if (isResizing)
+    {
+        device->querySurfaceCapabilities();
+        if (device->isCurrentSurfaceExtentZero())
+            return;
+
+        handleSurfaceResize();
+        isResizing = false;
+    }
+
+    acquireNextImage();
+    if (isResizing)
+        return;
+    EASY_END_BLOCK;
+
     EASY_BLOCK("Update buffers");
     updateTransformMatrixBuffer(currentFrame);
-    updateUniformBuffer(currentFrame);
+    updateUniformBuffer(currentFrame);    
     EASY_END_BLOCK;
+
     drawFrame();
 }
 
@@ -379,6 +397,30 @@ void vulkan::recordPresentCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     GSGE_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
 }
 
+void vulkan::acquireNextImage()
+{
+    VkAcquireNextImageInfoKHR acquireInfo{
+        .sType = VK_STRUCTURE_TYPE_ACQUIRE_NEXT_IMAGE_INFO_KHR,
+        .pNext = nullptr,
+        .swapchain = *swapchain,
+        .timeout = UINT64_MAX,
+        .semaphore = imageAquiredSemaphores[currentFrame],
+        .fence = VK_NULL_HANDLE,
+        .deviceMask = 1, // TODO: For now assuming only device with bit 0 set
+    };
+
+    VkResult result = vkAcquireNextImage2KHR(*device, &acquireInfo, &swapchainImageIndex);
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+    {
+        isResizing = true;
+        return;
+    }
+    else if (result != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to acquire swapchain image!");
+    }
+}
+
 void vulkan::recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 {
     // Begin command buffer
@@ -516,40 +558,7 @@ void vulkan::drawFrame()
     EASY_FUNCTION(profiler::colors::Green400);
     EASY_VALUE("currentFrame", currentFrame);
 
-    if (isResizing)
-    {
-        device->querySurfaceCapabilities();
-        if (device->isCurrentSurfaceExtentZero())
-            return;
-
-        handleSurfaceResize();
-        isResizing = false;
-    }
-
     GSGE_CHECK_RESULT(vkWaitForFences(*device, 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX));
-
-    uint32_t swapchainImageIndex;
-
-    VkAcquireNextImageInfoKHR acquireInfo{
-        .sType = VK_STRUCTURE_TYPE_ACQUIRE_NEXT_IMAGE_INFO_KHR,
-        .pNext = nullptr,
-        .swapchain = *swapchain,
-        .timeout = UINT64_MAX,
-        .semaphore = imageAquiredSemaphores[currentFrame],
-        .fence = VK_NULL_HANDLE,
-        .deviceMask = 1, // TODO: For now assuming only device with bit 0 set
-    };
-
-    VkResult result = vkAcquireNextImage2KHR(*device, &acquireInfo, &swapchainImageIndex);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-    {
-        isResizing = true;
-        return;
-    }
-    else if (result != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to acquire swapchain image!");
-    }
 
     EASY_BLOCK("Record command buffers");
     // Reset a fence indicating that drawing has been finished
@@ -714,7 +723,7 @@ void vulkan::handleMSAAChange()
     createTransferCommandBuffers();
     createGraphicsCommandBuffers();
     createSyncObjects();
-    vkDeviceWaitIdle(*device);
+    GSGE_CHECK_RESULT(vkDeviceWaitIdle(*device));
 }
 
 /**

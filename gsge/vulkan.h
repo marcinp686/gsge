@@ -61,7 +61,8 @@ class vulkan
     GSGE_DEBUGGER_INSTANCE_DECL;
     GSGE_SETTINGS_INSTANCE_DECL;
 
-    uint32_t currentFrame = 0;
+    uint32_t currentFrame{0};
+    uint32_t swapchainImageIndex{0};
     const int MAX_FRAMES_IN_FLIGHT = 2;
     bool swapchainAspectChanged{true};    
     bool isResizing{false};
@@ -128,6 +129,7 @@ class vulkan
     void createPresentCommandBuffers();
     void recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void recordPresentCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    void acquireNextImage();
     void drawFrame();
     
     void handleSurfaceResize();
