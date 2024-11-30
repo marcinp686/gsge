@@ -29,6 +29,7 @@ std::unordered_map<VkResult, ErrorDetail> errorDetails = {
       "A requested pipeline creation would have required compilation, but the application "
       "requested compilation to not be performed.",
       false}},
+
     // ERROR CODES
     {VK_ERROR_OUT_OF_HOST_MEMORY, {"VK_ERROR_OUT_OF_HOST_MEMORY", "A host memory allocation has failed."}},
     {VK_ERROR_OUT_OF_DEVICE_MEMORY, {"VK_ERROR_OUT_OF_DEVICE_MEMORY", "A device memory allocation has failed."}},
@@ -46,7 +47,7 @@ std::unordered_map<VkResult, ErrorDetail> errorDetails = {
     {VK_ERROR_TOO_MANY_OBJECTS, {"VK_ERROR_TOO_MANY_OBJECTS", "Too many objects of the type have already been created."}},
     {VK_ERROR_FORMAT_NOT_SUPPORTED, {"VK_ERROR_FORMAT_NOT_SUPPORTED", "A requested format is not supported on this device."}},
     {VK_ERROR_FRAGMENTED_POOL,
-     {"VK_ERROR_FRAGMENTED_POOL", "A pool allocation has failed due to fragmentation of the pool’s memory. This must only be "
+     {"VK_ERROR_FRAGMENTED_POOL", "A pool allocation has failed due to fragmentation of the pool's memory. This must only be "
                                   "returned if no attempt to allocate host or device memory was made to accommodate the new "
                                   "allocation. This should be returned in preference to VK_ERROR_OUT_OF_POOL_MEMORY, but only if "
                                   "the implementation is certain that the pool allocation failure was due to fragmentation."}},
@@ -58,7 +59,8 @@ std::unordered_map<VkResult, ErrorDetail> errorDetails = {
      {"VK_ERROR_OUT_OF_DATE_KHR",
       "A surface has changed in such a way that it is no longer compatible with the swapchain, and further presentation requests "
       "using the swapchain will fail. Applications must query the new surface properties and recreate their swapchain if they "
-      "wish to continue presenting to the surface.",false}},
+      "wish to continue presenting to the surface.",
+      false}},
     {VK_ERROR_INCOMPATIBLE_DISPLAY_KHR,
      {"VK_ERROR_INCOMPATIBLE_DISPLAY_KHR", "The display used by a swapchain does not use the same presentable image layout, or "
                                            "is incompatible in a way that prevents sharing an image."}},
@@ -82,7 +84,7 @@ std::unordered_map<VkResult, ErrorDetail> errorDetails = {
     {VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT,
      {"VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT",
       "An operation on a swapchain created with VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT failed as it did not have "
-      "exclusive full-screen access. This may occur due to implementation-dependent reasons, outside of the application’s "
+      "exclusive full-screen access. This may occur due to implementation-dependent reasons, outside of the application's "
       "control."}},
     {VK_ERROR_VALIDATION_FAILED_EXT,
      {"VK_ERROR_VALIDATION_FAILED_EXT",
