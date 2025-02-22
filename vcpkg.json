@@ -6,40 +6,18 @@
   "dependencies": [
     {
       "name": "spdlog",
-      "version>=": "1.10.0",
-      "platform": "windows & x64",
-      "features": ["wchar"]
+      "features": [
+        "wchar"
+      ]
     },
-    {
-      "name": "glfw3",
-      "version>=": "3.3.8",
-      "platform": "windows & x64"     
-    },
-    {
-      "name": "directxmath",
-      "platform": "windows & x64"
-    },
-    {
-      "name": "assimp",
-      "platform": "windows & x64",
-      "version>=": "5.2.4"
-    },
-    {
-      "name": "glm",
-      "platform": "windows & x64"
-    },
-    {
-      "name": "entt",
-      "version>=": "3.12.0"
-    },
-    {
-      "name": "vulkan-memory-allocator",
-      "version>=": "3.0.0"
-    },
-    {
-      "name": "fastgltf",
-      "version>=": "0.5.0"
-    }
-  ],
-  "builtin-baseline": "f6a5d4e8eb7476b8d7fc12a56dff300c1c986131"
+    "glfw3",
+    "directxmath",
+    "assimp",
+    "glm",
+    "entt",
+    "vulkan-memory-allocator",
+    "fastgltf",
+    "vulkan-loader",
+    "tracy"
+  ]
 }
