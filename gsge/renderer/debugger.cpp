@@ -1,3 +1,4 @@
+#if !defined NDEBUG
 #include "debugger.h"
 
 Debugger::Debugger()
@@ -205,3 +206,4 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Debugger::debugCallback(VkDebugUtilsMessageSeveri
 
     return VK_FALSE;
 }
+#endif
