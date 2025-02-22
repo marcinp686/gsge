@@ -1,8 +1,8 @@
 # GSGE
 Giraffe Studio Game Engine is a place to learn some Vulkan 1.3 API.
 Well, it's not exactly a game engine. I aim to make it a benchmarking app for GPUs using Vulkan API.<br><br>
-When I started learning Vulkan I faced one major issue: Which way of making things is correct and fastest?<br> Should I use the same Queue Family Index for the graphics queue and presentation queue? I read that using a dedicated transfer queue makes memory transfers faster, but does it always? And faster by how much? GPU vendors tend to give general guidelines on how to do things, but does it work for each GPU from the same vendor? Does an RX 6700XT benefit from a certain solution by the same amount as an RX 7900XT does? Is dynamic rendering faster than "traditional"?<br>That's what this project aims to do - give measurements to different methods of rendering using Vulkan so we can conclude off of it.<br><br>
-Additionally, I noticed, that Vulkan implementation is not always correct across vendors. Same code, same specification, different vendor and slightly different behaviour. It would be nice to pinpoint these issues (one such issue is resource ownership across different queues in Vulkan 1.3 / synchronization2).
+When I started learning Vulkan, I faced one major issue: Which way of making things is correct and fastest?<br> Should I use the same Queue Family Index for the graphics and presentation queues? I read that using a dedicated transfer queue makes memory transfers faster, but does it always? And faster by how much? GPU vendors tend to give general guidelines on how to do things, but does it work for each GPU from the same vendor? Does an RX 6700XT benefit from a certain solution by the same amount as an RX 7900XT? Is dynamic rendering faster than "traditional"?<br> this project aims to give measurements to different rendering methods using Vulkan so we can conclude off of it.<br><br>
+Additionally, I noticed that Vulkan implementation is not always correct across vendors. The same code, the same specification, a different vendor, and slightly different behavior. It would be nice to pinpoint these issues (one such issue is resource ownership across different queues in Vulkan 1.3 / synchronization2).
 
 ## Current state
 Making architecture decisions, for now it's a bit messy.
@@ -16,20 +16,20 @@ Making architecture decisions, for now it's a bit messy.
 * [fastgltf](https://github.com/spnda/fastgltf) - model loading, not used yet
 * [entt](https://github.com/skypjack/entt) - Entity Component System
 * [vulkan-memory-allocator](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator) - Memory allocation, not used yet
-* [easy_profiler](https://github.com/yse/easy_profiler) - profiling, with nice GUI, **no vcpkg - install manually**
+* [tracy](https://github.com/wolfpld/tracy) - profiling, with nice GUI
 
 ## Installation
 GSGE uses vcpkg to handle dependencies, except for _easy_profiler_.
-If using VS's vcpkg extension, it should download, build and install necessary dependencies automatically.
+If using VS's vcpkg extension, it should download, build, and install necessary dependencies automatically.
 If not, use `vcpkg install --triplet=x64-windows-static` in the solution folder.
 
 ## Configuration
 There are no specific options to configure. However, for maximum performance, please set the architecture for code generation in project settings [/arch:AVX...](https://learn.microsoft.com/en-us/cpp/build/reference/arch-x64).
 
 ## Build
-GSGE is available as a VS 2022 project, with Debug, Release and Profile configurations available.<br>
+GSGE is available as a VS 2022 project, with Debug, Release, and Profile configurations available.<br>
 Make sure to install _easy_profiler_ when using the "Profile" configuration.<br>
-Choose right architecture for code generation for your CPU (AVX, AVX2, AVX512 and so on) in project settings.
+In the project settings, choose the right architecture for code generation for your CPU (AVX, AVX2, AVX512, and so on).
 
 ## Command-line parameters
 |Parameter|Value type|Description|Default value|Example|
@@ -40,7 +40,7 @@ Choose right architecture for code generation for your CPU (AVX, AVX2, AVX512 an
 |--width|Integer>=1|Window width in windowed mode / Screen width in fullscreen mode|800|--width=800|
 |--height|Integer>=1|Window height in windowed mode / Screen height in fullscreen mode|600|--height=600|
 
-## Navigation / keys in app
+## Navigation/keys in the app
 |Key|Description|
 |---|---|
 |W,S,A,D|Move forward, backward, strafe left, strafe right|
