@@ -1,10 +1,11 @@
 #pragma once
 
+#if !defined NDEBUG
+
 #include <string>
+#include <unordered_map>
 #include <vulkan/vulkan.h>
 #include <spdlog/spdlog.h>
-
-#if !defined NDEBUG
 
 struct ErrorDetail
 {
