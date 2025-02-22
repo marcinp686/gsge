@@ -166,8 +166,8 @@ void scene::update(float deltaTime)
 void scene::updateTransformMatrices(float dt)
 {
     using namespace DirectX;
-    EASY_FUNCTION();
- 
+    ZoneScoped;
+
     auto view = registry.view<component::transform, component::motion>();
 
     // load dt to all components of vector
@@ -208,6 +208,7 @@ void scene::updateTransformMatrices(float dt)
 
 void scene::prepareFrameData()
 {
+    ZoneScoped;
     auto view = registry.view<component::mesh, component::name>();
 
     uint32_t totVertices = 0;
@@ -246,7 +247,7 @@ void scene::prepareFrameData()
 
 void scene::updateUniformBuffer()
 {
-    EASY_FUNCTION();
+    ZoneScoped;
     
     // ubo.model = tr.transformMatrix;
     ubo.view = mainCamera.getViewMatrix();

@@ -81,9 +81,8 @@ vulkan::~vulkan()
 
 void vulkan::update()
 {
-    EASY_FUNCTION(profiler::colors::Green200);
+    ZoneScoped;
         
-    EASY_BLOCK("Acquire image");
     if (isResizing)
     {
         device->querySurfaceCapabilities();
@@ -93,16 +92,19 @@ void vulkan::update()
         handleSurfaceResize();
         isResizing = false;
     }
-
+    
+    // Wait for the current frame to be finished
+    GSGE_CHECK_RESULT(vkWaitForFences(*device, 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX));
+    // Reset a fence indicating that drawing has been finished
+    GSGE_CHECK_RESULT(vkResetFences(*device, 1, &drawingFinishedFences[currentFrame]));
+    
     acquireNextImage();
     if (isResizing)
         return;
-    EASY_END_BLOCK;
 
-    EASY_BLOCK("Update buffers");
+    FrameMark;
     updateTransformMatrixBuffer(currentFrame);
     updateUniformBuffer(currentFrame);    
-    EASY_END_BLOCK;
 
     drawFrame();
 }
@@ -555,20 +557,11 @@ void vulkan::recordGraphicsCommandBuffer(VkCommandBuffer commandBuffer, uint32_t
 
 void vulkan::drawFrame()
 {
-    EASY_FUNCTION(profiler::colors::Green400);
-    EASY_VALUE("currentFrame", currentFrame);
-
-    GSGE_CHECK_RESULT(vkWaitForFences(*device, 1, &drawingFinishedFences[currentFrame], VK_TRUE, UINT64_MAX));
-
-    EASY_BLOCK("Record command buffers");
-    // Reset a fence indicating that drawing has been finished
-    GSGE_CHECK_RESULT(vkResetFences(*device, 1, &drawingFinishedFences[currentFrame]));
+    
     recordGraphicsCommandBuffer(graphicsCommandBuffers[currentFrame], swapchainImageIndex);
     recordPresentCommandBuffer(presentCommandBuffers[currentFrame], swapchainImageIndex);
-    EASY_END_BLOCK;
 
     // Graphics queue submit info
-    EASY_BLOCK("Queue submit");
     VkCommandBufferSubmitInfo graphicsCommandBufferSubmitInfo{
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
         .commandBuffer = graphicsCommandBuffers[currentFrame],
@@ -619,7 +612,6 @@ void vulkan::drawFrame()
     GSGE_CHECK_RESULT(
         vkQueueSubmit2(device->getGraphicsQueue(), 1, &graphicsQueueSubmitInfo, drawingFinishedFences[currentFrame]));
 
-    EASY_END_BLOCK;
 
     //// present queue submission
     // VkSemaphoreSubmitInfo prePresentCompleteSemaphoreInfo{
@@ -649,7 +641,6 @@ void vulkan::drawFrame()
     //     SPDLOG_CRITICAL("Error: {}", static_cast<int>(result));
     //     throw std::runtime_error("failed to submit present command buffer!");
     // }
-    EASY_BLOCK("Present");
 
     VkSwapchainKHR swapchains = {*swapchain};
     VkPresentInfoKHR presentInfo{
@@ -664,7 +655,6 @@ void vulkan::drawFrame()
 
     // Presentation of current frame's image after renderFinishedSemaphore[currentFrame] is signalled
     GSGE_CHECK_RESULT(vkQueuePresentKHR(device->getPresentQueue(), &presentInfo));
-    EASY_END_BLOCK;
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 

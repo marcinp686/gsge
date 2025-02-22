@@ -10,7 +10,6 @@
 #include <entt/entity/registry.hpp>
 
 #include <glm/glm.hpp>
-#include <easy/profiler.h>
 
 #include "scene.h"
 #include "renderer/window.h"

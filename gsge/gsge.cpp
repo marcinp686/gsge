@@ -90,10 +90,9 @@ void gsge::uploadBuffersToGPU()
 
 void gsge::mainLoop()
 {
-    EASY_MAIN_THREAD;
     while (!glfwWindowShouldClose(*window))
     {
-        EASY_BLOCK("mainLoop", profiler::colors::Blue200);
+        ZoneScoped;
         glfwPollEvents();
 
         mouse->update();

@@ -5,19 +5,14 @@
 #include "gsge.h"
 #include "renderer/settings.h"
 
-#include <easy/profiler.h>
+// #include <easy/profiler.h>
+#include <tracy/Tracy.hpp>
 
 #pragma warning(suppress : 4275 6285 26498 26451 26800)
 #include <spdlog/spdlog.h>
 
 int main(int argc, char *argv[])
 {
-
-#ifdef BUILD_WITH_EASY_PROFILER
-    EASY_PROFILER_ENABLE;
-    profiler::startListen();
-#endif // BUILD_WITH_EASY_PROFILER  
-
 #ifdef _DEBUG
     spdlog::set_level(spdlog::level::trace);
 #elif NDEBUG

@@ -18,7 +18,7 @@
 
 #include <glm/glm.hpp>
 
-#include <easy/profiler.h>
+#include <tracy/Tracy.hpp>
 
 #include "component/component.h"
 #include "component/camera.h"

@@ -7,8 +7,7 @@
 #pragma warning(suppress : 4275 6285 26498 26451 26800)
 #include <spdlog/spdlog.h>
 #include <glm/glm.hpp>
-#include <easy/profiler.h>
-#include <easy/arbitrary_value.h>
+#include <tracy/Tracy.hpp>
 
 #include "types.h"
 #include "renderer/window.h"
