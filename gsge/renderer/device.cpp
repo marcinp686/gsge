@@ -238,8 +238,8 @@ void Device::findQueueFamilies()
     case 0x1002: // AMD
         graphicsQueueFamilyIdx = 0;
         computeQueueFamilyIdx = 1;
-        transferQueueFamilyIdx = 1;
-        presentQueueFamilyIdx = 2;
+        transferQueueFamilyIdx = 2;
+        presentQueueFamilyIdx = 0;
 
         graphicsQueuePriority = 1.0f;
         computeQueuePriority = 1.0f;
@@ -287,7 +287,7 @@ void Device::findQueueFamilies()
     addQueueToCreate(graphicsQueueFamilyIdx, graphicsQueuePriority, &graphicsQueue, "Graphics queue");
     addQueueToCreate(computeQueueFamilyIdx, computeQueuePriority, &computeQueue, "Compute queue");
     addQueueToCreate(transferQueueFamilyIdx, transferQueuePriority, &transferQueue, "Transfer queue");
-    addQueueToCreate(presentQueueFamilyIdx, presentQueuePriority, &presentQueue, "Present queue");
+   // addQueueToCreate(presentQueueFamilyIdx, presentQueuePriority, &presentQueue, "Present queue");
 }
 
 void Device::addQueueToCreate(uint32_t familyIdx, float priority, VkQueue *handle, const char *queueName)
@@ -343,6 +343,8 @@ void Device::createQueues()
             GSGE_DEBUGGER_SET_OBJECT_NAME(*queue.handle, queue.name);
         }
     }
+
+    presentQueue = graphicsQueue;
 
     SPDLOG_TRACE("[Device queues] Created");
 }
